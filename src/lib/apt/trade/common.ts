@@ -1,5 +1,6 @@
-import { shallowReactive } from 'vue'
-import type { ItemFilters, FilterOrGroup } from '../filters/interfaces'
+// [port] Vue `shallowReactive(new Set())` replaced with plain Sets + `RATE_LIMIT_RULES_REVISION` signal.
+import { signal } from '@angular/core'
+// [port] stage 3: restore with filters — import type { ItemFilters, FilterOrGroup } from '../filters/interfaces'
 import { AppConfig } from '@/web/Config'
 import type { PriceCheckWidget } from '@/web/overlay/interfaces'
 import { RateLimiter } from './RateLimiter'
@@ -21,30 +22,33 @@ export type TradeResponse<T> = (T & { error?: null }) | {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function apiToSatisfySearch (item: ParsedItem, stats: FilterOrGroup[], filters: ItemFilters): 'trade' | 'bulk' {
-  if (stats.some(s => s.group ? !s.meta.disabled : !s.disabled)) {
-    return 'trade'
-  }
-
-  return tradeTag(item) != null ? 'bulk' : 'trade'
-}
+// [port] stage 3: restore with filters (needs ../filters/interfaces).
+// export function apiToSatisfySearch (item: ParsedItem, stats: FilterOrGroup[], filters: ItemFilters): 'trade' | 'bulk' {
+//   if (stats.some(s => s.group ? !s.meta.disabled : !s.disabled)) {
+//     return 'trade'
+//   }
+//
+//   return tradeTag(item) != null ? 'bulk' : 'trade'
+// }
 
 export function tradeTag (item: ParsedItem): string | undefined {
   return item.info.tradeTag
 }
 
 export const RATE_LIMIT_RULES = {
-  SEARCH: shallowReactive(new Set([
+  SEARCH: new Set([ // [port]
     new RateLimiter(1, 5)
-  ])),
-  EXCHANGE: shallowReactive(new Set([
+  ]),
+  EXCHANGE: new Set([ // [port]
     new RateLimiter(1, 5)
-  ])),
-  FETCH: shallowReactive(new Set([
+  ]),
+  FETCH: new Set([ // [port]
     new RateLimiter(1, 5)
-  ]))
+  ])
 }
+
+/** [port] Bumped when limiters are added to or removed from `RATE_LIMIT_RULES`. */
+export const RATE_LIMIT_RULES_REVISION = signal(0)
 
 export function adjustRateLimits (clientLimits: Set<RateLimiter>, headers: Headers): void {
   if (!headers.has('x-rate-limit-rules')) return
@@ -82,6 +86,7 @@ function _adjustRateLimits (clientLimits: Set<RateLimiter>, limitStr: string, st
     const isActive = limitRule.some(serverLimit => limit.isEqualLimit(serverLimit))
     if (!isActive) {
       clientLimits.delete(limit)
+      RATE_LIMIT_RULES_REVISION.update(n => n + 1) // [port]
       limit.destroy()
       DEBUG && console.log('Destroy', limit.toString())
     }
@@ -114,6 +119,7 @@ function _adjustRateLimits (clientLimits: Set<RateLimiter>, limitStr: string, st
 
     const rl = new RateLimiter(serverLimit.max, serverLimit.window)
     clientLimits.add(rl)
+    RATE_LIMIT_RULES_REVISION.update(n => n + 1) // [port]
     DEBUG && console.log('Add', rl.toString())
 
     for (let i = 0; i < serverLimit.state; ++i) {

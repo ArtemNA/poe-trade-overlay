@@ -1,4 +1,5 @@
 mod clipboard;
+mod constants;
 mod hotkeys;
 mod platform;
 mod popup;
@@ -6,12 +7,13 @@ mod state;
 
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
+use constants::MAIN_WINDOW;
 use platform::ForegroundInfo;
 use state::AppState;
 
 pub(crate) fn log_to_ui(app: &AppHandle, message: String) {
     log::info!("{message}");
-    let _ = app.emit_to("main", "log", message);
+    let _ = app.emit_to(MAIN_WINDOW, "log", message);
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -41,7 +43,7 @@ fn on_foreground(app: &AppHandle, info: ForegroundInfo) {
     state.set_game_hwnd(is_game.then_some(info.hwnd));
 
     let _ = app.emit_to(
-        "main",
+        MAIN_WINDOW,
         "foreground",
         ForegroundPayload {
             title: info.title,
@@ -101,7 +103,8 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             // The hidden popup would otherwise keep the process alive.
-            if window.label() == "main" && matches!(event, WindowEvent::CloseRequested { .. }) {
+            if window.label() == MAIN_WINDOW && matches!(event, WindowEvent::CloseRequested { .. })
+            {
                 window.app_handle().exit(0);
             }
         })

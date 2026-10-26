@@ -9,6 +9,8 @@ export default defineConfig({
     alias: {
       '@/assets/data': src('lib/apt/data'),
       '@/parser': src('lib/apt/parser'),
+      '@/web/Config': src('app/apt-shims/web-config'),
+      '@/web/overlay/interfaces': src('app/apt-shims/overlay-interfaces'),
     },
   },
   test: {

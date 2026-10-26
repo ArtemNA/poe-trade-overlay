@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
 import { parseClipboard } from '@/parser';
+import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
 import { host, ItemTextEvent } from '../host';
 import { ItemView, toItemView } from './item-view';
@@ -15,6 +16,7 @@ export class PopupWindow {
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly showRaw = signal(false);
+  protected readonly settings = settings;
 
   constructor() {
     // Load game data while the popup is still hidden, so the first hotkey is fast.

@@ -5,28 +5,31 @@ use std::time::Instant;
 
 use tauri::plugin::TauriPlugin;
 use tauri::{AppHandle, Emitter, Manager, Wry};
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
+use crate::constants::{POPUP_WINDOW, PRICE_CHECK_KEY, PRICE_CHECK_MODIFIERS, PRICE_CHECK_VKS};
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
 use crate::{clipboard, log_to_ui, popup};
 
-const VK_D: u16 = 0x44;
-
 fn price_check_shortcut() -> Shortcut {
-    Shortcut::new(Some(Modifiers::CONTROL), Code::KeyD)
+    Shortcut::new(Some(PRICE_CHECK_MODIFIERS), PRICE_CHECK_KEY)
 }
 
 /// Release the keys of the hotkey first (otherwise the game sees e.g. Ctrl+D+C),
 /// then press Ctrl+C. Mirrors APT `Shortcuts.register` + `pressKeysToCopyItemText`.
-const COPY_SEQUENCE: [KeyAction; 6] = [
-    KeyAction::Up(VK_D),
-    KeyAction::Up(vk::CONTROL),
-    KeyAction::Down(vk::CONTROL),
-    KeyAction::Down(vk::C),
-    KeyAction::Up(vk::C),
-    KeyAction::Up(vk::CONTROL),
-];
+fn copy_sequence() -> Vec<KeyAction> {
+    PRICE_CHECK_VKS
+        .iter()
+        .map(|&key| KeyAction::Up(key))
+        .chain([
+            KeyAction::Down(vk::CONTROL),
+            KeyAction::Down(vk::C),
+            KeyAction::Up(vk::C),
+            KeyAction::Up(vk::CONTROL),
+        ])
+        .collect()
+}
 
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -87,7 +90,7 @@ fn price_check(app: &AppHandle) {
 
     let cursor = platform::cursor_pos();
     let started = Instant::now();
-    let result = clipboard::read_item_text(|| platform::send_keys(&COPY_SEQUENCE));
+    let result = clipboard::read_item_text(|| platform::send_keys(&copy_sequence()));
     let elapsed_ms = started.elapsed().as_millis();
     state.end_check();
 
@@ -110,6 +113,6 @@ fn price_check(app: &AppHandle) {
         game_rect,
         elapsed_ms,
     };
-    let _ = app.emit_to(popup::LABEL, "item-text", payload);
+    let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
     popup::show(app, game_rect, cursor);
 }

@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
+import { Leagues } from '../core/leagues';
 import { ForegroundEvent, host } from '../host';
 
 interface LogLine {
@@ -18,9 +19,11 @@ export class MainWindow {
   protected readonly gameTitle = signal('');
   protected readonly gameActive = signal(false);
   protected readonly log = signal<LogLine[]>([]);
+  protected readonly leagues = inject(Leagues);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
+    this.loadLeagues();
 
     host.getStatus().then((status) => {
       this.gameTitle.set(status.gameTitle);
@@ -41,6 +44,16 @@ export class MainWindow {
     this.gameTitle.set(title.trim());
     host.setGameTitle(title);
     this.append(`Game window title set to "${title.trim()}"`);
+  }
+
+  protected async loadLeagues() {
+    await this.leagues.load();
+    const error = this.leagues.error();
+    this.append(
+      error
+        ? `Leagues failed: ${error}`
+        : `Leagues: ${this.leagues.list().map((l) => l.id).join(', ')}; selected ${this.leagues.selectedId()}`,
+    );
   }
 
   private append(text: string) {

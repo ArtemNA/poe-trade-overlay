@@ -31,6 +31,31 @@
     </span>
   </section>
 
+  <section class="flex items-end gap-3">
+    <label class="flex flex-1 flex-col gap-1">
+      <span class="text-zinc-400">League</span>
+      <select
+        class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1.5 outline-none focus:border-amber-500"
+        [disabled]="leagues.isLoading() || !leagues.list().length"
+        (change)="leagues.select($any($event.target).value)"
+      >
+        @for (league of leagues.list(); track league.id) {
+          <option [value]="league.id" [selected]="league.id === leagues.selectedId()">{{ league.id }}</option>
+        }
+      </select>
+    </label>
+    <button
+      class="rounded bg-zinc-700 px-3 py-1.5 hover:bg-zinc-600 disabled:opacity-50"
+      [disabled]="leagues.isLoading()"
+      (click)="loadLeagues()"
+    >
+      {{ leagues.isLoading() ? 'Loading…' : 'Reload' }}
+    </button>
+  </section>
+  @if (leagues.error(); as error) {
+    <p class="rounded bg-red-950 px-2 py-1.5 text-red-300">Failed to load leagues: {{ error }}</p>
+  }
+
   <section class="flex min-h-0 flex-1 flex-col gap-1">
     <h2 class="text-zinc-400">Log</h2>
     <ol class="min-h-0 flex-1 overflow-auto rounded border border-zinc-800 bg-zinc-950 p-2 font-mono text-xs">

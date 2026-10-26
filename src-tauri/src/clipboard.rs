@@ -4,11 +4,9 @@ use std::time::Duration;
 
 use arboard::Clipboard;
 
-const POLL_DELAY: Duration = Duration::from_millis(48);
-const POLL_LIMIT: Duration = Duration::from_millis(500);
-
-/// First line of copied item text, per game language. Only EN for now.
-const ITEM_FIRST_LINES: &[&str] = &["Item Class: "];
+use crate::constants::{
+    CLIPBOARD_POLL_DELAY as POLL_DELAY, CLIPBOARD_POLL_LIMIT as POLL_LIMIT, ITEM_FIRST_LINES,
+};
 
 pub fn is_poe_item(text: &str) -> bool {
     ITEM_FIRST_LINES.iter().any(|line| text.starts_with(line))

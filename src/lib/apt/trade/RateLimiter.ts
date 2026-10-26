@@ -2,11 +2,14 @@
                   @typescript-eslint/promise-function-async,
                   @typescript-eslint/return-await */
 
-import { shallowReactive, shallowRef } from 'vue'
+// [port] Vue `shallowReactive` / `shallowRef` replaced with a plain array and Angular signals.
+import { signal } from '@angular/core'
 
 export class RateLimiter {
-  stack = shallowReactive<ResourceHandle[]>([])
-  queue = shallowRef(0)
+  stack: ResourceHandle[] = [] // [port]
+  /** [port] Bumped on every `stack` change, so UI can track it reactively. */
+  readonly revision = signal(0)
+  queue = signal(0) // [port]
 
   private _destroyed = false
 
@@ -23,9 +26,9 @@ export class RateLimiter {
     if (this._destroyed) throw new Error('RateLimiter is no longer active')
 
     if (this.isFullyUtilized) {
-      this.queue.value++
+      this.queue.update(n => n + 1) // [port]
       await this.stack[0].promise
-      this.queue.value--
+      this.queue.update(n => n - 1) // [port]
       return this._wait(borrow)
     } else {
       if (borrow) {
@@ -39,9 +42,11 @@ export class RateLimiter {
       const idx = this.stack.indexOf(handle)
       if (idx !== -1) {
         this.stack.splice(idx, 1)
+        this.revision.update(n => n + 1) // [port]
       }
     })
     this.stack.push(handle)
+    this.revision.update(n => n + 1) // [port]
   }
 
   static async waitMulti (limiters: Iterable<RateLimiter>): Promise<void> {
@@ -121,14 +126,14 @@ export class RateLimiter {
 
   destroy () {
     this._destroyed = true
-    if (this.queue.value) {
+    if (this.queue()) { // [port]
       // shortcircuit awaiters in queue
       this.stack[0].cancel(new Error('RateLimiter is no longer active'))
     }
   }
 
   toString () {
-    return `RateLimiter<max=${this.max}:window=${this.window}>: (stack=${this.stack.length},queue=${this.queue.value})`
+    return `RateLimiter<max=${this.max}:window=${this.window}>: (stack=${this.stack.length},queue=${this.queue()})` // [port]
   }
 }
 

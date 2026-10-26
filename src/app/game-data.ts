@@ -1,9 +1,7 @@
 import { init, setDataSource, type DataSource } from '@/assets/data';
+import { DATA_PATH, DEFAULT_LANG, Lang } from './constants';
 
-/** Game data language. Only EN is shipped for now; add a folder in public/data to support more. */
-export type Lang = 'en';
-
-const dataUrl = (path: string) => new URL(`data/${path}`, document.baseURI).href;
+const dataUrl = (path: string) => new URL(`${DATA_PATH}/${path}`, document.baseURI).href;
 
 async function get(path: string): Promise<Response> {
   const response = await fetch(dataUrl(path));
@@ -23,7 +21,7 @@ const browserSource: DataSource = {
 let loading: Promise<void> | undefined;
 
 /** Loads items, stats and client strings once; parsing items requires it. */
-export function loadGameData(lang: Lang = 'en'): Promise<void> {
+export function loadGameData(lang: Lang = DEFAULT_LANG): Promise<void> {
   if (!loading) {
     setDataSource(browserSource);
     loading = init(lang);

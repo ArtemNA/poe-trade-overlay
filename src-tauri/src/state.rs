@@ -1,9 +1,8 @@
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 
+use crate::constants::{DEFAULT_GAME_TITLE, ENV_GAME_TITLE, ENV_KEEP_POPUP};
 use crate::platform::RawHwnd;
-
-pub const DEFAULT_GAME_TITLE: &str = "Path of Exile";
 
 pub struct AppState {
     game_title: Mutex<String>,
@@ -13,22 +12,21 @@ pub struct AppState {
     popup_visible: AtomicBool,
     /// Guards against a second price check while the clipboard is still being polled.
     busy: AtomicBool,
-    /// POE_KEEP_POPUP=1: don't hide the popup when the game loses focus (for screenshots while developing).
+    /// See `ENV_KEEP_POPUP`.
     pub keep_popup_on_blur: bool,
 }
 
 impl Default for AppState {
     fn default() -> Self {
-        // POE_GAME_TITLE lets any window stand in for the game while developing (e.g. Notepad).
         let game_title =
-            std::env::var("POE_GAME_TITLE").unwrap_or_else(|_| DEFAULT_GAME_TITLE.into());
+            std::env::var(ENV_GAME_TITLE).unwrap_or_else(|_| DEFAULT_GAME_TITLE.into());
         Self {
             game_title: Mutex::new(game_title),
             game_hwnd: AtomicIsize::new(0),
             popup_hwnd: AtomicIsize::new(0),
             popup_visible: AtomicBool::new(false),
             busy: AtomicBool::new(false),
-            keep_popup_on_blur: std::env::var("POE_KEEP_POPUP").is_ok_and(|v| v == "1"),
+            keep_popup_on_blur: std::env::var(ENV_KEEP_POPUP).is_ok_and(|v| v == "1"),
         }
     }
 }

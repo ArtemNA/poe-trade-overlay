@@ -16,9 +16,12 @@
     "target": "ES2022",
     "module": "preserve",
     // Ported APT code keeps its original imports, so upstream files can be copied over as-is.
+    // APT modules we replace with our own code live in src/app/apt-shims.
     "paths": {
       "@/assets/data": ["./src/lib/apt/data"],
-      "@/parser": ["./src/lib/apt/parser"]
+      "@/parser": ["./src/lib/apt/parser"],
+      "@/web/Config": ["./src/app/apt-shims/web-config"],
+      "@/web/overlay/interfaces": ["./src/app/apt-shims/overlay-interfaces"]
     }
   },
   "angularCompilerOptions": {

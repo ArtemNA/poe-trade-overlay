@@ -2,11 +2,9 @@
 
 use tauri::{AppHandle, Manager};
 
+use crate::constants::{POPUP_WIDTH_LOGICAL as WIDTH_LOGICAL, POPUP_WINDOW as LABEL};
 use crate::platform::{self, Point, Rect};
 use crate::state::AppState;
-
-pub const LABEL: &str = "popup";
-const WIDTH_LOGICAL: f64 = 460.0;
 
 /// Call once on startup, after the popup window exists.
 pub fn init(app: &AppHandle) -> tauri::Result<()> {

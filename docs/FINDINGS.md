@@ -73,3 +73,38 @@
 - `matcher.string` зберігається **без знака** (`# to maximum Life`), а `stat.ref` — зі знаком (`+# to maximum Life`). Зараз popup показує рядки без «+» — виправити на етапі UI.
 - `ParsedItem` **не містить назви рідкісного / унікального предмета** («Storm Loop») — лише базу в `info`. Назва береться з першої секції `rawText`.
 - **PoE2: перевірити.**
+
+---
+
+## Етап 2 — HTTP, ліги, rate limiter (26.10.2026)
+
+### F-12. `Origin` не заважає API GGG — `unsafe-headers` не потрібен
+- `tauri-plugin-http` завжди додає `Origin` (`http://localhost:4200` у dev, `tauri://localhost` у збірці); проксі APT його видаляв. Прибрати можна лише з feature `unsafe-headers`.
+- Перевірено curl'ом 26.10.2026: `/api/leagues` і `POST /api/trade/search/<league>` відповідають 200 і без `Origin`, і з `tauri://localhost`. Плагін лишається зі стандартними фічами.
+- `User-Agent` не входить до заборонених заголовків — його можна ставити з JS; без нього плагін шле `tauri-plugin-http/<версія>`.
+- **PoE2: перевірити** (той самий сайт, але інші ендпоінти `/trade2`).
+
+### F-13. Запити йдуть з Rust-сторони, cookies сесії поки немає
+- APT робив усі запити через проксі в main-процесі з `useSessionCookies: true`. У нас — `tauri-plugin-http` без фічі `cookies`: CORS не заважає, заголовки `X-Rate-Limit-*` читаються, але cookies (POESESSID, Cloudflare) не зберігаються між запитами.
+- Для ліг і анонімного пошуку цього досить. Ризик R1 (вбудований браузер, етап 7) лишається: доведеться ввімкнути фічу `cookies` або передавати cookies з WebView.
+- Дозволені хости — у [capabilities/default.json](../src-tauri/capabilities/default.json): pathofexile.com, poe.ninja, poeprices.info.
+- **PoE2: так.**
+
+### F-14. Shim-модулі замість конфігу APT
+- Код APT читає налаштування через `@/web/Config` (`AppConfig()`, `poeWebApi()`) і типи віджетів з `@/web/overlay/interfaces`. Ці імпорти через `paths` ведуть у [src/app/apt-shims](../src/app/apt-shims), тож файли APT, які на них спираються, копіюються без змін. Shim віддає тільки те, що реально читає портований код; розширюється разом із портом.
+- Реактивність Vue в `RateLimiter.ts` / `common.ts` замінено на Angular signals (`revision`, `queue`, `RATE_LIMIT_RULES_REVISION`), логіку не змінено. `apiToSatisfySearch` тимчасово закоментовано до порту фільтрів (етап 3). `Cache.ts` — без змін.
+- **PoE2: так.**
+
+### F-15. Налаштування між вікнами синхронізуються через `storage`-подію
+- Головне вікно і popup — окремі WebView2 одного origin. Налаштування (зокрема ліга) лежать у `localStorage`, а зміна в одному вікні приходить в інше через подію `storage` — перевірено: popup оновлює лігу без перезапуску.
+- Тимчасове рішення до етапу налаштувань (план: `tauri-plugin-store`). Зауваження: у dev origin — `http://localhost:4200`, у збірці — `tauri://localhost`, тож dev- і prod-налаштування різні.
+- **PoE2: так.**
+
+### F-16. Ліги в 3.29 (Allflame)
+- API віддає 16 ліг; після фільтра APT (без постійного HC, без `NoParties`, без `HardMode` поза подіями) лишаються `Standard`, `Allflame`, `Hardcore Allflame`. За замовчуванням — друга в списку (поточна челендж-ліга). Реальна відповідь збережена як [tests/fixtures/leagues.json](../tests/fixtures/leagues.json).
+- Ліміт `/api/leagues` — політика `ladder-view`, `5:5:10,10:10:30,15:10:300`: легко вичерпати при ручному тестуванні.
+- **PoE2: перевірити** (інші ліги та, ймовірно, `realm=poe2`).
+
+### F-17. Статичні значення — в одному місці
+- На прохання користувача всі налаштовувані значення винесено: TS — [src/app/constants.ts](../src/app/constants.ts) (UA, контакт, хости, realm, затримка API, ключ сховища, постійні ліги), Rust — [src-tauri/src/constants.rs](../src-tauri/src/constants.rs) (назва вікна гри, хоткей, таймінги буфера, ширина popup, мітки вікон, dev-змінні). Винятки: код APT і allowlist у capabilities.
+- **PoE2: так** — для форку змінюються переважно ці два файли.

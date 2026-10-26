@@ -1,0 +1,51 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "PoE Trade Overlay",
+  "version": "0.1.0",
+  "identifier": "com.artemna.poe-trade-overlay",
+  "build": {
+    "frontendDist": "../dist/poe-trade-overlay/browser",
+    "devUrl": "http://localhost:4200",
+    "beforeDevCommand": "npm run start",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "PoE Trade Overlay",
+        "width": 900,
+        "height": 640,
+        "resizable": true
+      },
+      {
+        "label": "popup",
+        "title": "PoE Trade Overlay — popup",
+        "width": 460,
+        "height": 700,
+        "visible": false,
+        "focus": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

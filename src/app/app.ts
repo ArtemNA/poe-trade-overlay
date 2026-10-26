@@ -1,11 +1,26 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { MainWindow } from './main-window/main-window';
+import { PopupWindow } from './popup-window/popup-window';
 
+/** Both Tauri windows load the same app; the window label picks the view. */
 @Component({
-  imports: [],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  imports: [MainWindow, PopupWindow],
+  template: `
+    @if (label === 'popup') {
+      <app-popup-window />
+    } @else {
+      <app-main-window />
+    }
+  `,
 })
 export class App {
-  protected readonly title = signal('poe-trade-overlay');
+  protected readonly label = getCurrentWindow().label;
+
+  constructor() {
+    if (this.label === 'popup') {
+      document.documentElement.classList.add('popup');
+    }
+  }
 }

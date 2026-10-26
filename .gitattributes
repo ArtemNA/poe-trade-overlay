@@ -1,0 +1,2 @@
+# Game data is indexed by character offsets: never rewrite its line endings.
+public/data/** -text

@@ -13,6 +13,8 @@ pub struct AppState {
   popup_visible: AtomicBool,
   /// Guards against a second price check while the clipboard is still being polled.
   busy: AtomicBool,
+  /// POE_KEEP_POPUP=1: don't hide the popup when the game loses focus (for screenshots while developing).
+  pub keep_popup_on_blur: bool,
 }
 
 impl Default for AppState {
@@ -25,6 +27,7 @@ impl Default for AppState {
       popup_hwnd: AtomicIsize::new(0),
       popup_visible: AtomicBool::new(false),
       busy: AtomicBool::new(false),
+      keep_popup_on_blur: std::env::var("POE_KEEP_POPUP").is_ok_and(|v| v == "1"),
     }
   }
 }

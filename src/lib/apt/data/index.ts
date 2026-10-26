@@ -3,10 +3,23 @@ import type { BaseType, DropEntry, Stat, StatOrGroup, StatMatcher, TranslationDi
 
 export * from './interfaces'
 
+// [port] Vite-specific `fetch(import.meta.env.BASE_URL + ...)` / `import()` replaced with a
+// pluggable source: browser fetch in the app, filesystem in tests. Paths are relative to `data/`.
+export interface DataSource {
+  text (path: string): Promise<string>
+  binary (path: string): Promise<ArrayBuffer>
+  clientStrings (path: string): Promise<TranslationDict>
+}
+
+let source: DataSource
+
+export function setDataSource (dataSource: DataSource) {
+  source = dataSource
+}
+
 export let ITEM_DROP: DropEntry[]
 export let CLIENT_STRINGS: TranslationDict
 export let CLIENT_STRINGS_REF: TranslationDict
-export let APP_PATRONS: Array<{ from: string, months: number, style: number }>
 
 export let ITEM_BY_TRANSLATED: (ns: BaseType['namespace'], name: string) => BaseType[] | undefined = () => undefined
 export let ITEM_BY_REF: (ns: BaseType['namespace'], name: string) => BaseType[] | undefined = () => undefined
@@ -75,10 +88,10 @@ function itemNamesFromLines (items: Generator<BaseType>) {
 }
 
 async function loadItems (language: string) {
-  const ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items.ndjson`)).text()
+  const ndjson = await source.text(`${language}/items.ndjson`) // [port]
   const INDEX_WIDTH = 2
-  const indexNames = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items-name.index.bin`)).arrayBuffer())
-  const indexRefNames = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/items-ref.index.bin`)).arrayBuffer())
+  const indexNames = new Uint32Array(await source.binary(`${language}/items-name.index.bin`)) // [port]
+  const indexRefNames = new Uint32Array(await source.binary(`${language}/items-ref.index.bin`)) // [port]
 
   function commonFind (index: Uint32Array, prop: 'name' | 'refName') {
     return function (ns: BaseType['namespace'], name: string): BaseType[] | undefined {
@@ -107,10 +120,10 @@ async function loadItems (language: string) {
 }
 
 async function loadStats (language: string) {
-  const ndjson = await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats.ndjson`)).text()
+  const ndjson = await source.text(`${language}/stats.ndjson`) // [port]
   const INDEX_WIDTH = 2
-  const indexRef = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats-ref.index.bin`)).arrayBuffer())
-  const indexMatcher = new Uint32Array(await (await fetch(`${import.meta.env.BASE_URL}data/${language}/stats-matcher.index.bin`)).arrayBuffer())
+  const indexRef = new Uint32Array(await source.binary(`${language}/stats-ref.index.bin`)) // [port]
+  const indexMatcher = new Uint32Array(await source.binary(`${language}/stats-matcher.index.bin`)) // [port]
 
   STAT_BY_REF_V2 = function (ref: string) {
     let start = dataBinarySearch(indexRef, Number(fnv1a(ref, { size: 32 })), 0, INDEX_WIDTH)
@@ -190,9 +203,9 @@ export function stat (text: string) {
 }
 
 export async function init (lang: string) {
-  CLIENT_STRINGS_REF = (await import(/* @vite-ignore */`${import.meta.env.BASE_URL}data/en/client_strings.js`)).default
-  ITEM_DROP = await (await fetch(`${import.meta.env.BASE_URL}data/item-drop.json`)).json()
-  APP_PATRONS = await (await fetch(`${import.meta.env.BASE_URL}data/patrons.json`)).json()
+  CLIENT_STRINGS_REF = await source.clientStrings('en/client_strings.js') // [port]
+  ITEM_DROP = JSON.parse(await source.text('item-drop.json')) // [port]
+  // [port] APP_PATRONS (patrons.json) dropped: only used by APT's About screen.
 
   await loadForLang(lang)
 
@@ -217,7 +230,7 @@ export async function init (lang: string) {
 }
 
 export async function loadForLang (lang: string) {
-  CLIENT_STRINGS = (await import(/* @vite-ignore */`${import.meta.env.BASE_URL}data/${lang}/client_strings.js`)).default
+  CLIENT_STRINGS = await source.clientStrings(`${lang}/client_strings.js`) // [port]
   await loadItems(lang)
   await loadStats(lang)
 }

@@ -1,19 +1,66 @@
 <div class="flex h-full flex-col overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900/95 font-sans text-sm text-zinc-200 shadow-xl">
-  <header class="flex items-center gap-2 border-b border-zinc-800 px-3 py-2">
-    <span class="flex-1 font-semibold text-zinc-50">Item text</span>
-    @if (item(); as current) {
-      <span class="text-xs text-zinc-500">{{ current.elapsedMs }} ms</span>
+  <header class="flex items-start gap-2 border-b border-zinc-800 px-3 py-2">
+    <div class="min-w-0 flex-1">
+      @if (item(); as view) {
+        <div class="truncate text-base font-semibold text-amber-200">{{ view.name }}</div>
+        @if (view.baseType) {
+          <div class="truncate text-zinc-300">{{ view.baseType }}</div>
+        }
+        <div class="text-xs text-zinc-500">
+          {{ view.rarity }}
+          @if (view.category && view.category !== view.rarity) { · {{ view.category }} }
+          @if (view.itemLevel) { · iLvl {{ view.itemLevel }} }
+        </div>
+      } @else {
+        <div class="font-semibold text-zinc-50">{{ error() ? 'Cannot parse item' : 'Parsing…' }}</div>
+      }
+    </div>
+    @if (event(); as current) {
+      <span class="pt-1 text-xs text-zinc-500">{{ current.elapsedMs }} ms</span>
     }
     <button class="rounded px-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100" (click)="close()">✕</button>
   </header>
 
-  <!-- Click test: the counter must grow while the game keeps focus. -->
-  <button
-    class="mx-3 mt-3 rounded bg-zinc-800 px-3 py-1.5 text-left hover:bg-zinc-700"
-    (click)="clicks.set(clicks() + 1)"
-  >
-    Click test: {{ clicks() }}
-  </button>
+  <div class="min-h-0 flex-1 overflow-auto px-3 py-2">
+    @if (error(); as message) {
+      <p class="rounded bg-red-950 px-2 py-1.5 text-red-300">{{ message }}</p>
+    }
 
-  <pre class="m-3 min-h-0 flex-1 overflow-auto rounded bg-zinc-950 p-2 font-mono text-xs whitespace-pre-wrap">{{ item()?.text ?? 'No item yet.' }}</pre>
+    @if (item(); as view) {
+      @if (view.flags.length) {
+        <div class="mb-2 flex flex-wrap gap-1">
+          @for (flag of view.flags; track flag) {
+            <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-300">{{ flag }}</span>
+          }
+        </div>
+      }
+
+      @for (mod of view.mods; track $index) {
+        <section class="mb-2">
+          <div class="text-xs text-zinc-500">{{ mod.header }}</div>
+          @for (line of mod.lines; track $index) {
+            <div class="text-sky-200">{{ line }}</div>
+          }
+        </section>
+      } @empty {
+        <p class="text-zinc-500">No modifiers.</p>
+      }
+
+      @if (view.unknown.length) {
+        <section class="mt-2">
+          <div class="text-xs text-red-400">Unknown modifiers</div>
+          @for (line of view.unknown; track $index) {
+            <div class="text-red-300">{{ line }}</div>
+          }
+        </section>
+      }
+    }
+
+    <button class="mt-3 text-xs text-zinc-500 underline hover:text-zinc-300" (click)="showRaw.set(!showRaw())">
+      {{ showRaw() ? 'Hide' : 'Show' }} raw text
+    </button>
+    @if (showRaw()) {
+      <pre class="mt-1 rounded bg-zinc-950 p-2 font-mono text-xs whitespace-pre-wrap">{{ event()?.text }}</pre>
+    }
+  </div>
 </div>

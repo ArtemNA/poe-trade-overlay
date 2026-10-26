@@ -4,15 +4,22 @@
   "compileOnSave": false,
   "compilerOptions": {
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
+    // Off for ported APT code (src/lib/apt), which is kept identical to upstream
+    // and is written against plain `strict` without these two checks.
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    // Ported APT code keeps its original imports, so upstream files can be copied over as-is.
+    "paths": {
+      "@/assets/data": ["./src/lib/apt/data"],
+      "@/parser": ["./src/lib/apt/parser"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

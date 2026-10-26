@@ -3,10 +3,14 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "data:index": "node scripts/make-data-indexes.mjs",
+    "prestart": "npm run data:index",
     "start": "ng serve",
+    "prebuild": "npm run data:index",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "pretest": "npm run data:index",
+    "test": "vitest run"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -17,7 +21,9 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@sindresorhus/fnv1a": "^3.1.0",
     "@tauri-apps/api": "^2.12.4",
+    "neverthrow": "^8.2.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -30,6 +36,7 @@
     "postcss": "^8.5.31",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.3.3",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.5"
   }
 }

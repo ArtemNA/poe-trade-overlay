@@ -44,7 +44,7 @@ fn on_foreground(app: &AppHandle, info: ForegroundInfo) {
   if is_game != was_game {
     hotkeys::set_game_hotkeys(app, is_game);
   }
-  if !is_game && state.popup_visible() {
+  if !is_game && state.popup_visible() && !state.keep_popup_on_blur {
     popup::hide(app);
   }
 }

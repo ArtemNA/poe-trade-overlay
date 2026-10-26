@@ -1,6 +1,6 @@
 // [port] Vue `shallowReactive(new Set())` replaced with plain Sets + `RATE_LIMIT_RULES_REVISION` signal.
 import { signal } from '@angular/core'
-// [port] stage 3: restore with filters — import type { ItemFilters, FilterOrGroup } from '../filters/interfaces'
+import type { ItemFilters, FilterOrGroup } from '../filters/interfaces'
 import { AppConfig } from '@/web/Config'
 import type { PriceCheckWidget } from '@/web/overlay/interfaces'
 import { RateLimiter } from './RateLimiter'
@@ -22,14 +22,14 @@ export type TradeResponse<T> = (T & { error?: null }) | {
   }
 }
 
-// [port] stage 3: restore with filters (needs ../filters/interfaces).
-// export function apiToSatisfySearch (item: ParsedItem, stats: FilterOrGroup[], filters: ItemFilters): 'trade' | 'bulk' {
-//   if (stats.some(s => s.group ? !s.meta.disabled : !s.disabled)) {
-//     return 'trade'
-//   }
-//
-//   return tradeTag(item) != null ? 'bulk' : 'trade'
-// }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function apiToSatisfySearch (item: ParsedItem, stats: FilterOrGroup[], filters: ItemFilters): 'trade' | 'bulk' {
+  if (stats.some(s => s.group ? !s.meta.disabled : !s.disabled)) {
+    return 'trade'
+  }
+
+  return tradeTag(item) != null ? 'bulk' : 'trade'
+}
 
 export function tradeTag (item: ParsedItem): string | undefined {
   return item.info.tradeTag

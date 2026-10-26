@@ -2,7 +2,7 @@
  * Stands in for APT `@/web/Config`, so ported APT code that imports it stays unchanged.
  * Only the parts used by ported code are provided; extend as more of APT is ported.
  */
-import { API_LATENCY_SECONDS, POE_INTL_WEB_API, POE_WEB_API } from '../constants';
+import { API_LATENCY_SECONDS, POE_INTL_WEB_API, POE_WEB_API, PRICE_CHECK_DEFAULTS } from '../constants';
 import { settings } from '../core/settings';
 
 export interface Config {
@@ -10,19 +10,20 @@ export interface Config {
   language: ReturnType<typeof settings>['language'];
   realm: 'pc-ggg';
   useIntlSite: boolean;
+  accountName: string;
 }
 
 /** Per-widget settings APT reads via `AppConfig('<widget type>')`. */
 const WIDGETS: Record<string, object> = {
-  'price-check': { apiLatencySeconds: API_LATENCY_SECONDS },
+  'price-check': { ...PRICE_CHECK_DEFAULTS, apiLatencySeconds: API_LATENCY_SECONDS },
 };
 
 export function AppConfig(): Config;
 export function AppConfig<T>(type: string): T | undefined;
 export function AppConfig(type?: string) {
   if (type) return WIDGETS[type];
-  const { leagueId, language, useIntlSite } = settings();
-  return { leagueId, language, realm: 'pc-ggg', useIntlSite } satisfies Config;
+  const { leagueId, language, useIntlSite, accountName } = settings();
+  return { leagueId, language, realm: 'pc-ggg', useIntlSite, accountName } satisfies Config;
 }
 
 export function poeWebApi(): string {

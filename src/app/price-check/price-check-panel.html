@@ -1,0 +1,105 @@
+@if (error(); as message) {
+  <p class="rounded bg-red-950 px-2 py-1.5 text-red-300">{{ message }}</p>
+}
+
+@if (presets(); as all) {
+  @if (all.presets.length > 1) {
+    <nav class="mb-2 flex gap-1">
+      @for (preset of all.presets; track preset.id) {
+        <button
+          class="rounded px-2 py-0.5 text-xs"
+          [class]="preset.id === all.active ? 'bg-amber-600 text-zinc-950' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'"
+          (click)="selectPreset(preset.id)"
+        >
+          {{ presetLabel(preset.id) }}
+        </button>
+      }
+    </nav>
+  }
+}
+
+@if (active(); as preset) {
+  <!-- Item filters -->
+  @if (chips().length) {
+    <div class="mb-2 flex flex-wrap gap-1">
+      @for (chip of chips(); track chip.key) {
+        <button
+          class="rounded px-1.5 py-0.5 text-xs"
+          [class]="chip.enabled ? 'bg-sky-900 text-sky-100' : 'bg-zinc-800 text-zinc-500 line-through'"
+          [title]="chip.numeric ? 'Click to toggle, wheel to change' : 'Click to toggle'"
+          (click)="toggleChip(chip)"
+          (wheel)="wheelChip(chip, $event)"
+        >
+          {{ chip.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Stat filters -->
+  <ul class="mb-2 flex flex-col gap-0.5">
+    @for (entry of preset.stats; track $index) {
+      @if (isGroup(entry)) {
+        <li class="flex items-baseline gap-2">
+          <input type="checkbox" class="accent-amber-500" [checked]="!entry.meta.disabled" (change)="toggleStat(entry.meta)" />
+          <button class="min-w-0 flex-1 truncate text-left text-zinc-300" (click)="toggleGroup(entry)">
+            {{ entry.expanded ? '▾' : '▸' }} {{ entry.meta.text }}
+          </button>
+        </li>
+        @if (entry.expanded) {
+          @for (stat of entry.stats; track $index) {
+            <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat, nested: true }" />
+          }
+        }
+      } @else {
+        <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry), nested: false }" />
+      }
+    } @empty {
+      <li class="text-zinc-500">{{ 'filters.empty' | t }}</li>
+    }
+  </ul>
+
+  <ng-template #statRow let-stat let-nested="nested">
+    <li class="flex items-center gap-2" [class.pl-5]="nested" [class.opacity-50]="stat.disabled">
+      <input type="checkbox" class="accent-amber-500" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
+      <span class="min-w-0 flex-1 truncate" [title]="stat.hidden ? (stat.hidden | t) : statText(stat)">
+        {{ statText(stat) }}
+        @if (stat.hidden) {
+          <span class="text-xs text-zinc-500">({{ 'filters.hidden_toggle' | t }})</span>
+        }
+      </span>
+      @if (stat.roll; as roll) {
+        <button class="w-12 rounded bg-zinc-800 px-1 text-right tabular-nums hover:bg-zinc-700" title="Wheel to change, click to clear"
+          (wheel)="wheelRoll(stat, 'min', $event)" (click)="clickRoll(stat, 'min')">{{ rollValue(roll, 'min') }}</button>
+        <button class="w-12 rounded bg-zinc-800 px-1 text-right tabular-nums hover:bg-zinc-700" title="Wheel to change, click to clear"
+          (wheel)="wheelRoll(stat, 'max', $event)" (click)="clickRoll(stat, 'max')">{{ rollValue(roll, 'max') }}</button>
+      }
+    </li>
+  </ng-template>
+
+  <!-- Online filters and actions -->
+  <div class="mb-2 flex flex-wrap items-center gap-1 text-xs">
+    <button class="rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700" (click)="toggleOffline()">
+      {{ preset.filters.trade.offline ? ('online_filter.offline_toggle' | t) : 'Online' }}
+    </button>
+    <button
+      class="rounded px-1.5 py-0.5"
+      [class]="preset.filters.trade.merchantOnly ? 'bg-sky-900 text-sky-100' : 'bg-zinc-800 text-zinc-500'"
+      (click)="toggleMerchantOnly()"
+    >
+      {{ 'online_filter.merchant_toggle' | t }}
+    </button>
+    <span class="flex-1"></span>
+    <button class="rounded bg-zinc-800 px-2 py-0.5 hover:bg-zinc-700" (click)="openTradeSite()">{{ 'trade_result.trade' | t }} ↗</button>
+    <button
+      class="rounded px-3 py-0.5 font-medium"
+      [class]="stale() ? 'bg-amber-600 text-zinc-950 hover:bg-amber-500' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'"
+      [disabled]="search.isSearching()"
+      (click)="runSearch()"
+    >
+      {{ search.isSearching() ? '…' : 'Search' }}
+    </button>
+  </div>
+
+  <app-trade-listings [search]="search" />
+}

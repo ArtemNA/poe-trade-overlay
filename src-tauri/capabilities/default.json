@@ -11,10 +11,17 @@
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://www.pathofexile.com/*" },
-        { "url": "https://poe.ninja/*" },
-        { "url": "https://www.poeprices.info/*" }
+        {
+          "url": "https://www.pathofexile.com/*"
+        },
+        {
+          "url": "https://poe.ninja/*"
+        },
+        {
+          "url": "https://www.poeprices.info/*"
+        }
       ]
-    }
+    },
+    "opener:default"
   ]
 }

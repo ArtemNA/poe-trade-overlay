@@ -6,11 +6,14 @@ export interface Settings {
   language: Lang;
   /** Use the international (English) trade site regardless of game language. */
   useIntlSite: boolean;
+  /** PoE account name: own listings are marked in results. */
+  accountName: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   language: DEFAULT_LANG,
   useIntlSite: false,
+  accountName: '',
 };
 
 // Stage 2 storage: localStorage of the webview. Replaced by tauri-plugin-store at the settings stage.

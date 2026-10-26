@@ -1,13 +1,13 @@
 import type { FilterNumeric, ItemFilters } from '../../lib/apt/web/price-check/filters/interfaces';
 import { t } from '../core/i18n';
 
-/** One toggleable item property filter (item level, links, quality, …). */
+/** One item property filter row (item level, links, quality, corrupted, …). */
 export interface ItemFilterChip {
   key: string;
   label: string;
   enabled: boolean;
   toggle(): void;
-  /** Numeric filters change their value with the mouse wheel. */
+  /** Numeric filters get min (and max when the filter has one) fields. */
   numeric?: FilterNumeric;
 }
 
@@ -24,14 +24,18 @@ const NUMERIC: Array<[keyof ItemFilters, string]> = [
   ['sentinelCharge', 'item.sentinel_charge'],
 ];
 
+/** "Item Level: {0}" → "Item Level". */
+const labelOnly = (i18nKey: string) => t(i18nKey, '').replace(/[:\s]+$/, '');
+
 export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
   const chips: ItemFilterChip[] = [];
 
   const relaxed = filters.searchRelaxed;
   if (relaxed) {
+    const base = filters.searchExact.baseType ?? filters.searchExact.name ?? 'base';
     chips.push({
       key: 'base',
-      label: filters.searchExact.baseType ?? filters.searchExact.name ?? 'Base',
+      label: `Only ${base}`,
       enabled: relaxed.disabled,
       toggle: () => (relaxed.disabled = !relaxed.disabled),
     });
@@ -39,7 +43,8 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
 
   const rarity = filters.rarity;
   if (rarity) {
-    chips.push({ key: 'rarity', label: rarity.value, enabled: !rarity.disabled, toggle: () => (rarity.disabled = !rarity.disabled) });
+    const label = rarity.value === 'nonunique' ? 'Not unique' : rarity.value.charAt(0).toUpperCase() + rarity.value.slice(1);
+    chips.push({ key: 'rarity', label, enabled: !rarity.disabled, toggle: () => (rarity.disabled = !rarity.disabled) });
   }
 
   for (const [key, i18nKey] of NUMERIC) {
@@ -47,7 +52,7 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
     if (!filter) continue;
     chips.push({
       key,
-      label: t(i18nKey, filter.max != null && filter.max !== filter.value ? `${filter.value}–${filter.max}` : filter.value),
+      label: labelOnly(i18nKey),
       enabled: !filter.disabled,
       toggle: () => (filter.disabled = !filter.disabled),
       numeric: filter,

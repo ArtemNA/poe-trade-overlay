@@ -10,6 +10,8 @@ pub struct AppState {
     game_hwnd: AtomicIsize,
     popup_hwnd: AtomicIsize,
     popup_visible: AtomicBool,
+    /// The popup temporarily has keyboard focus (the user is typing into it).
+    popup_focused: AtomicBool,
     /// Guards against a second price check while the clipboard is still being polled.
     busy: AtomicBool,
     /// See `ENV_KEEP_POPUP`.
@@ -25,6 +27,7 @@ impl Default for AppState {
             game_hwnd: AtomicIsize::new(0),
             popup_hwnd: AtomicIsize::new(0),
             popup_visible: AtomicBool::new(false),
+            popup_focused: AtomicBool::new(false),
             busy: AtomicBool::new(false),
             keep_popup_on_blur: std::env::var(ENV_KEEP_POPUP).is_ok_and(|v| v == "1"),
         }
@@ -61,6 +64,13 @@ impl AppState {
     }
     pub fn set_popup_visible(&self, visible: bool) {
         self.popup_visible.store(visible, Ordering::SeqCst);
+    }
+
+    pub fn popup_focused(&self) -> bool {
+        self.popup_focused.load(Ordering::SeqCst)
+    }
+    pub fn set_popup_focused(&self, focused: bool) {
+        self.popup_focused.store(focused, Ordering::SeqCst);
     }
 
     /// Returns false if a check is already running.

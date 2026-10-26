@@ -2,33 +2,50 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import type { ParsedItem } from '@/parser';
-import type { FilterOrGroup, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
+import type { FilterNumeric, FilterOrGroup, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
+import { RATE_LIMIT_RULES, RATE_LIMIT_RULES_REVISION } from '../../lib/apt/web/price-check/trade/common';
+import { CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
+import { currencyRates, toChaos } from '../core/currency-rates';
 import { t, TranslatePipe } from '../core/i18n';
 import { settings } from '../core/settings';
+import type { ItemView } from '../popup-window/item-view';
 import { ItemFilterChip, itemFilterChips } from './item-filter-chips';
+import { formatChaos, limiterUsage, summarizeListings } from './listing-summary';
+import { NumInput } from './num-input';
 import { activePreset, createItemPresets, Presets, shouldSearchImmediately } from './price-check';
-import { TradeListings } from './trade-listings';
-import { TradeSearch, tradeSiteUrl } from './trade-search';
+import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
 
-type Roll = NonNullable<StatFilter['roll']>;
+type Group = Extract<FilterOrGroup, { group: string }>;
+
+/** Tabs of the results pane; only Trade works so far (Bulk: stage 4, poe.ninja: stage 5, Wiki: stage 9). */
+const TABS = [
+  { id: 'trade', label: 'Trade', ready: true },
+  { id: 'bulk', label: 'Bulk', ready: false },
+  { id: 'ninja', label: 'poe.ninja', ready: false },
+  { id: 'wiki', label: 'Wiki', ready: false },
+];
 
 /**
- * Filters and trade listings for one item. Stage 3 functional UI; the design comes later.
+ * The price check window body: filters on the left, trade listings on the right, status bar.
  * APT filter objects are mutable by design: edits change them in place and bump `revision`.
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, TradeListings],
+  imports: [NgTemplateOutlet, TranslatePipe, NumInput],
   templateUrl: './price-check-panel.html',
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
 export class PriceCheckPanel {
   readonly item = input.required<ParsedItem>();
+  readonly view = input.required<ItemView>();
 
   protected readonly presets = signal<Presets | null>(null);
   protected readonly error = signal<string | null>(null);
   /** Filters changed since the last search: the user starts the next one. */
   protected readonly stale = signal(true);
   protected readonly search = new TradeSearch();
+  protected readonly tabs = TABS;
+  protected readonly open = signal({ stats: true, item: true, trade: false });
   private readonly revision = signal(0);
   private previous?: { item: ParsedItem; presets: Presets };
 
@@ -41,6 +58,22 @@ export class PriceCheckPanel {
   protected readonly chips = computed(() => {
     const active = this.active();
     return active ? itemFilterChips(active.filters) : [];
+  });
+
+  protected readonly plate = computed(() => RARITY_COLORS[this.view().rarity] ?? RARITY_COLORS['Normal']);
+
+  protected readonly summary = computed(() => summarizeListings(this.search.groupedResults(), currencyRates.rates()));
+
+  protected readonly limits = computed(() => {
+    RATE_LIMIT_RULES_REVISION();
+    const format = (usage?: { used: number; max: number }) => (usage ? `${usage.used}/${usage.max}` : '—');
+    return `Search ${format(limiterUsage(RATE_LIMIT_RULES.SEARCH))} · Fetch ${format(limiterUsage(RATE_LIMIT_RULES.FETCH))}`;
+  });
+
+  protected readonly tradeSummary = computed(() => {
+    const trade = this.active()?.filters.trade;
+    if (!trade) return '';
+    return [trade.offline ? 'online & offline' : 'online', trade.merchantOnly ? 'instant buyout' : 'any listing'].join(' · ');
   });
 
   constructor() {
@@ -56,7 +89,7 @@ export class PriceCheckPanel {
     const leagueId = settings().leagueId;
     if (!leagueId) {
       this.presets.set(null);
-      this.error.set('No league selected: choose one in the main window.');
+      this.error.set('No league selected: choose one in the title bar.');
       return;
     }
     const presets = createItemPresets(item, leagueId, this.previous);
@@ -68,7 +101,7 @@ export class PriceCheckPanel {
 
   protected runSearch(): void {
     const active = this.active();
-    if (!active) return;
+    if (!active || this.search.isSearching()) return;
     this.stale.set(false);
     void this.search.search(active.filters, active.stats);
   }
@@ -80,6 +113,14 @@ export class PriceCheckPanel {
 
   protected presetLabel(id: string): string {
     return t(id);
+  }
+
+  protected isOpen(key: string): boolean {
+    return this.open()[key as 'stats' | 'item' | 'trade'];
+  }
+
+  protected toggleSection(key: 'stats' | 'item' | 'trade'): void {
+    this.open.update((open) => ({ ...open, [key]: !open[key] }));
   }
 
   /** Stat and item filter edits wait for the Search button, like in APT. */
@@ -95,11 +136,14 @@ export class PriceCheckPanel {
     this.markChanged();
   }
 
-  protected wheelChip(chip: ItemFilterChip, event: WheelEvent): void {
-    if (!chip.numeric) return;
-    event.preventDefault();
-    chip.numeric.value = Math.max(0, chip.numeric.value + (event.deltaY < 0 ? 1 : -1));
-    chip.numeric.disabled = false;
+  protected setNumeric(filter: FilterNumeric, which: 'value' | 'max', value: number | ''): void {
+    if (which === 'value') {
+      if (value === '') return;
+      filter.value = value;
+    } else {
+      filter.max = value === '' ? undefined : value;
+    }
+    filter.disabled = false;
     this.markChanged();
   }
 
@@ -109,19 +153,24 @@ export class PriceCheckPanel {
     const trade = this.active()!.filters.trade;
     trade.offline = !trade.offline;
     this.revision.update((n) => n + 1);
-    this.runSearch();
+    this.runSearchSoon();
   }
 
   protected toggleMerchantOnly(): void {
     const trade = this.active()!.filters.trade;
     trade.merchantOnly = !trade.merchantOnly;
     this.revision.update((n) => n + 1);
-    this.runSearch();
+    this.runSearchSoon();
+  }
+
+  private runSearchSoon(): void {
+    this.stale.set(true);
+    if (!this.search.isSearching()) this.runSearch();
   }
 
   // Stat filters
 
-  protected isGroup(filter: FilterOrGroup): filter is Extract<FilterOrGroup, { group: string }> {
+  protected isGroup(filter: FilterOrGroup): filter is Group {
     return Boolean(filter.group);
   }
 
@@ -134,7 +183,7 @@ export class PriceCheckPanel {
     this.markChanged();
   }
 
-  protected toggleGroup(group: Extract<FilterOrGroup, { group: string }>): void {
+  protected toggleGroup(group: Group): void {
     group.expanded = !group.expanded;
     this.revision.update((n) => n + 1);
   }
@@ -144,31 +193,49 @@ export class PriceCheckPanel {
     return value != null && filter.text.split('#').length === 2 ? filter.text.replace('#', String(value)) : filter.text;
   }
 
-  protected rollValue(roll: Roll, which: 'min' | 'max'): string {
-    const value = roll[which];
-    return typeof value === 'number' ? String(value) : '—';
+  /** Short tag before non-explicit stats ("implicit", "crafted", …). */
+  protected statTag(filter: StatFilter): string {
+    return filter.tag === 'explicit' || filter.tag === 'pseudo' ? '' : t(`filters.tag_${filter.tag}`);
   }
 
-  /** Mouse wheel over min/max steps it; the popup takes no keyboard focus, so there is no typing yet. */
-  protected wheelRoll(filter: StatFilter, which: 'min' | 'max', event: WheelEvent): void {
-    const roll = filter.roll;
-    if (!roll) return;
-    event.preventDefault();
-    const step = roll.dp ? 0.1 : 1;
-    const current = roll[which];
-    const base = typeof current === 'number' ? current : roll.value;
-    const next = base + (event.deltaY < 0 ? step : -step);
-    roll[which] = roll.dp ? Math.round(next * 10) / 10 : next;
+  protected rollValue(filter: StatFilter, which: 'min' | 'max'): number | '' | undefined {
+    return filter.roll?.[which];
+  }
+
+  protected setRoll(filter: StatFilter, which: 'min' | 'max', value: number | ''): void {
+    if (!filter.roll) return;
+    filter.roll[which] = value;
     filter.disabled = false;
     this.markChanged();
   }
 
-  /** Click on min/max: clear it, or restore the default when already empty. */
-  protected clickRoll(filter: StatFilter, which: 'min' | 'max'): void {
-    const roll = filter.roll;
-    if (!roll) return;
-    roll[which] = typeof roll[which] === 'number' ? '' : roll.default[which];
-    this.markChanged();
+  // Listings
+
+  protected dot(row: GroupedResult): string {
+    return CURRENCY_COLORS[row.priceCurrency] ?? CURRENCY_COLOR_OTHER;
+  }
+
+  /** "≈ 3.8" for listings not priced in chaos. */
+  protected equivalent(row: GroupedResult): string {
+    if (row.priceCurrency === 'chaos') return '';
+    const chaos = toChaos(row.priceAmount, row.priceCurrency, currencyRates.rates());
+    return chaos != null ? `≈ ${formatChaos(chaos)}` : '';
+  }
+
+  protected isCheapest(row: GroupedResult): boolean {
+    return `${row.priceAmount} ${row.priceCurrency}` === this.summary().cheapest?.price;
+  }
+
+  protected detailHeader(rows: GroupedResult[]): string {
+    if (rows.some((r) => r.stackSize != null)) return 'Stack';
+    if (rows.some((r) => r.level != null)) return 'Lvl / Q';
+    return 'iLvl';
+  }
+
+  protected detail(row: GroupedResult): string {
+    if (row.stackSize != null) return String(row.stackSize);
+    if (row.level != null) return [row.level, row.quality].filter(Boolean).join(' / ');
+    return row.itemLevel ?? '';
   }
 
   protected openTradeSite(): void {

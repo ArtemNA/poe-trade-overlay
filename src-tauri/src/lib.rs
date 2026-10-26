@@ -33,14 +33,21 @@ struct Status {
 fn on_foreground(app: &AppHandle, info: ForegroundInfo) {
     let state = app.state::<AppState>();
     if info.is_own_process && info.hwnd == state.popup_hwnd() {
-        // Must never happen: the popup is WS_EX_NOACTIVATE. Keep the game state as is.
-        log_to_ui(app, "WARNING: popup became the foreground window".into());
+        // Expected only while the user types into the popup; otherwise it is WS_EX_NOACTIVATE.
+        if !state.popup_focused() {
+            log_to_ui(app, "WARNING: popup became the foreground window".into());
+        }
+        // Keep the game state as is.
         return;
     }
 
     let is_game = !info.is_own_process && state.is_game_window(&info.title);
     let was_game = state.game_hwnd().is_some();
     state.set_game_hwnd(is_game.then_some(info.hwnd));
+    if is_game {
+        // Clicked back into the game while typing in the popup: popup stops taking focus.
+        popup::release_focus(app, false);
+    }
 
     let _ = app.emit_to(
         MAIN_WINDOW,
@@ -54,7 +61,7 @@ fn on_foreground(app: &AppHandle, info: ForegroundInfo) {
         hotkeys::set_game_hotkeys(app, is_game);
     }
     if !is_game && state.popup_visible() && !state.keep_popup_on_blur {
-        popup::hide(app);
+        popup::hide(app, false);
     }
 }
 
@@ -73,7 +80,23 @@ fn set_game_title(state: tauri::State<AppState>, title: String) {
 
 #[tauri::command]
 fn hide_popup(app: AppHandle) {
-    popup::hide(&app);
+    popup::hide(&app, true);
+}
+
+/// The user clicked an input in the popup: it takes the keyboard.
+#[tauri::command]
+fn popup_focus_input(app: AppHandle) -> bool {
+    let focused = popup::focus_for_input(&app);
+    if !focused {
+        log_to_ui(&app, "Could not give the popup keyboard focus".into());
+    }
+    focused
+}
+
+/// Typing is done: keyboard back to the game, popup back to no-activate.
+#[tauri::command]
+fn popup_release_focus(app: AppHandle) {
+    popup::release_focus(&app, true);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -91,7 +114,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_status,
             set_game_title,
-            hide_popup
+            hide_popup,
+            popup_focus_input,
+            popup_release_focus
         ])
         .setup(|app| {
             let handle = app.handle().clone();

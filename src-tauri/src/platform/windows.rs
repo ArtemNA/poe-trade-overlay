@@ -6,18 +6,19 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::ClientToScreen;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
     MAPVK_VK_TO_VSC, MapVirtualKeyW, SendInput, VIRTUAL_KEY, VK_ESCAPE,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GWL_EXSTYLE, GetClientRect,
-    GetCursorPos, GetForegroundWindow, GetMessageW, GetWindowLongPtrW, GetWindowTextW,
-    GetWindowThreadProcessId, HC_ACTION, HWND_TOPMOST, KBDLLHOOKSTRUCT, MSG, SW_HIDE,
-    SWP_NOACTIVATE, SWP_SHOWWINDOW, SetWindowLongPtrW, SetWindowPos, SetWindowsHookExW, ShowWindow,
-    TranslateMessage, WH_KEYBOARD_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN, WS_EX_NOACTIVATE,
-    WS_EX_TOOLWINDOW,
+    BringWindowToTop, CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GWL_EXSTYLE,
+    GetClientRect, GetCursorPos, GetForegroundWindow, GetMessageW, GetWindowLongPtrW,
+    GetWindowTextW, GetWindowThreadProcessId, HC_ACTION, HWND_TOPMOST, KBDLLHOOKSTRUCT, MSG,
+    SW_HIDE, SWP_NOACTIVATE, SWP_SHOWWINDOW, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos,
+    SetWindowsHookExW, ShowWindow, TranslateMessage, WH_KEYBOARD_LL, WINEVENT_OUTOFCONTEXT,
+    WM_KEYDOWN, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
 };
 
 fn run_message_loop() {
@@ -223,6 +224,43 @@ pub fn make_no_activate(raw: RawHwnd) {
             GWL_EXSTYLE,
             ex | (WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0) as isize,
         );
+    }
+}
+
+/// The popup takes keyboard focus only while the user types into it, then goes back to no-activate.
+pub fn set_no_activate(raw: RawHwnd, enabled: bool) {
+    unsafe {
+        let ex = GetWindowLongPtrW(hwnd(raw), GWL_EXSTYLE);
+        let flag = WS_EX_NOACTIVATE.0 as isize;
+        SetWindowLongPtrW(
+            hwnd(raw),
+            GWL_EXSTYLE,
+            if enabled { ex | flag } else { ex & !flag },
+        );
+    }
+}
+
+/// Makes `raw` the foreground window and reports whether it actually is now.
+/// Windows refuses SetForegroundWindow to a background process (a click on a WS_EX_NOACTIVATE
+/// window does not count), so our thread briefly shares input with the current foreground
+/// window's thread, which lifts that restriction.
+pub fn focus(raw: RawHwnd) -> bool {
+    unsafe {
+        let target = hwnd(raw);
+        let foreground = GetForegroundWindow();
+        if foreground == target {
+            return true;
+        }
+        let ours = GetCurrentThreadId();
+        let theirs = GetWindowThreadProcessId(foreground, None);
+        let attached =
+            theirs != 0 && theirs != ours && AttachThreadInput(ours, theirs, true).as_bool();
+        let _ = SetForegroundWindow(target);
+        let _ = BringWindowToTop(target);
+        if attached {
+            let _ = AttachThreadInput(ours, theirs, false);
+        }
+        GetForegroundWindow() == target
     }
 }
 

@@ -1,105 +1,214 @@
-@if (error(); as message) {
-  <p class="rounded bg-red-950 px-2 py-1.5 text-red-300">{{ message }}</p>
-}
-
-@if (presets(); as all) {
-  @if (all.presets.length > 1) {
-    <nav class="mb-2 flex gap-1">
-      @for (preset of all.presets; track preset.id) {
-        <button
-          class="rounded px-2 py-0.5 text-xs"
-          [class]="preset.id === all.active ? 'bg-amber-600 text-zinc-950' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'"
-          (click)="selectPreset(preset.id)"
-        >
-          {{ presetLabel(preset.id) }}
-        </button>
-      }
-    </nav>
-  }
-}
-
-@if (active(); as preset) {
-  <!-- Item filters -->
-  @if (chips().length) {
-    <div class="mb-2 flex flex-wrap gap-1">
-      @for (chip of chips(); track chip.key) {
-        <button
-          class="rounded px-1.5 py-0.5 text-xs"
-          [class]="chip.enabled ? 'bg-sky-900 text-sky-100' : 'bg-zinc-800 text-zinc-500 line-through'"
-          [title]="chip.numeric ? 'Click to toggle, wheel to change' : 'Click to toggle'"
-          (click)="toggleChip(chip)"
-          (wheel)="wheelChip(chip, $event)"
-        >
-          {{ chip.label }}
-        </button>
+<div class="flex min-h-0 flex-1">
+  <!-- Filters -->
+  <div class="flex w-[340px] flex-col border-r border-line">
+    <div class="flex flex-col items-center border-y px-2.5 pt-2 pb-1.5" [style.background]="plate().plate" [style.border-color]="plate().rule">
+      <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ view().name }}</span>
+      @if (view().baseType) {
+        <span class="font-display text-[15px] leading-tight" [style.color]="plate().text">{{ view().baseType }}</span>
       }
     </div>
-  }
+    @if (view().itemLevel) {
+      <div class="py-1.5 text-center font-display text-[13px] text-muted">Item Level: <span class="text-bright">{{ view().itemLevel }}</span></div>
+    }
 
-  <!-- Stat filters -->
-  <ul class="mb-2 flex flex-col gap-0.5">
-    @for (entry of preset.stats; track $index) {
-      @if (isGroup(entry)) {
-        <li class="flex items-baseline gap-2">
-          <input type="checkbox" class="accent-amber-500" [checked]="!entry.meta.disabled" (change)="toggleStat(entry.meta)" />
-          <button class="min-w-0 flex-1 truncate text-left text-zinc-300" (click)="toggleGroup(entry)">
-            {{ entry.expanded ? '▾' : '▸' }} {{ entry.meta.text }}
-          </button>
-        </li>
-        @if (entry.expanded) {
-          @for (stat of entry.stats; track $index) {
-            <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat, nested: true }" />
+    @if (presets(); as all) {
+      @if (all.presets.length > 1) {
+        <div class="mx-2.5 mb-1 flex border border-line">
+          @for (preset of all.presets; track preset.id) {
+            <button
+              class="h-6 flex-1 border-line text-xs not-last:border-r"
+              [class]="preset.id === all.active ? 'bg-[#2a2218] font-medium text-gold-soft' : 'text-muted hover:text-text'"
+              (click)="selectPreset(preset.id)"
+            >
+              {{ presetLabel(preset.id) }}
+            </button>
+          }
+        </div>
+      }
+    }
+
+    @if (error(); as message) {
+      <p class="mx-2.5 my-1 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ message }}</p>
+    }
+
+    @if (active(); as preset) {
+      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5">
+        <!-- Stat filters -->
+        <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'stats', title: 'Stat filters', aside: 'min · max' }" />
+        @if (open().stats) {
+          @for (entry of preset.stats; track $index) {
+            @if (isGroup(entry)) {
+              <div class="flex items-center gap-2 px-1 py-1">
+                <input type="checkbox" class="size-3.5 accent-gold" [checked]="!entry.meta.disabled" (change)="toggleStat(entry.meta)" />
+                <button class="min-w-0 flex-1 truncate text-left font-display text-[13px] text-mod" (click)="toggleGroup(entry)">
+                  {{ entry.expanded ? '▾' : '▸' }} {{ entry.meta.text }}
+                </button>
+              </div>
+              @if (entry.expanded) {
+                @for (stat of entry.stats; track $index) {
+                  <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat, nested: true }" />
+                }
+              }
+            } @else {
+              <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry), nested: false }" />
+            }
+          } @empty {
+            <p class="px-1 py-1.5 text-muted">{{ 'filters.empty' | t }}</p>
           }
         }
-      } @else {
-        <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry), nested: false }" />
-      }
-    } @empty {
-      <li class="text-zinc-500">{{ 'filters.empty' | t }}</li>
-    }
-  </ul>
 
-  <ng-template #statRow let-stat let-nested="nested">
-    <li class="flex items-center gap-2" [class.pl-5]="nested" [class.opacity-50]="stat.disabled">
-      <input type="checkbox" class="accent-amber-500" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
-      <span class="min-w-0 flex-1 truncate" [title]="stat.hidden ? (stat.hidden | t) : statText(stat)">
-        {{ statText(stat) }}
-        @if (stat.hidden) {
-          <span class="text-xs text-zinc-500">({{ 'filters.hidden_toggle' | t }})</span>
+        <!-- Item -->
+        @if (chips().length) {
+          <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'item', title: 'Item', aside: '' }" />
+          @if (open().item) {
+            @for (chip of chips(); track chip.key) {
+              <label class="flex items-center gap-2 px-1 py-1">
+                <input type="checkbox" class="size-3.5 accent-gold" [checked]="chip.enabled" (change)="toggleChip(chip)" />
+                <span class="min-w-0 flex-1 truncate" [class.text-muted]="!chip.enabled">{{ chip.label }}</span>
+                @if (chip.numeric; as numeric) {
+                  <app-num-input [value]="numeric.value" [label]="chip.label + ' minimum'"
+                    (valueChange)="setNumeric(numeric, 'value', $event)" (submit)="runSearch()" />
+                  @if (numeric.max != null) {
+                    <app-num-input [value]="numeric.max" [label]="chip.label + ' maximum'" placeholder="max"
+                      (valueChange)="setNumeric(numeric, 'max', $event)" (submit)="runSearch()" />
+                  }
+                }
+              </label>
+            }
+          }
         }
-      </span>
-      @if (stat.roll; as roll) {
-        <button class="w-12 rounded bg-zinc-800 px-1 text-right tabular-nums hover:bg-zinc-700" title="Wheel to change, click to clear"
-          (wheel)="wheelRoll(stat, 'min', $event)" (click)="clickRoll(stat, 'min')">{{ rollValue(roll, 'min') }}</button>
-        <button class="w-12 rounded bg-zinc-800 px-1 text-right tabular-nums hover:bg-zinc-700" title="Wheel to change, click to clear"
-          (wheel)="wheelRoll(stat, 'max', $event)" (click)="clickRoll(stat, 'max')">{{ rollValue(roll, 'max') }}</button>
-      }
-    </li>
-  </ng-template>
 
-  <!-- Online filters and actions -->
-  <div class="mb-2 flex flex-wrap items-center gap-1 text-xs">
-    <button class="rounded bg-zinc-800 px-1.5 py-0.5 hover:bg-zinc-700" (click)="toggleOffline()">
-      {{ preset.filters.trade.offline ? ('online_filter.offline_toggle' | t) : 'Online' }}
-    </button>
-    <button
-      class="rounded px-1.5 py-0.5"
-      [class]="preset.filters.trade.merchantOnly ? 'bg-sky-900 text-sky-100' : 'bg-zinc-800 text-zinc-500'"
-      (click)="toggleMerchantOnly()"
-    >
-      {{ 'online_filter.merchant_toggle' | t }}
-    </button>
-    <span class="flex-1"></span>
-    <button class="rounded bg-zinc-800 px-2 py-0.5 hover:bg-zinc-700" (click)="openTradeSite()">{{ 'trade_result.trade' | t }} ↗</button>
-    <button
-      class="rounded px-3 py-0.5 font-medium"
-      [class]="stale() ? 'bg-amber-600 text-zinc-950 hover:bg-amber-500' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'"
-      [disabled]="search.isSearching()"
-      (click)="runSearch()"
-    >
-      {{ search.isSearching() ? '…' : 'Search' }}
-    </button>
+        <!-- Trade -->
+        <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'trade', title: 'Trade', aside: open().trade ? '' : tradeSummary() }" />
+        @if (open().trade) {
+          <label class="flex items-center gap-2 px-1 py-1">
+            <input type="checkbox" class="size-3.5 accent-gold" [checked]="!preset.filters.trade.offline" (change)="toggleOffline()" />
+            <span>Online sellers only</span>
+          </label>
+          <label class="flex items-center gap-2 px-1 py-1">
+            <input type="checkbox" class="size-3.5 accent-gold" [checked]="preset.filters.trade.merchantOnly" (change)="toggleMerchantOnly()" />
+            <span>Instant buyout only</span>
+          </label>
+        }
+      </div>
+
+      <div class="p-2.5">
+        <button
+          class="h-8 w-full border text-[13px] font-semibold disabled:cursor-default"
+          [class]="stale() ? 'border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] text-[#1a1208]' : 'border-line-strong bg-raised text-text hover:border-gold'"
+          [disabled]="search.isSearching()"
+          (click)="runSearch()"
+        >
+          {{ search.isSearching() ? 'Searching…' : 'Search' }}
+        </button>
+      </div>
+    }
   </div>
 
-  <app-trade-listings [search]="search" />
-}
+  <!-- Results -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <nav class="flex items-end gap-0.5 border-b border-line px-2.5 pt-1.5">
+      @for (tab of tabs; track tab.id) {
+        <button
+          class="-mb-px border px-3 py-1.5"
+          [class]="tab.id === 'trade' ? 'border-line border-b-raised bg-raised font-medium text-bright' : 'border-transparent text-muted/60'"
+          [disabled]="!tab.ready"
+          [title]="tab.ready ? '' : 'Coming in a later stage'"
+        >
+          {{ tab.label }}
+        </button>
+      }
+      <span class="flex-1"></span>
+      <button class="px-1 py-1.5 text-gold hover:text-[#e6c88a]" (click)="openTradeSite()">Open on trade site ↗</button>
+    </nav>
+
+    <div class="flex min-h-[34px] items-baseline gap-3.5 border-b border-line bg-raised px-3 py-2">
+      @if (search.searchResult(); as result) {
+        <span class="text-muted">{{ result.total.toLocaleString('en') }} matched</span>
+        @if (summary().cheapest; as cheapest) {
+          <span>Cheapest <b class="font-semibold text-gold-soft">{{ cheapest.price }}</b></span>
+        }
+        @if (summary().mostListed; as most) {
+          <span>Most listed <b class="font-semibold text-bright">{{ most }}</b></span>
+        }
+      } @else if (search.isSearching()) {
+        <span class="text-muted">Searching…</span>
+      } @else if (stale()) {
+        <span class="text-muted">Adjust filters, then Search</span>
+      }
+    </div>
+
+    @if (search.error(); as message) {
+      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+    }
+
+    @let rows = search.rows();
+    <div class="grid grid-cols-[minmax(0,1fr)_70px_52px_84px] gap-2 border-b border-line px-3 py-1 text-[11px] text-muted">
+      <span>Price</span><span class="text-right">≈ chaos</span><span class="text-right">{{ detailHeader(rows) }}</span><span class="text-right">Listed</span>
+    </div>
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      @for (row of rows; track row.id; let odd = $odd) {
+        <div
+          class="grid grid-cols-[minmax(0,1fr)_70px_52px_84px] items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
+          [class.bg-white/[0.015]]="odd"
+          [class.opacity-60]="row.accountStatus === 'offline'"
+          [class.text-gold-soft]="row.isMine"
+        >
+          <span class="flex min-w-0 items-center gap-1.5 text-bright">
+            <span class="size-[9px] flex-none rounded-full" [style.background]="dot(row)"></span>
+            {{ row.priceAmount }} {{ row.priceCurrency }}
+            @if (row.listedTimes > 1) {
+              <span class="text-muted">×{{ row.listedTimes }}</span>
+            }
+          </span>
+          <span class="text-right" [class]="isCheapest(row) ? 'text-good' : 'text-muted'">{{ equivalent(row) }}</span>
+          <span class="text-right">{{ detail(row) }}</span>
+          <span class="text-right text-muted">{{ row.relativeDate }}</span>
+        </div>
+      }
+    </div>
+    <div class="border-t border-line px-3 py-1.5 text-[11px] text-muted">
+      @if (search.searchResult(); as result) {
+        Showing {{ rows.length }} of {{ result.total.toLocaleString('en') }} · cheapest first
+      } @else {
+        &nbsp;
+      }
+    </div>
+  </div>
+</div>
+
+<footer class="flex h-6 items-center gap-3.5 border-t border-line bg-chrome px-3 text-[11px] text-muted">
+  <span class="flex items-center gap-1.5">
+    <span class="size-[7px] rounded-full" [class]="search.error() ? 'bg-bad' : search.isSearching() ? 'bg-warn' : 'bg-good'"></span>
+    Trade API
+  </span>
+  <span>{{ limits() }}</span>
+  <span class="flex-1"></span>
+  <span>Click a field to type · ↑ ↓ or wheel to step · Enter searches · Esc closes</span>
+</footer>
+
+<ng-template #sectionHead let-key="key" let-title="title" let-aside="aside">
+  <button class="flex w-full items-center gap-1.5 border-b border-line px-0.5 pt-2 pb-1.5 text-left font-display text-[13px] text-muted hover:text-text" (click)="toggleSection(key)">
+    <span class="w-2 text-[9px]">{{ isOpen(key) ? '▾' : '▸' }}</span>
+    {{ title }}
+    <span class="flex-1"></span>
+    <span class="font-sans text-[11px]">{{ aside }}</span>
+  </button>
+</ng-template>
+
+<ng-template #statRow let-stat let-nested="nested">
+  <label class="flex items-center gap-2 px-1 py-1" [class.pl-5]="nested" [class.bg-mod/[0.06]]="!stat.disabled">
+    <input type="checkbox" class="size-3.5 accent-gold" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
+    @if (statTag(stat); as tag) {
+      <span class="border border-line-strong px-1 text-[10px] text-muted">{{ tag }}</span>
+    }
+    <span class="min-w-0 flex-1 truncate font-display text-[13px]" [class]="stat.disabled ? 'text-mod-off' : 'text-mod'"
+      [title]="stat.hidden ? (stat.hidden | t) : statText(stat)">{{ statText(stat) }}</span>
+    @if (stat.roll; as roll) {
+      <app-num-input [value]="rollValue(stat, 'min')" [decimals]="roll.dp" label="Minimum"
+        (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
+      <app-num-input [value]="rollValue(stat, 'max')" [decimals]="roll.dp" label="Maximum" placeholder="max"
+        (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />
+    }
+  </label>
+</ng-template>

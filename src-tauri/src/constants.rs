@@ -17,8 +17,13 @@ pub const ENV_KEEP_POPUP: &str = "POE_KEEP_POPUP";
 pub const MAIN_WINDOW: &str = "main";
 pub const POPUP_WINDOW: &str = "popup";
 
-/// Popup width in logical pixels; its height follows the game window.
-pub const POPUP_WIDTH_LOGICAL: f64 = 460.0;
+/// Price check window size in logical pixels (shrinks to fit a smaller game window).
+pub const POPUP_WIDTH_LOGICAL: f64 = 820.0;
+pub const POPUP_HEIGHT_LOGICAL: f64 = 590.0;
+/// Gap between the popup and the game window edge, logical pixels.
+pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
+/// The popup's top edge sits this share of the game height below the game's top.
+pub const POPUP_TOP_RATIO: f64 = 0.1;
 
 /// Price check hotkey: Ctrl+D (APT default).
 pub const PRICE_CHECK_MODIFIERS: Modifiers = Modifiers::CONTROL;
@@ -29,6 +34,9 @@ pub const PRICE_CHECK_VKS: [u16; 2] = [0x44 /* D */, 0x11 /* Ctrl */];
 /// Clipboard polling after Ctrl+C (APT `HostClipboard`: 48 ms × up to 500 ms).
 pub const CLIPBOARD_POLL_DELAY: Duration = Duration::from_millis(48);
 pub const CLIPBOARD_POLL_LIMIT: Duration = Duration::from_millis(500);
+
+/// Second attempt to give the keyboard back to the game if the first one was intercepted.
+pub const FOCUS_RETRY_DELAY: Duration = Duration::from_millis(150);
 
 /// First line of copied item text, per game language. Only EN for now.
 pub const ITEM_FIRST_LINES: &[&str] = &["Item Class: "];

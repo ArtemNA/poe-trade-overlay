@@ -21,8 +21,8 @@
       {
         "label": "popup",
         "title": "PoE Trade Overlay — popup",
-        "width": 460,
-        "height": 700,
+        "width": 820,
+        "height": 590,
         "visible": false,
         "focus": false,
         "decorations": false,

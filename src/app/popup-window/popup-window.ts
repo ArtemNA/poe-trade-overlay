@@ -1,27 +1,31 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
 import { parseClipboard, type ParsedItem } from '@/parser';
+import { currencyRates, divineFractions, trackCurrencyRates } from '../core/currency-rates';
 import { loadI18n } from '../core/i18n';
+import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
 import { host, ItemTextEvent } from '../host';
+import { formatChaos } from '../price-check/listing-summary';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
 import { ItemView, toItemView } from './item-view';
 
-/** Popup: the parsed item, its price check, and the raw text for debugging. */
+/** The price check window: title bar (league, divine rate), filters and listings. */
 @Component({
   selector: 'app-popup-window',
   imports: [PriceCheckPanel],
   templateUrl: './popup-window.html',
 })
 export class PopupWindow {
-  protected readonly event = signal<ItemTextEvent | null>(null);
   protected readonly parsed = signal<ParsedItem | null>(null);
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
-  protected readonly showDetails = signal(false);
-  protected readonly showRaw = signal(false);
+  protected readonly menu = signal<'league' | 'divine' | null>(null);
   protected readonly settings = settings;
+  protected readonly leagues = inject(Leagues);
+  protected readonly divine = currencyRates.divine;
+  protected readonly ratesUpdated = currencyRates.updatedAt;
 
   constructor() {
     // Load game data and UI strings while the popup is still hidden, so the first hotkey is fast.
@@ -29,11 +33,12 @@ export class PopupWindow {
       this.error.set(String(e));
       throw e;
     });
+    void this.leagues.load();
+    effect(() => trackCurrencyRates(settings().leagueId));
 
     const unlisten = listen<ItemTextEvent>('item-text', async ({ payload }) => {
-      this.event.set(payload);
-      this.item.set(null);
-      this.parsed.set(null);
+      host.popupLostKeyboard(); // a new check: the popup was hidden or never had it
+      this.menu.set(null);
       this.error.set(null);
       try {
         await dataReady;
@@ -45,13 +50,44 @@ export class PopupWindow {
         this.parsed.set(result.value);
         this.item.set(toItemView(result.value));
       } else {
+        this.parsed.set(null);
+        this.item.set(null);
         this.error.set(result.error);
       }
     });
     inject(DestroyRef).onDestroy(() => unlisten.then((fn) => fn()));
   }
 
-  protected close() {
+  /** A click outside the number fields ends typing: keyboard back to the game (no-op otherwise). */
+  protected pointerDown(event: Event): void {
+    if (!(event.target as HTMLElement).closest('app-num-input')) void host.popupReleaseFocus();
+  }
+
+  protected toggleMenu(menu: 'league' | 'divine'): void {
+    this.menu.update((open) => (open === menu ? null : menu));
+  }
+
+  protected selectLeague(id: string): void {
+    this.leagues.select(id);
+    this.menu.set(null);
+  }
+
+  protected fractions(divine: number) {
+    return divineFractions(divine);
+  }
+
+  protected formatChaos(value: number): string {
+    return formatChaos(value);
+  }
+
+  protected minutesAgo(date: Date | null): string {
+    if (!date) return '';
+    const minutes = Math.round((Date.now() - date.getTime()) / 60000);
+    return minutes < 1 ? 'just now' : `${minutes} min ago`;
+  }
+
+  protected close(): void {
+    this.menu.set(null);
     host.hidePopup();
   }
 }

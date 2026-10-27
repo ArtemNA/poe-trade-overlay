@@ -58,11 +58,12 @@
   }
   @if (dps(); as weapon) {
     <div class="grid grid-cols-[1fr_auto] gap-x-4 px-2.5 py-1.5 tabular-nums not-last:border-b not-last:border-line"
-      title="At the item's current quality (the price check filters assume 20 %)">
-      <span class="col-span-2 pb-0.5 text-[11px] text-muted">Weapon DPS · current quality</span>
-      <span class="text-muted">Physical DPS</span><span class="text-right text-bright">{{ weapon.phys }}</span>
+      [title]="weapon.q20 ? 'In brackets: at 20 % quality, as the trade site and the price check filters count it' : ''">
+      <span class="text-muted">Physical DPS</span>
+      <span class="text-right text-bright">{{ weapon.phys }}@if (weapon.q20; as q20) {<span class="ml-1 text-muted">({{ q20.phys }} at Q20)</span>}</span>
       <span class="text-muted">Elemental DPS</span><span class="text-right text-bright">{{ weapon.elem }}</span>
-      <span class="text-muted">Total DPS</span><b class="text-right font-semibold text-gold-soft">{{ weapon.total }}</b>
+      <span class="text-muted">Total DPS</span>
+      <span class="text-right"><b class="font-semibold text-gold-soft">{{ weapon.total }}</b>@if (weapon.q20; as q20) {<span class="ml-1 text-muted">({{ q20.total }} at Q20)</span>}</span>
     </div>
   }
   @if (item().dustEquivalent; as dust) {

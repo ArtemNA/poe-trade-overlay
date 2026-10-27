@@ -15,7 +15,8 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `05-rare-base-price.png`, `05-rare-base-price-ninja-tab.png` | Rare ring: stat filters, poe.ninja base type price |
 | `05-no-ninja-price.png`, `05-no-ninja-price-ninja-tab.png` | Divination card poe.ninja does not list: no price, related cards and reward still shown |
 | `05-league-allflame.png`, `05-league-allflame-ninja-tab.png` | After switching league: prices reloaded; flat week graph |
-| `09-item-check-weapon.png` | Item check (Alt+D), rare bow: links incl. Craft of Exile, weapon DPS, no poe.ninja price |
+| `09-item-check-weapon.png` | Item check (Alt+D), rare bow at 0 % quality: links incl. Craft of Exile, weapon DPS with the 20 % quality value in brackets, no poe.ninja price |
+| `09-item-check-weapon-q20.png` | The same bow at 20 % quality: no brackets |
 | `09-item-check-unique.png` | Item check, unique: poe.ninja price with week change, dust value |
 | `09-item-check-currency.png` | Item check, currency: no Craft of Exile, no item level |
 | `09-item-check-corrupted.png` | Item check, unidentified corrupted amulet: flags, no Craft of Exile, base price |

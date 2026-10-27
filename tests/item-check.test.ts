@@ -62,7 +62,10 @@ describe('item check', () => {
   });
 
   it('computes weapon DPS from the properties', () => {
-    expect(weaponDps(parse(items.RARE_BOW))).toEqual({ phys: 161, elem: 112, total: 273 });
+    // Same 20 % quality numbers as the price check filters (Physical DPS: 193, Total DPS: 306).
+    expect(weaponDps(parse(items.RARE_BOW))).toEqual({ phys: 161, elem: 112, total: 273, q20: { phys: 193, total: 306 } });
+    const q20Bow = items.RARE_BOW.replace('Physical Damage: 52-139', 'Quality: +20% (augmented)\nPhysical Damage: 52-139');
+    expect(weaponDps(parse(q20Bow))?.q20).toBeUndefined();
     expect(weaponDps(parse(items.RARE_RING))).toBeNull();
   });
 });

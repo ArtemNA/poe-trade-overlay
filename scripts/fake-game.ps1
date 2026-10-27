@@ -1,6 +1,7 @@
 # Stand-in "game" window for testing the overlay without Path of Exile.
 # Ctrl+C puts item text on the clipboard, like the game does for a hovered item; nothing else
-# reacts to keys, so stray test input cannot change anything.
+# reacts to keys, so stray test input cannot change anything. The item file is read on every
+# Ctrl+C: overwrite it to check another item without restarting.
 #
 #   powershell -STA -File scripts/fake-game.ps1 [-ItemFile <path>] [-X <left>] [-Y <top>]
 #   then run the app with POE_GAME_TITLE="PoE Fake Game" (see src-tauri/src/constants.rs).
@@ -12,6 +13,13 @@ param(
   [int]$Width = 1600,
   [int]$Height = 900
 )
+
+# Hide our own console instead of starting hidden: -WindowStyle Hidden would hide the form too.
+Add-Type -Name Console -Namespace FakeGame -MemberDefinition @'
+[DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
+'@
+[void][FakeGame.Console]::ShowWindow([FakeGame.Console]::GetConsoleWindow(), 0)
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -36,6 +44,7 @@ $form.Controls.Add($label)
 $form.Add_KeyDown({
   param($sender, $e)
   if ($e.Control -and $e.KeyCode -eq 'C') {
+    $item = [IO.File]::ReadAllText($ItemFile)
     [Windows.Forms.Clipboard]::SetText($item)
     $e.Handled = $true
   }

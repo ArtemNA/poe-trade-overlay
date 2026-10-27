@@ -1,0 +1,19 @@
+# App states
+
+Screenshots of every state reached while testing, for a later redesign. Taken with
+`scripts/screenshot.ps1 -Window popup` against the fake game (`scripts/fake-game.ps1`).
+Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.ninja tab open.
+
+| File | State |
+|---|---|
+| `03-title-divine-fractions-menu.png` | Title bar: divine → chaos fractions menu |
+| `03-title-league-menu.png` | Title bar: league menu |
+| `05-unique.png`, `05-unique-ninja-tab.png` | Unique (Tabula Rasa 6L): trade listings; poe.ninja price, week change with graph, related items, dust value |
+| `05-currency-bulk.png`, `05-currency-bulk-ninja-tab.png` | Divine Orb: bulk tab opens by itself; poe.ninja tab, Divine priced in chaos |
+| `05-fragment.png`, `05-fragment-ninja-tab.png` | Sacrifice at Dawn: bulk with market ratio and hidden bait; set and what it turns into |
+| `05-gem.png`, `05-gem-ninja-tab.png` | Gem 20/20: poe.ninja variant by level and quality |
+| `05-rare-base-price.png`, `05-rare-base-price-ninja-tab.png` | Rare ring: stat filters, poe.ninja base type price |
+| `05-no-ninja-price.png`, `05-no-ninja-price-ninja-tab.png` | Divination card poe.ninja does not list: no price, related cards and reward still shown |
+| `05-league-allflame.png`, `05-league-allflame-ninja-tab.png` | After switching league: prices reloaded; flat week graph |
+
+Not captured yet: poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

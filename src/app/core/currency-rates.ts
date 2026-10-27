@@ -1,16 +1,12 @@
 // Currency rates from poe.ninja: the divine → chaos rate in the title bar and
-// chaos equivalents of listings priced in other currencies.
+// chaos equivalents of listings priced in other currencies. The same download
+// also feeds the poe.ninja tab (`ninja-prices.ts`).
 
 import { computed, signal } from '@angular/core';
 import { ITEMS_ITERATOR } from '@/assets/data';
 import { DIVINE_FRACTIONS, POE_NINJA_BULK_TYPES, POE_NINJA_OVERVIEWS, POE_NINJA_REFRESH_MS } from '../constants';
 import { poeFetch } from './http';
-
-type NinjaOverview = { type: string; lines: Array<{ name: string; chaos: number }> };
-interface NinjaOverviews {
-  currencyOverviews: NinjaOverview[];
-  itemOverviews?: NinjaOverview[];
-}
+import { NinjaOverviews, PriceDb, priceDbFromNinja } from './ninja-prices';
 
 /** Chaos value per currency or stackable item name ("Divine Orb" → 342.6). */
 export type ChaosRates = ReadonlyMap<string, number>;
@@ -53,6 +49,7 @@ export function toChaos(amount: number, tradeTag: string, rates: ChaosRates): nu
 
 // Module state shared by everything in one window (like settings).
 const rates = signal<ChaosRates>(new Map());
+const prices = signal<PriceDb>(new Map());
 const updatedAt = signal<Date | null>(null);
 const error = signal<string | null>(null);
 let league: string | undefined;
@@ -60,6 +57,8 @@ let timer: ReturnType<typeof setInterval> | undefined;
 
 export const currencyRates = {
   rates: rates.asReadonly(),
+  /** Every poe.ninja price from the same download (uniques, gems, bases, maps, …). */
+  prices: prices.asReadonly(),
   updatedAt: updatedAt.asReadonly(),
   error: error.asReadonly(),
   divine: computed(() => rates().get('Divine Orb')),
@@ -74,6 +73,7 @@ async function load(leagueId: string): Promise<void> {
     const data = (await response.json()) as NinjaOverviews;
     if (leagueId !== league) return;
     rates.set(chaosRatesFromNinja(data));
+    prices.set(priceDbFromNinja(data));
     updatedAt.set(new Date());
     error.set(null);
   } catch (e) {
@@ -87,6 +87,7 @@ export function trackCurrencyRates(leagueId: string | undefined): void {
   league = leagueId;
   clearInterval(timer);
   rates.set(new Map());
+  prices.set(new Map());
   updatedAt.set(null);
   if (!leagueId) return;
   void load(leagueId);

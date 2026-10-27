@@ -10,7 +10,19 @@ import {
   tradeTag,
 } from '../../lib/apt/web/price-check/trade/common';
 import { CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
+import { isValuableBasetype } from '../../lib/apt/web/price-check/trends/getDetailsId';
 import { currencyRates, toChaos } from '../core/currency-rates';
+import {
+  autoCurrency,
+  CurrencyValue,
+  displayRounding,
+  findItemPrice,
+  ninjaUrl,
+  priceTrend,
+  queryId,
+  relatedItems,
+  sparkline,
+} from '../core/ninja-prices';
 import { t, TranslatePipe } from '../core/i18n';
 import { settings } from '../core/settings';
 import type { ItemView } from '../popup-window/item-view';
@@ -32,10 +44,10 @@ import { activePreset, createItemPresets, Presets, shouldSearchImmediately } fro
 import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
 
 type Group = Extract<FilterOrGroup, { group: string }>;
-type Tab = 'trade' | 'bulk';
+type Tab = 'trade' | 'bulk' | 'ninja';
 type BulkLine = { kind: 'offer'; row: BulkRow } | { kind: 'ratio'; ratio: MarketRatio };
 
-/** Tabs of the results pane (poe.ninja: stage 5, Wiki: stage 9). */
+/** Tabs of the results pane (Wiki: stage 9). */
 const TABS = [
   { id: 'trade', label: 'Trade' },
   { id: 'bulk', label: 'Bulk' },
@@ -108,17 +120,85 @@ export class PriceCheckPanel {
   });
 
   protected tabReady(id: string): boolean {
-    return id === 'trade' || (id === 'bulk' && this.canBulk());
+    return id === 'trade' || id === 'ninja' || (id === 'bulk' && this.canBulk());
   }
 
   protected selectTab(id: string): void {
     if (!this.tabReady(id) || id === this.activeTab()) return;
+    const searchTab = this.activeTab() !== 'ninja' && id !== 'ninja';
     this.tabChoice.set(id as Tab);
-    this.stale.set(true);
+    // poe.ninja shows the same item: switching to it and back keeps the search results.
+    if (searchTab) this.stale.set(true);
   }
 
   protected readonly isSearching = computed(() => this.search.isSearching() || this.bulk.isSearching());
   protected readonly searchError = computed(() => (this.activeTab() === 'bulk' ? this.bulk.error() : this.search.error()));
+
+  // poe.ninja
+
+  /** poe.ninja entry for the item (null: it has no poe.ninja id, e.g. rares). */
+  protected readonly ninja = computed(() => {
+    const found = findItemPrice(currencyRates.prices(), this.item());
+    if (!found) return null;
+    const { query, price } = found;
+    const leagueId = settings().leagueId;
+    return {
+      query,
+      price,
+      label: [query.name, query.variant].filter(Boolean).join(', '),
+      url: price && leagueId ? ninjaUrl(price, leagueId) : undefined,
+      trend: price ? priceTrend(price.graph) : null,
+    };
+  });
+
+  protected updatedAgo(): string {
+    const date = currencyRates.updatedAt();
+    if (!date) return '';
+    const minutes = Math.round((Date.now() - date.getTime()) / 60000);
+    return minutes < 1 ? 'just now' : `${minutes} min ago`;
+  }
+
+  protected readonly ninjaLoading =computed(() => currencyRates.updatedAt() == null && !currencyRates.error());
+  protected readonly ninjaError = currencyRates.error;
+
+  /** Rares and magic bases are priced by base type only: say so next to the price. */
+  protected readonly ninjaBaseOnly = computed(() => isValuableBasetype(this.item()));
+
+  /** Price as APT shows it: chaos, or divines from about one divine up (Divine Orb itself in chaos). */
+  protected readonly ninjaValue = computed<CurrencyValue | null>(() => {
+    const price = this.ninja()?.price;
+    if (!price) return null;
+    return this.item().info.refName === 'Divine Orb'
+      ? { min: price.chaos, max: price.chaos, currency: 'chaos' }
+      : autoCurrency(price.chaos, currencyRates.divine());
+  });
+
+  protected readonly ninjaSpark = computed(() => {
+    const trend = this.ninja()?.trend;
+    return trend ? sparkline(trend.graph, 300, 64) : null;
+  });
+
+  protected readonly related = computed(() => {
+    const query = this.ninja()?.query;
+    return query ? relatedItems(queryId(query), currencyRates.prices()) : null;
+  });
+
+  protected price(value: CurrencyValue | null | undefined, fraction = false): string {
+    if (!value) return '?';
+    const unit = value.currency === 'div' ? 'div' : 'c';
+    const min = displayRounding(value.min, fraction);
+    const max = displayRounding(value.max, fraction);
+    return min === max ? `${min} ${unit}` : `${min} – ${max} ${unit}`;
+  }
+
+  protected relatedPrice(chaos: number | undefined): string {
+    return chaos == null ? '—' : this.price(autoCurrency(chaos, currencyRates.divine()), true);
+  }
+
+  protected percent(value: number): string {
+    const rounded = Math.abs(value) < 10 ? Math.round(value * 10) / 10 : Math.round(value);
+    return `${rounded > 0 ? '+' : rounded < 0 ? '−' : '±'}${Math.abs(rounded)} %`;
+  }
 
   // Bulk
 
@@ -201,6 +281,7 @@ export class PriceCheckPanel {
   protected runSearch(): void {
     const active = this.active();
     if (!active || this.isSearching()) return;
+    if (this.activeTab() === 'ninja') this.tabChoice.set(null); // Search goes to trade or bulk
     this.stale.set(false);
     if (this.activeTab() === 'bulk') void this.bulk.search(this.item(), active.filters);
     else void this.search.search(active.filters, active.stats);
@@ -339,6 +420,11 @@ export class PriceCheckPanel {
   }
 
   protected openTradeSite(): void {
+    if (this.activeTab() === 'ninja') {
+      const url = this.ninja()?.url;
+      if (url) void openUrl(url);
+      return;
+    }
     const active = this.active();
     if (!active) return;
     const url =

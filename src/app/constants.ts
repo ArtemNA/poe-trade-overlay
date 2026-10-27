@@ -74,6 +74,56 @@ export const POE_NINJA_BULK_TYPES = [
   'DivinationCard', 'Omen', 'Tattoo', 'AllflameEmber', 'Runegraft', 'Wombgift', 'Artifact',
 ];
 
+/** poe.ninja item pages: `${POE_NINJA_SITE}/${league slug}/${overview url}/${details id}`. */
+export const POE_NINJA_SITE = 'https://poe.ninja/poe1/economy';
+
+/**
+ * poe.ninja overview types APT prices items from (`Prices.ts` NAMESPACE_MAP): game data
+ * namespace, site URL segment, overview type. Earlier entries win for the same name.
+ */
+export const POE_NINJA_NAMESPACES: ReadonlyArray<{ ns: string; url: string; type: string }> = [
+  { ns: 'ITEM', url: 'currency', type: 'Currency' },
+  { ns: 'ITEM', url: 'fragments', type: 'Fragment' },
+  { ns: 'ITEM', url: 'delirium-orbs', type: 'DeliriumOrb' },
+  { ns: 'ITEM', url: 'scarabs', type: 'Scarab' },
+  { ns: 'ITEM', url: 'artifacts', type: 'Artifact' },
+  { ns: 'ITEM', url: 'base-types', type: 'BaseType' },
+  { ns: 'ITEM', url: 'fossils', type: 'Fossil' },
+  { ns: 'ITEM', url: 'resonators', type: 'Resonator' },
+  { ns: 'ITEM', url: 'incubators', type: 'Incubator' },
+  { ns: 'ITEM', url: 'oils', type: 'Oil' },
+  { ns: 'ITEM', url: 'vials', type: 'Vial' },
+  { ns: 'ITEM', url: 'invitations', type: 'Invitation' },
+  { ns: 'ITEM', url: 'blighted-maps', type: 'BlightedMap' },
+  { ns: 'ITEM', url: 'blight-ravaged-maps', type: 'BlightRavagedMap' },
+  { ns: 'ITEM', url: 'essences', type: 'Essence' },
+  { ns: 'ITEM', url: 'maps', type: 'Map' },
+  { ns: 'ITEM', url: 'tattoos', type: 'Tattoo' },
+  { ns: 'ITEM', url: 'omens', type: 'Omen' },
+  { ns: 'ITEM', url: 'coffins', type: 'Coffin' },
+  { ns: 'ITEM', url: 'allflame-embers', type: 'AllflameEmber' },
+  { ns: 'ITEM', url: 'djinn-coins', type: 'DjinnCoin' },
+  { ns: 'ITEM', url: 'astrolabes', type: 'Astrolabe' },
+  { ns: 'ITEM', url: 'runegrafts', type: 'Runegraft' },
+  { ns: 'ITEM', url: 'ducats', type: 'Ducat' },
+  { ns: 'ITEM', url: 'enshrouding-crystals', type: 'EnshroudingCrystal' },
+  { ns: 'ITEM', url: 'corpses', type: 'Corpse' },
+  { ns: 'DIVINATION_CARD', url: 'divination-cards', type: 'DivinationCard' },
+  { ns: 'CAPTURED_BEAST', url: 'beasts', type: 'Beast' },
+  { ns: 'UNIQUE', url: 'unique-jewels', type: 'UniqueJewel' },
+  { ns: 'UNIQUE', url: 'unique-flasks', type: 'UniqueFlask' },
+  { ns: 'UNIQUE', url: 'unique-weapons', type: 'UniqueWeapon' },
+  { ns: 'UNIQUE', url: 'unique-armours', type: 'UniqueArmour' },
+  { ns: 'UNIQUE', url: 'unique-accessories', type: 'UniqueAccessory' },
+  { ns: 'UNIQUE', url: 'unique-maps', type: 'UniqueMap' },
+  { ns: 'UNIQUE', url: 'unique-relics', type: 'UniqueRelic' },
+  { ns: 'UNIQUE', url: 'unique-tinctures', type: 'UniqueTincture' },
+  { ns: 'GEM', url: 'skill-gems', type: 'SkillGem' },
+];
+
+/** APT shows chaos prices from this share of the divine rate up as divines (≈ 1 div in ±6 %). */
+export const NINJA_DIVINE_ROUNDING = 0.06;
+
 /** Bulk offers below this share of the poe.ninja price are treated as bait (FINDINGS F-26). */
 export const BULK_BAIT_RATIO = 0.5;
 

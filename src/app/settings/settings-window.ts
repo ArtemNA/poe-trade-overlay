@@ -87,6 +87,7 @@ export class SettingsWindow {
   constructor() {
     // The window starts hidden (the app lives in the tray): show it once after installing.
     if (isFirstStart()) void getCurrentWindow().show().then(() => getCurrentWindow().setFocus());
+    if (settings().startMessage) void host.showToast();
     void getVersion().then((version) => this.version.set(version));
     void updates.checkOnStart();
     void this.loadLeagues();
@@ -125,6 +126,10 @@ export class SettingsWindow {
   protected setGameTitle(title: string): void {
     const trimmed = title.trim();
     if (trimmed && trimmed !== settings().gameTitle) updateSettings({ gameTitle: trimmed });
+  }
+
+  protected setStartMessage(startMessage: boolean): void {
+    updateSettings({ startMessage });
   }
 
   protected setPopupPosition(popupPosition: PopupPosition): void {

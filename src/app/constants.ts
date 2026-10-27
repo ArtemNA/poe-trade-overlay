@@ -199,6 +199,13 @@ export const DEFAULT_CHAT_COMMANDS: Array<{ text: string; hotkey: string | null;
 export type PopupPosition = 'center' | 'opposite-cursor';
 export const DEFAULT_POPUP_POSITION: PopupPosition = 'center';
 
+/** Window labels, as in `tauri.conf.json`. */
+export const MAIN_WINDOW_LABEL = 'main';
+export const TOAST_WINDOW_LABEL = 'toast';
+
+/** Where the portable build sends the user for a new version. */
+export const RELEASES_URL = 'https://github.com/ArtemNA/poe-trade-overlay/releases/latest';
+
 /** Identifier suffix of dev builds (`tauri.dev.conf.json`), see `src-tauri/src/constants.rs`. */
 export const DEV_IDENTIFIER_SUFFIX = '.dev';
 

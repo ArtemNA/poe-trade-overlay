@@ -18,8 +18,9 @@ Testing without the game: run `scripts/fake-game.ps1` and start the app with `PO
 ## Releases
 
 Push a tag that matches `version` in `src-tauri/tauri.conf.json` (`git tag v0.1.0 && git push origin v0.1.0`):
-`.github/workflows/release.yml` builds the NSIS installer, signs it for the updater and publishes the release
-with `latest.json`. The signing key is the repository secret `TAURI_SIGNING_PRIVATE_KEY`; its public half is in
+`.github/workflows/release.yml` builds the NSIS installer and the portable exe, signs the installer for the
+updater and publishes the release with `latest.json`, `SHA256SUMS.txt` and notes from `.github/RELEASE_NOTES.md`
+plus the tag's section of `CHANGELOG.md` (write it before tagging). The signing key is the repository secret `TAURI_SIGNING_PRIVATE_KEY`; its public half is in
 `tauri.conf.json`. Bump `version` in `tauri.conf.json`, `Cargo.toml` and `package.json` together.
 
 ## Code scaffolding

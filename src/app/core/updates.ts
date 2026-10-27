@@ -1,15 +1,19 @@
 import { signal } from '@angular/core';
 import { getIdentifier } from '@tauri-apps/api/app';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check, type Update } from '@tauri-apps/plugin-updater';
-import { DEV_IDENTIFIER_SUFFIX } from '../constants';
+import { DEV_IDENTIFIER_SUFFIX, RELEASES_URL } from '../constants';
+import { host } from '../host';
 
 export type UpdateStatus = 'idle' | 'checking' | 'latest' | 'available' | 'installing' | 'error';
 
 const status = signal<UpdateStatus>('idle');
 const version = signal<string | null>(null);
 const error = signal<string | null>(null);
+const portable = signal(false);
 let pending: Update | null = null;
+void host.isPortable().then(portable.set, () => undefined);
 
 /** App updates from GitHub Releases (tauri-plugin-updater; APT uses electron-updater the same way). */
 export const updates = {
@@ -17,6 +21,8 @@ export const updates = {
   /** Version of the update found. */
   version: version.asReadonly(),
   error: error.asReadonly(),
+  /** The portable exe does not update itself: "install" opens the release page. */
+  portable: portable.asReadonly(),
 
   async check(): Promise<void> {
     status.set('checking');
@@ -31,8 +37,12 @@ export const updates = {
     }
   },
 
-  /** Downloads and installs the update found, then restarts the app. */
+  /** Downloads and installs the update found, then restarts the app; the portable build opens the release page. */
   async install(): Promise<void> {
+    if (portable()) {
+      await openUrl(RELEASES_URL);
+      return;
+    }
     if (!pending) return;
     status.set('installing');
     try {

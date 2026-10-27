@@ -7,6 +7,7 @@ mod platform;
 mod popup;
 mod stash;
 mod state;
+mod toast;
 mod tray;
 
 use std::collections::HashMap;
@@ -154,6 +155,31 @@ async fn browser_fetch(
         .map_err(|e| e.to_string())?
 }
 
+/// The portable build is the bare exe, without the installer's uninstaller next to it:
+/// it cannot update itself, so the page only links to the new release.
+#[tauri::command]
+fn is_portable() -> bool {
+    std::env::current_exe()
+        .ok()
+        .and_then(|exe| {
+            exe.parent()
+                .map(|dir| dir.join(constants::INSTALLER_UNINSTALLER))
+        })
+        .is_none_or(|uninstaller| !uninstaller.exists())
+}
+
+/// The start message in the screen corner.
+#[tauri::command]
+fn show_toast(app: AppHandle) -> Result<(), String> {
+    toast::show(&app)
+}
+
+/// The settings window (a click on the start message).
+#[tauri::command]
+fn open_settings(app: AppHandle) {
+    tray::show_settings(&app);
+}
+
 /// Shows the built-in browser, on `url` if given.
 #[tauri::command]
 async fn browser_open(app: AppHandle, url: Option<String>) -> Result<(), String> {
@@ -200,6 +226,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_status,
             set_host_config,
+            show_toast,
+            is_portable,
+            open_settings,
             browser_fetch,
             browser_open,
             hide_popup,
@@ -219,6 +248,7 @@ pub fn run() {
             let handle = app.handle().clone();
             popup::init(&handle)?;
             tray::init(&handle)?;
+            toast::init(&handle)?;
             // The settings window starts hidden (the app lives in the tray); the page shows it on
             // the first start. Dev builds show it right away.
             if cfg!(debug_assertions) {

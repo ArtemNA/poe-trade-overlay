@@ -35,6 +35,12 @@ pub const BROWSER_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 /// Log file size before it is started over (only the latest file is kept).
 pub const LOG_MAX_BYTES: u128 = 2 * 1024 * 1024;
 pub const TRAY_ID: &str = "main";
+/// The NSIS installer puts this next to the exe; without it the exe is the portable build.
+pub const INSTALLER_UNINSTALLER: &str = "uninstall.exe";
+/// Start message in the screen corner: label, gap to the work area edge, how long it stays.
+pub const TOAST_WINDOW: &str = "toast";
+pub const TOAST_MARGIN_LOGICAL: f64 = 16.0;
+pub const TOAST_DURATION: Duration = Duration::from_millis(4500);
 
 /// Window labels, as declared in `tauri.conf.json`.
 pub const MAIN_WINDOW: &str = "main";

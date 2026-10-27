@@ -19,7 +19,7 @@
         <span class="text-gold-soft">Version {{ updates.version() }} is out</span>
         <button class="h-7 border border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] font-semibold text-[#1a1208] disabled:opacity-60"
           [disabled]="updates.status() === 'installing'" (click)="updates.install()">
-          {{ updates.status() === 'installing' ? 'Installing…' : 'Install and restart' }}
+          {{ updates.status() === 'installing' ? 'Installing…' : updates.portable() ? 'Download' : 'Install and restart' }}
         </button>
       </div>
     }
@@ -67,6 +67,13 @@
               <span class="text-[12px] text-muted">Opposite the cursor is how Awakened PoE Trade places it: the popup never covers the item. A click into the game outside the popup closes it.</span>
             </div>
 
+            <label class="flex items-start gap-2.5">
+              <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().startMessage"
+                (change)="setStartMessage($any($event.target).checked)" />
+              <span class="flex flex-col"><span class="text-bright">Show a message when the overlay starts</span>
+                <span class="text-[12px] text-muted">A few seconds in the corner of the screen: the overlay runs, its hotkeys, where the settings are.</span></span>
+            </label>
+
             <div class="flex flex-col gap-1.5">
               <span class="text-bright">League</span>
               <div class="flex gap-2">
@@ -94,7 +101,7 @@
             <div class="flex flex-col gap-1.5">
               <span class="text-bright">Version</span>
               <div class="flex items-center gap-3">
-                <span class="tabular-nums">{{ version() }}</span>
+                <span class="tabular-nums">{{ version() }}@if (updates.portable()) {<span class="text-muted"> · portable</span>}</span>
                 <button class="h-7 border border-line-strong bg-raised px-3 hover:border-gold disabled:opacity-50"
                   [disabled]="updates.status() === 'checking' || updates.status() === 'installing'" (click)="updates.check()">Check for updates</button>
                 @switch (updates.status()) {

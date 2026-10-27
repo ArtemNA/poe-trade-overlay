@@ -32,6 +32,20 @@
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "resizable": false
+      },
+      {
+        "label": "toast",
+        "title": "PoE Trade Overlay — started",
+        "width": 340,
+        "height": 92,
+        "visible": false,
+        "focus": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false
       }
     ],
     "security": {
@@ -55,9 +69,12 @@
     "shortDescription": "Path of Exile price check overlay",
     "windows": {
       "nsis": {
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico"
       }
-    }
+    },
+    "license": "MIT",
+    "licenseFile": "../LICENSE"
   },
   "plugins": {
     "updater": {

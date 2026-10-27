@@ -17,6 +17,7 @@ import {
   SETTINGS_FILE,
   SETTINGS_STORE_KEY,
   SETTINGS_VERSION,
+  MAIN_WINDOW_LABEL,
 } from '../constants';
 
 /** Price check options the user can change (APT `PriceCheckWidget`, the subset ported so far). */
@@ -56,6 +57,8 @@ export interface Settings {
   accountName: string;
   /** Exact title of the game window. */
   gameTitle: string;
+  /** A short message in the corner when the overlay starts (APT `showAttachNotification`). */
+  startMessage: boolean;
   popupPosition: PopupPosition;
   hotkeys: Record<HotkeyAction, string | null>;
   commands: ChatCommand[];
@@ -81,6 +84,7 @@ export function defaultSettings(): Settings {
     useIntlSite: false,
     accountName: '',
     gameTitle: DEFAULT_GAME_TITLE,
+    startMessage: true,
     popupPosition: DEFAULT_POPUP_POSITION,
     hotkeys: { ...DEFAULT_HOTKEYS },
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
@@ -165,7 +169,10 @@ export async function initSettings(): Promise<void> {
   await listen<{ from: string; settings: Settings }>(SETTINGS_CHANGED_EVENT, ({ payload }) => {
     if (payload.from !== label) state.set(payload.settings);
   });
-  if (stored === undefined || (stored as Partial<Settings>).configVersion !== SETTINGS_VERSION) {
+  // Only the settings window writes the first file: if the popup did, the settings window
+  // (loading a moment later) would no longer see a first start.
+  const outdated = stored === undefined || (stored as Partial<Settings>).configVersion !== SETTINGS_VERSION;
+  if (outdated && label === MAIN_WINDOW_LABEL) {
     await persistence.save(settings);
   }
 }

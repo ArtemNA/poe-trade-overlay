@@ -3,8 +3,8 @@ name = "poe-trade-overlay"
 version = "0.1.1"
 description = "Path of Exile price check overlay"
 authors = ["ArtemNA"]
-license = ""
-repository = ""
+license = "MIT"
+repository = "https://github.com/ArtemNA/poe-trade-overlay"
 edition = "2024"
 rust-version = "1.90"
 

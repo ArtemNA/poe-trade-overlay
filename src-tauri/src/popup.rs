@@ -21,6 +21,7 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
     let handle = app.clone();
     platform::watch_escape(move || {
         // Runs inside the keyboard hook: just post the work and return.
+        log::info!("[focus] Esc pressed");
         let inner = handle.clone();
         let _ = handle.run_on_main_thread(move || hide(&inner, true));
     });
@@ -108,6 +109,7 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point) {
 /// Not when the user switched to another application.
 pub fn hide(app: &AppHandle, return_focus: bool) {
     let state = app.state::<AppState>();
+    log::info!("[focus] hide popup (return focus: {return_focus})");
     platform::set_escape_enabled(false);
     // Hide first, then hand focus back: focusing the game while the popup still shows a
     // focused text field let the Windows text input host grab the foreground instead.
@@ -130,8 +132,10 @@ pub fn focus_for_input(app: &AppHandle) -> bool {
     platform::set_no_activate(state.popup_hwnd(), false);
     state.set_popup_focused(true);
     if platform::focus(state.popup_hwnd()) {
+        log::info!("[focus] popup took the keyboard");
         return true;
     }
+    log::info!("[focus] Windows refused to focus the popup");
     platform::set_no_activate(state.popup_hwnd(), true);
     state.set_popup_focused(false);
     false
@@ -144,9 +148,11 @@ pub fn release_focus(app: &AppHandle, return_focus: bool) {
     }
     platform::set_no_activate(state.popup_hwnd(), true);
     state.set_popup_focused(false);
+    log::info!("[focus] popup released the keyboard (return to game: {return_focus})");
     if return_focus {
         if let Some(game) = state.game_hwnd() {
             if !platform::focus(game) {
+                log::info!("[focus] game refocus intercepted, retrying");
                 // Something (e.g. "Windows Input Experience") took the foreground in between: retry once.
                 std::thread::spawn(move || {
                     std::thread::sleep(FOCUS_RETRY_DELAY);

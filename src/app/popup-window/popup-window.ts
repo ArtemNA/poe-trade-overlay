@@ -16,6 +16,9 @@ import { ItemView, toItemView } from './item-view';
   selector: 'app-popup-window',
   imports: [PriceCheckPanel],
   templateUrl: './popup-window.html',
+  // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
+  // (typing into a field) it arrives here instead.
+  host: { '(document:keydown.escape)': 'close()' },
 })
 export class PopupWindow {
   protected readonly parsed = signal<ParsedItem | null>(null);

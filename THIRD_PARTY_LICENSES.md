@@ -11,12 +11,14 @@ Used parts:
 - `src/lib/apt/parser/*`: item text parser, copied unchanged.
 - `src/lib/apt/data/*`: game data lookup. `index.ts` is adapted: loading goes through a
   pluggable `DataSource`; changed lines are marked `// [port]`.
-- `src/lib/apt/web/price-check/filters/**`, `trade/pathofexile-trade.ts`, `trade/Cache.ts`: copied unchanged.
+- `src/lib/apt/web/price-check/filters/**`, `trade/pathofexile-trade.ts`, `trade/pathofexile-bulk.ts`,
+  `trade/Cache.ts`: copied unchanged.
 - `src/lib/apt/web/price-check/trade/RateLimiter.ts`, `common.ts`: adapted (Vue reactivity → Angular
   signals), changed lines are marked `// [port]`.
 - `src/lib/apt/web/background/Leagues.ts`: not an APT file — a stand-in exporting `PERMANENT_SC`.
 - `src/app/price-check/price-check.ts`, `trade-search.ts`: ports of the logic in `CheckedItem.vue` and
-  `TradeListing.vue`.
+  `TradeListing.vue`;
+  `src/app/price-check/bulk-search.ts`: port of the logic in `TradeBulk.vue` and `StackValue.vue`.
 - `src/app/core/leagues.ts`: port of `renderer/src/web/background/Leagues.ts`.
 - `scripts/make-data-indexes.mjs`: port of `renderer/src/assets/make-index-files.mjs`.
 - `public/data/en/app_i18n.json`: APT UI strings.

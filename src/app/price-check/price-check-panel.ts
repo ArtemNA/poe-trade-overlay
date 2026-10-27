@@ -3,12 +3,28 @@ import { Component, computed, effect, input, signal, untracked } from '@angular/
 import { openUrl } from '@tauri-apps/plugin-opener';
 import type { ParsedItem } from '@/parser';
 import type { FilterNumeric, FilterOrGroup, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
-import { RATE_LIMIT_RULES, RATE_LIMIT_RULES_REVISION } from '../../lib/apt/web/price-check/trade/common';
+import {
+  apiToSatisfySearch,
+  RATE_LIMIT_RULES,
+  RATE_LIMIT_RULES_REVISION,
+  tradeTag,
+} from '../../lib/apt/web/price-check/trade/common';
 import { CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
 import { currencyRates, toChaos } from '../core/currency-rates';
 import { t, TranslatePipe } from '../core/i18n';
 import { settings } from '../core/settings';
 import type { ItemView } from '../popup-window/item-view';
+import {
+  bestOffer,
+  BulkHave,
+  BulkRow,
+  BulkSearch,
+  bulkSiteUrl,
+  MarketRatio,
+  marketRatio,
+  priceOffers,
+  stackWorth,
+} from './bulk-search';
 import { ItemFilterChip, itemFilterChips } from './item-filter-chips';
 import { formatChaos, limiterUsage, summarizeListings } from './listing-summary';
 import { NumInput } from './num-input';
@@ -16,14 +32,16 @@ import { activePreset, createItemPresets, Presets, shouldSearchImmediately } fro
 import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
 
 type Group = Extract<FilterOrGroup, { group: string }>;
+type Tab = 'trade' | 'bulk';
+type BulkLine = { kind: 'offer'; row: BulkRow } | { kind: 'ratio'; ratio: MarketRatio };
 
-/** Tabs of the results pane; only Trade works so far (Bulk: stage 4, poe.ninja: stage 5, Wiki: stage 9). */
+/** Tabs of the results pane (poe.ninja: stage 5, Wiki: stage 9). */
 const TABS = [
-  { id: 'trade', label: 'Trade', ready: true },
-  { id: 'bulk', label: 'Bulk', ready: false },
-  { id: 'ninja', label: 'poe.ninja', ready: false },
-  { id: 'wiki', label: 'Wiki', ready: false },
-];
+  { id: 'trade', label: 'Trade' },
+  { id: 'bulk', label: 'Bulk' },
+  { id: 'ninja', label: 'poe.ninja' },
+  { id: 'wiki', label: 'Wiki' },
+] as const;
 
 /**
  * The price check window body: filters on the left, trade listings on the right, status bar.
@@ -44,7 +62,11 @@ export class PriceCheckPanel {
   /** Filters changed since the last search: the user starts the next one. */
   protected readonly stale = signal(true);
   protected readonly search = new TradeSearch();
+  protected readonly bulk = new BulkSearch();
   protected readonly tabs = TABS;
+  /** Bait offers (far below poe.ninja) are hidden unless the user asks to see them. */
+  protected readonly hideBait = signal(true);
+  private readonly tabChoice = signal<Tab | null>(null);
   protected readonly open = signal({ stats: true, item: true, trade: false });
   private readonly revision = signal(0);
   private previous?: { item: ParsedItem; presets: Presets };
@@ -67,8 +89,83 @@ export class PriceCheckPanel {
   protected readonly limits = computed(() => {
     RATE_LIMIT_RULES_REVISION();
     const format = (usage?: { used: number; max: number }) => (usage ? `${usage.used}/${usage.max}` : '—');
-    return `Search ${format(limiterUsage(RATE_LIMIT_RULES.SEARCH))} · Fetch ${format(limiterUsage(RATE_LIMIT_RULES.FETCH))}`;
+    return this.activeTab() === 'bulk'
+      ? `Exchange ${format(limiterUsage(RATE_LIMIT_RULES.EXCHANGE))}`
+      : `Search ${format(limiterUsage(RATE_LIMIT_RULES.SEARCH))} · Fetch ${format(limiterUsage(RATE_LIMIT_RULES.FETCH))}`;
   });
+
+  // Tabs
+
+  /** Bulk exchange exists only for items with a trade tag (currency, fragments, essences, …). */
+  protected readonly canBulk = computed(() => tradeTag(this.item()) != null);
+
+  /** Like APT: bulk when no stat filter is on and the item can be exchanged; the user may switch. */
+  protected readonly activeTab = computed<Tab>(() => {
+    const choice = this.tabChoice();
+    if (choice) return choice;
+    const active = this.active();
+    return active ? apiToSatisfySearch(this.item(), active.stats, active.filters) : 'trade';
+  });
+
+  protected tabReady(id: string): boolean {
+    return id === 'trade' || (id === 'bulk' && this.canBulk());
+  }
+
+  protected selectTab(id: string): void {
+    if (!this.tabReady(id) || id === this.activeTab()) return;
+    this.tabChoice.set(id as Tab);
+    this.stale.set(true);
+  }
+
+  protected readonly isSearching = computed(() => this.search.isSearching() || this.bulk.isSearching());
+  protected readonly searchError = computed(() => (this.activeTab() === 'bulk' ? this.bulk.error() : this.search.error()));
+
+  // Bulk
+
+  /** poe.ninja chaos price of the item being priced (currency, fragment, essence, …). */
+  protected readonly ninjaChaos = computed(() => currencyRates.rates().get(this.item().info.refName));
+
+  private readonly bulkPriced = computed(() =>
+    priceOffers(this.bulk.current()?.listed ?? [], this.bulk.selected(), this.ninjaChaos(), currencyRates.divine()),
+  );
+
+  protected readonly bulkBest = computed(() => bestOffer(this.bulkPriced()));
+  protected readonly bulkBaitCount = computed(() => this.bulkPriced().filter((row) => row.isBait).length);
+
+  /** Offers with poe.ninja's price slotted in where it belongs (APT "Market Ratio" row). */
+  protected readonly bulkLines = computed<BulkLine[]>(() => {
+    const rows = this.bulkPriced().filter((row) => !(this.hideBait() && row.isBait));
+    const lines: BulkLine[] = rows.map((row) => ({ kind: 'offer', row }));
+    const ninja = this.ninjaChaos();
+    const ratio = ninja != null ? marketRatio(this.bulk.selected(), ninja, currencyRates.divine()) : undefined;
+    if (ratio) {
+      const perItem = ratio.exchangeAmount / ratio.itemAmount;
+      const at = rows.findIndex((row) => row.exchangeAmount / row.itemAmount >= perItem);
+      lines.splice(at === -1 ? lines.length : at, 0, { kind: 'ratio', ratio });
+    }
+    return lines;
+  });
+
+  /** "You have × 12 → 4,111 chaos" from the stock filter or the copied stack (APT StackValue). */
+  protected readonly youHave = computed(() => {
+    const ninja = this.ninjaChaos();
+    const amount = this.active()?.filters.stackSize?.value ?? this.item().stackSize?.value;
+    if (ninja == null || !amount) return null;
+    const isDivine = this.item().info.refName === 'Divine Orb';
+    return { amount, worth: stackWorth(amount, ninja, currencyRates.divine(), isDivine) };
+  });
+
+  protected selectHave(have: BulkHave): void {
+    void this.bulk.select(have);
+  }
+
+  protected toggleHideBait(): void {
+    this.hideBait.update((hide) => !hide);
+  }
+
+  protected amount(value: number): string {
+    return formatChaos(value);
+  }
 
   protected readonly tradeSummary = computed(() => {
     const trade = this.active()?.filters.trade;
@@ -85,6 +182,8 @@ export class PriceCheckPanel {
 
   private start(item: ParsedItem): void {
     this.search.reset();
+    this.bulk.reset();
+    this.tabChoice.set(null);
     this.error.set(null);
     const leagueId = settings().leagueId;
     if (!leagueId) {
@@ -101,9 +200,10 @@ export class PriceCheckPanel {
 
   protected runSearch(): void {
     const active = this.active();
-    if (!active || this.search.isSearching()) return;
+    if (!active || this.isSearching()) return;
     this.stale.set(false);
-    void this.search.search(active.filters, active.stats);
+    if (this.activeTab() === 'bulk') void this.bulk.search(this.item(), active.filters);
+    else void this.search.search(active.filters, active.stats);
   }
 
   protected selectPreset(id: string): void {
@@ -165,7 +265,7 @@ export class PriceCheckPanel {
 
   private runSearchSoon(): void {
     this.stale.set(true);
-    if (!this.search.isSearching()) this.runSearch();
+    if (!this.isSearching()) this.runSearch();
   }
 
   // Stat filters
@@ -241,6 +341,10 @@ export class PriceCheckPanel {
   protected openTradeSite(): void {
     const active = this.active();
     if (!active) return;
-    void openUrl(tradeSiteUrl(active.filters, active.stats, this.stale() ? undefined : this.search.searchResult()?.id));
+    const url =
+      this.activeTab() === 'bulk'
+        ? bulkSiteUrl(this.item(), active.filters, this.bulk.selected())
+        : tradeSiteUrl(active.filters, active.stats, this.stale() ? undefined : this.search.searchResult()?.id);
+    void openUrl(url);
   }
 }

@@ -3,20 +3,26 @@
 
 import { computed, signal } from '@angular/core';
 import { ITEMS_ITERATOR } from '@/assets/data';
-import { DIVINE_FRACTIONS, POE_NINJA_OVERVIEWS, POE_NINJA_REFRESH_MS } from '../constants';
+import { DIVINE_FRACTIONS, POE_NINJA_BULK_TYPES, POE_NINJA_OVERVIEWS, POE_NINJA_REFRESH_MS } from '../constants';
 import { poeFetch } from './http';
 
+type NinjaOverview = { type: string; lines: Array<{ name: string; chaos: number }> };
 interface NinjaOverviews {
-  currencyOverviews: Array<{ type: string; lines: Array<{ name: string; chaos: number }> }>;
+  currencyOverviews: NinjaOverview[];
+  itemOverviews?: NinjaOverview[];
 }
 
-/** Chaos value per currency name ("Divine Orb" → 342.6). */
+/** Chaos value per currency or stackable item name ("Divine Orb" → 342.6). */
 export type ChaosRates = ReadonlyMap<string, number>;
 
 export function chaosRatesFromNinja(data: NinjaOverviews): ChaosRates {
   const rates = new Map<string, number>([['Chaos Orb', 1]]);
-  for (const overview of data.currencyOverviews) {
-    for (const line of overview.lines) rates.set(line.name, line.chaos);
+  const bulkTypes = new Set(POE_NINJA_BULK_TYPES);
+  const overviews = [...data.currencyOverviews, ...(data.itemOverviews ?? []).filter((o) => bulkTypes.has(o.type))];
+  for (const overview of overviews) {
+    for (const line of overview.lines) {
+      if (!rates.has(line.name)) rates.set(line.name, line.chaos);
+    }
   }
   return rates;
 }

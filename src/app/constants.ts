@@ -65,6 +65,18 @@ export const TRADE_LISTING = {
 export const POE_NINJA_OVERVIEWS = 'poe.ninja/poe1/api/economy/current/dense/overviews';
 /** Re-fetch poe.ninja prices this often while the app runs. */
 export const POE_NINJA_REFRESH_MS = 10 * 60 * 1000;
+/**
+ * poe.ninja item overview types priced by name for bulk exchange (stackable, one price per name).
+ * Uniques, gems, bases and maps are left out: one name has many variants there.
+ */
+export const POE_NINJA_BULK_TYPES = [
+  'Essence', 'Fossil', 'Resonator', 'Scarab', 'Oil', 'Vial', 'DeliriumOrb', 'Invitation', 'Fragment',
+  'DivinationCard', 'Omen', 'Tattoo', 'AllflameEmber', 'Runegraft', 'Wombgift', 'Artifact',
+];
+
+/** Bulk offers below this share of the poe.ninja price are treated as bait (FINDINGS F-26). */
+export const BULK_BAIT_RATIO = 0.5;
+
 /** Rows of the divine → chaos tooltip in the window title bar. */
 export const DIVINE_FRACTIONS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 

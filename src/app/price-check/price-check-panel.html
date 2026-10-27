@@ -85,10 +85,17 @@
             <input type="checkbox" class="size-3.5 accent-gold" [checked]="!preset.filters.trade.offline" (change)="toggleOffline()" />
             <span>Online sellers only</span>
           </label>
-          <label class="flex items-center gap-2 px-1 py-1">
-            <input type="checkbox" class="size-3.5 accent-gold" [checked]="preset.filters.trade.merchantOnly" (change)="toggleMerchantOnly()" />
-            <span>Instant buyout only</span>
-          </label>
+          @if (activeTab() === 'bulk') {
+            <label class="flex items-center gap-2 px-1 py-1" title="Offers far below the poe.ninja price are almost always bait">
+              <input type="checkbox" class="size-3.5 accent-gold" [checked]="hideBait()" (change)="toggleHideBait()" />
+              <span>Hide offers far below poe.ninja</span>
+            </label>
+          } @else {
+            <label class="flex items-center gap-2 px-1 py-1">
+              <input type="checkbox" class="size-3.5 accent-gold" [checked]="preset.filters.trade.merchantOnly" (change)="toggleMerchantOnly()" />
+              <span>Instant buyout only</span>
+            </label>
+          }
         }
       </div>
 
@@ -96,10 +103,10 @@
         <button
           class="h-8 w-full border text-[13px] font-semibold disabled:cursor-default"
           [class]="stale() ? 'border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] text-[#1a1208]' : 'border-line-strong bg-raised text-text hover:border-gold'"
-          [disabled]="search.isSearching()"
+          [disabled]="isSearching()"
           (click)="runSearch()"
         >
-          {{ search.isSearching() ? 'Searching…' : 'Search' }}
+          {{ isSearching() ? 'Searching…' : 'Search' }}
         </button>
       </div>
     }
@@ -111,9 +118,11 @@
       @for (tab of tabs; track tab.id) {
         <button
           class="-mb-px border px-3 py-1.5"
-          [class]="tab.id === 'trade' ? 'border-line border-b-raised bg-raised font-medium text-bright' : 'border-transparent text-muted/60'"
-          [disabled]="!tab.ready"
-          [title]="tab.ready ? '' : 'Coming in a later stage'"
+          [class]="tab.id === activeTab() ? 'border-line border-b-raised bg-raised font-medium text-bright'
+            : tabReady(tab.id) ? 'border-transparent text-muted hover:text-text' : 'border-transparent text-muted/50'"
+          [disabled]="!tabReady(tab.id)"
+          [title]="tabReady(tab.id) ? '' : tab.id === 'bulk' ? 'Not exchangeable in bulk' : 'Coming in a later stage'"
+          (click)="selectTab(tab.id)"
         >
           {{ tab.label }}
         </button>
@@ -122,6 +131,9 @@
       <button class="px-1 py-1.5 text-gold hover:text-[#e6c88a]" (click)="openTradeSite()">Open on trade site ↗</button>
     </nav>
 
+    @if (activeTab() === 'bulk') {
+      <ng-container *ngTemplateOutlet="bulkPane" />
+    } @else {
     <div class="flex min-h-[34px] items-baseline gap-3.5 border-b border-line bg-raised px-3 py-2">
       @if (search.searchResult(); as result) {
         <span class="text-muted">{{ result.total.toLocaleString('en') }} matched</span>
@@ -174,12 +186,90 @@
         &nbsp;
       }
     </div>
+    }
   </div>
 </div>
 
+<ng-template #bulkPane>
+  <div class="flex min-h-[34px] items-center gap-3.5 border-b border-line bg-raised px-3 py-1.5">
+    @if (bulk.haves().length > 1) {
+      <div class="flex border border-line">
+        @for (have of bulk.haves(); track have) {
+          <button class="h-6 px-2.5 not-last:border-r not-last:border-line"
+            [class]="have === bulk.selected() ? 'bg-[#2a2218] font-medium text-gold-soft' : 'text-muted hover:text-text'"
+            (click)="selectHave(have)">Pay {{ have }}</button>
+        }
+      </div>
+    } @else if (bulk.haves().length === 1) {
+      <span class="text-muted">Pay {{ bulk.haves()[0] }}</span>
+    }
+    @if (bulk.current(); as found) {
+      <span class="text-muted">{{ found.total.toLocaleString('en') }} offers</span>
+      @if (bulkBest(); as best) {
+        <span>Best real offer <b class="font-semibold text-gold-soft">{{ amount(best.exchangeAmount / best.itemAmount) }} {{ bulk.selected() }}</b></span>
+      }
+    } @else if (bulk.isSearching()) {
+      <span class="text-muted">Searching…</span>
+    } @else if (stale()) {
+      <span class="text-muted">Adjust filters, then Search</span>
+    }
+    <span class="flex-1"></span>
+    @if (ninjaChaos(); as ninja) {
+      <span class="text-muted">poe.ninja <b class="font-semibold text-bright">{{ amount(ninja) }} c</b></span>
+    }
+  </div>
+
+  @if (youHave(); as have) {
+    <div class="border-b border-line px-3 py-1.5 text-muted">
+      {{ 'trade_result.you_have' | t }} × {{ have.amount }} → <span class="text-bright">{{ have.worth }}</span>
+    </div>
+  }
+
+  @if (searchError(); as message) {
+    <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+  }
+
+  <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] gap-2 border-b border-line px-3 py-1 text-[11px] text-muted">
+    <span>Pay → get</span><span class="text-right">Stock</span><span class="text-right">Seller</span><span class="text-right">Listed</span>
+  </div>
+  <div class="min-h-0 flex-1 overflow-y-auto">
+    @for (line of bulkLines(); track $index; let odd = $odd) {
+      @if (line.kind === 'ratio') {
+        <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-y border-dashed border-bronze/60 bg-gold/[0.06] px-3 py-1 tabular-nums">
+          <span class="text-gold-soft">{{ amount(line.ratio.exchangeAmount) }} {{ bulk.selected() }} → {{ amount(line.ratio.itemAmount) }}</span>
+          <span class="col-span-3 text-right text-[11px] text-muted">{{ 'trade_result.market_ratio' | t }} · poe.ninja</span>
+        </div>
+      } @else {
+        <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
+          [class.bg-white/[0.015]]="odd" [class.opacity-55]="line.row.isBait || line.row.accountStatus === 'offline'" [class.text-gold-soft]="line.row.isMine">
+          <span class="flex min-w-0 items-center gap-1.5 text-bright">
+            <span class="size-[9px] flex-none rounded-full" [style.background]="bulk.selected() === 'divine' ? '#d8d8e8' : '#d6b04c'"></span>
+            {{ amount(line.row.exchangeAmount) }} {{ bulk.selected() }} → {{ amount(line.row.itemAmount) }}
+            @if (line.row.isBait) {
+              <span class="border border-[#a5553f] px-1 text-[10px] text-[#f0a08a]">bait?</span>
+            }
+          </span>
+          <span class="text-right">{{ line.row.stock.toLocaleString('en') }}</span>
+          <span class="text-right" [class]="line.row.accountStatus === 'online' ? 'text-good' : 'text-warn'">{{ line.row.accountStatus }}</span>
+          <span class="text-right text-muted">{{ line.row.relativeDate }}</span>
+        </div>
+      }
+    }
+  </div>
+  <div class="border-t border-line px-3 py-1.5 text-[11px] text-muted">
+    @if (bulkBaitCount() && hideBait()) {
+      {{ bulkBaitCount() }} offer(s) far below poe.ninja hidden as likely bait.
+    } @else if (bulkBaitCount()) {
+      {{ bulkBaitCount() }} offer(s) marked “bait?”: far below poe.ninja, ignored for “best real offer”.
+    } @else {
+      &nbsp;
+    }
+  </div>
+</ng-template>
+
 <footer class="flex h-6 items-center gap-3.5 border-t border-line bg-chrome px-3 text-[11px] text-muted">
   <span class="flex items-center gap-1.5">
-    <span class="size-[7px] rounded-full" [class]="search.error() ? 'bg-bad' : search.isSearching() ? 'bg-warn' : 'bg-good'"></span>
+    <span class="size-[7px] rounded-full" [class]="searchError() ? 'bg-bad' : isSearching() ? 'bg-warn' : 'bg-good'"></span>
     Trade API
   </span>
   <span>{{ limits() }}</span>

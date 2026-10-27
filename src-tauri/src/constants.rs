@@ -20,6 +20,9 @@ pub const POPUP_WINDOW: &str = "popup";
 /// Price check window size in logical pixels (shrinks to fit a smaller game window).
 pub const POPUP_WIDTH_LOGICAL: f64 = 820.0;
 pub const POPUP_HEIGHT_LOGICAL: f64 = 590.0;
+/// Item check window size in logical pixels; it is vertically centred on the game.
+pub const ITEM_CHECK_WIDTH_LOGICAL: f64 = 380.0;
+pub const ITEM_CHECK_HEIGHT_LOGICAL: f64 = 330.0;
 /// Gap between the popup and the game window edge, logical pixels.
 pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
 /// The popup's top edge sits this share of the game height below the game's top.
@@ -30,6 +33,16 @@ pub const PRICE_CHECK_MODIFIERS: Modifiers = Modifiers::CONTROL;
 pub const PRICE_CHECK_KEY: Code = Code::KeyD;
 /// Virtual keys of the same hotkey, released before sending Ctrl+C. Keep in sync with the two above.
 pub const PRICE_CHECK_VKS: [u16; 2] = [0x44 /* D */, 0x11 /* Ctrl */];
+
+/// Item check hotkey: Alt+D (APT has none by default; settings come in stage 13).
+pub const ITEM_CHECK_MODIFIERS: Modifiers = Modifiers::ALT;
+pub const ITEM_CHECK_KEY: Code = Code::KeyD;
+pub const ITEM_CHECK_VKS: [u16; 2] = [0x44 /* D */, 0x12 /* Alt */];
+
+/// The clipboard is put back this long after a stash search pasted into the game (APT `RESTORE_AFTER`).
+pub const CLIPBOARD_RESTORE_AFTER: Duration = Duration::from_millis(120);
+/// Wait for the game to have the keyboard again after the popup gave it back, before typing into it.
+pub const STASH_SEARCH_FOCUS_DELAY: Duration = Duration::from_millis(60);
 
 /// Clipboard polling after Ctrl+C (APT `HostClipboard`: 48 ms × up to 500 ms).
 pub const CLIPBOARD_POLL_DELAY: Duration = Duration::from_millis(48);

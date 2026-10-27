@@ -16,8 +16,12 @@ export interface Rect extends Point {
   height: number;
 }
 
-/** Payload of the `item-text` event, emitted to the popup after a price check hotkey. */
+export type CheckTarget = 'price-check' | 'item-check';
+
+/** Payload of the `item-text` event, emitted to the popup after a price or item check hotkey. */
 export interface ItemTextEvent {
+  /** Which hotkey copied the item. */
+  target: CheckTarget;
   text: string;
   cursor: Point;
   gameRect: Rect;
@@ -46,6 +50,8 @@ export const host = {
     popupHasKeyboard = false;
     await invoke<void>('popup_release_focus');
   },
+  /** Hides the popup and types `text` into the game's stash search (Ctrl+F, paste, Enter). */
+  stashSearch: (text: string) => invoke<void>('stash_search', { text }),
   /** The host took the keyboard back (popup hidden, game clicked). */
   popupLostKeyboard: () => (popupHasKeyboard = false),
 };

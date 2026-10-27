@@ -112,3 +112,31 @@ Item Level: 84
 +38% to Lightning Resistance
 +21 to Dexterity
 `;
+
+export const RARE_BOW = `Item Class: Bows
+Rarity: Rare
+Doom Fletch
+Thicket Bow
+--------
+Physical Damage: 52-139 (augmented)
+Elemental Damage: 20-38 (augmented), 5-70 (augmented)
+Critical Strike Chance: 6.00%
+Attacks per Second: 1.69 (augmented)
+--------
+Requirements:
+Level: 56
+Dex: 159
+--------
+Sockets: G-G-G
+--------
+Item Level: 80
+--------
+{ Prefix Modifier "Cruel" (Tier: 3) — Damage, Physical, Attack }
+120(110-134)% increased Physical Damage
+{ Prefix Modifier "Frozen" (Tier: 5) — Damage, Elemental, Cold, Attack }
+Adds 20(17-22) to 38(35-40) Cold Damage
+{ Prefix Modifier "Sparking" (Tier: 6) — Damage, Elemental, Lightning, Attack }
+Adds 5(2-5) to 70(66-71) Lightning Damage
+{ Suffix Modifier "of Celebration" (Tier: 3) — Attack, Speed }
+13(11-13)% increased Attack Speed
+`;

@@ -6,21 +6,23 @@ import { loadI18n } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
-import { host, ItemTextEvent } from '../host';
+import { CheckTarget, host, ItemTextEvent } from '../host';
+import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { formatChaos } from '../price-check/listing-summary';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
 import { ItemView, toItemView } from './item-view';
 
-/** The price check window: title bar (league, divine rate), filters and listings. */
+/** The popup: price check (title bar with league and divine rate, filters, listings) or item check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel],
+  imports: [PriceCheckPanel, ItemCheckPanel],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
   host: { '(document:keydown.escape)': 'close()' },
 })
 export class PopupWindow {
+  protected readonly target = signal<CheckTarget>('price-check');
   protected readonly parsed = signal<ParsedItem | null>(null);
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -43,6 +45,7 @@ export class PopupWindow {
       host.popupLostKeyboard(); // a new check: the popup was hidden or never had it
       this.menu.set(null);
       this.error.set(null);
+      this.target.set(payload.target);
       try {
         await dataReady;
       } catch {

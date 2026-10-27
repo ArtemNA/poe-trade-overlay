@@ -15,5 +15,13 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `05-rare-base-price.png`, `05-rare-base-price-ninja-tab.png` | Rare ring: stat filters, poe.ninja base type price |
 | `05-no-ninja-price.png`, `05-no-ninja-price-ninja-tab.png` | Divination card poe.ninja does not list: no price, related cards and reward still shown |
 | `05-league-allflame.png`, `05-league-allflame-ninja-tab.png` | After switching league: prices reloaded; flat week graph |
+| `09-item-check-weapon.png` | Item check (Alt+D), rare bow: links incl. Craft of Exile, weapon DPS, no poe.ninja price |
+| `09-item-check-unique.png` | Item check, unique: poe.ninja price with week change, dust value |
+| `09-item-check-currency.png` | Item check, currency: no Craft of Exile, no item level |
+| `09-item-check-corrupted.png` | Item check, unidentified corrupted amulet: flags, no Craft of Exile, base price |
+| `09-item-check-rare-base-price.png` | Item check, rare ring: Craft of Exile, poe.ninja base price |
+| `09-item-check-no-ninja-price.png` | Item check, divination card poe.ninja does not list |
+| `09-price-check-wiki-tab.png` | Price check, Wiki tab: the same links and DPS inside the price check |
+| `09-find-in-stash-fake-game.png` | The fake game after "Find in Stash": search text typed, popup hidden (whole game window, not the popup) |
 
 Not captured yet: poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

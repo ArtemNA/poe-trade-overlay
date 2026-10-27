@@ -121,6 +121,13 @@ export const POE_NINJA_NAMESPACES: ReadonlyArray<{ ns: string; url: string; type
   { ns: 'GEM', url: 'skill-gems', type: 'SkillGem' },
 ];
 
+/** Item check links (APT `item-check/hotkeyable-actions.ts`). */
+export const POE_WIKI_SITE = 'https://www.poewiki.net/wiki';
+export const POEDB_SITE = 'https://poedb.tw';
+/** PoEDB language segment per game language. */
+export const POEDB_LANGS: Record<Lang, string> = { en: 'us' };
+export const CRAFT_OF_EXILE_SITE = 'https://craftofexile.com';
+
 /** APT shows chaos prices from this share of the divine rate up as divines (≈ 1 div in ±6 %). */
 export const NINJA_DIVINE_ROUNDING = 0.06;
 

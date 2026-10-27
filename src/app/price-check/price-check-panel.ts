@@ -10,15 +10,13 @@ import {
   tradeTag,
 } from '../../lib/apt/web/price-check/trade/common';
 import { CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
-import { isValuableBasetype } from '../../lib/apt/web/price-check/trends/getDetailsId';
 import { currencyRates, toChaos } from '../core/currency-rates';
 import {
   autoCurrency,
   CurrencyValue,
-  displayRounding,
-  findItemPrice,
-  ninjaUrl,
-  priceTrend,
+  formatPercent,
+  formatValue,
+  itemQuote,
   queryId,
   relatedItems,
   sparkline,
@@ -39,15 +37,19 @@ import {
 } from './bulk-search';
 import { ItemFilterChip, itemFilterChips } from './item-filter-chips';
 import { formatChaos, limiterUsage, summarizeListings } from './listing-summary';
+import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { NumInput } from './num-input';
 import { activePreset, createItemPresets, Presets, shouldSearchImmediately } from './price-check';
 import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
 
 type Group = Extract<FilterOrGroup, { group: string }>;
-type Tab = 'trade' | 'bulk' | 'ninja';
+type Tab = 'trade' | 'bulk' | 'ninja' | 'wiki';
+
+/** Tabs about the item itself rather than a search: switching to them keeps the search results. */
+const INFO_TABS: readonly string[] = ['ninja', 'wiki'];
 type BulkLine = { kind: 'offer'; row: BulkRow } | { kind: 'ratio'; ratio: MarketRatio };
 
-/** Tabs of the results pane (Wiki: stage 9). */
+/** Tabs of the results pane. Wiki: item check links, find in stash, weapon DPS. */
 const TABS = [
   { id: 'trade', label: 'Trade' },
   { id: 'bulk', label: 'Bulk' },
@@ -61,7 +63,7 @@ const TABS = [
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, NumInput],
+  imports: [NgTemplateOutlet, TranslatePipe, NumInput, ItemCheckPanel],
   templateUrl: './price-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -120,14 +122,14 @@ export class PriceCheckPanel {
   });
 
   protected tabReady(id: string): boolean {
-    return id === 'trade' || id === 'ninja' || (id === 'bulk' && this.canBulk());
+    return id !== 'bulk' || this.canBulk();
   }
 
   protected selectTab(id: string): void {
     if (!this.tabReady(id) || id === this.activeTab()) return;
-    const searchTab = this.activeTab() !== 'ninja' && id !== 'ninja';
+    const searchTab = !INFO_TABS.includes(this.activeTab()) && !INFO_TABS.includes(id);
     this.tabChoice.set(id as Tab);
-    // poe.ninja shows the same item: switching to it and back keeps the search results.
+    // poe.ninja and Wiki show the same item: switching to them and back keeps the search results.
     if (searchTab) this.stale.set(true);
   }
 
@@ -136,20 +138,10 @@ export class PriceCheckPanel {
 
   // poe.ninja
 
-  /** poe.ninja entry for the item (null: it has no poe.ninja id, e.g. rares). */
-  protected readonly ninja = computed(() => {
-    const found = findItemPrice(currencyRates.prices(), this.item());
-    if (!found) return null;
-    const { query, price } = found;
-    const leagueId = settings().leagueId;
-    return {
-      query,
-      price,
-      label: [query.name, query.variant].filter(Boolean).join(', '),
-      url: price && leagueId ? ninjaUrl(price, leagueId) : undefined,
-      trend: price ? priceTrend(price.graph) : null,
-    };
-  });
+  /** poe.ninja entry for the item (null: it has no poe.ninja id). */
+  protected readonly ninja = computed(() =>
+    itemQuote(currencyRates.prices(), this.item(), settings().leagueId, currencyRates.divine()),
+  );
 
   protected updatedAgo(): string {
     const date = currencyRates.updatedAt();
@@ -158,20 +150,10 @@ export class PriceCheckPanel {
     return minutes < 1 ? 'just now' : `${minutes} min ago`;
   }
 
-  protected readonly ninjaLoading =computed(() => currencyRates.updatedAt() == null && !currencyRates.error());
+  protected readonly ninjaLoading = computed(() => currencyRates.updatedAt() == null && !currencyRates.error());
   protected readonly ninjaError = currencyRates.error;
-
-  /** Rares and magic bases are priced by base type only: say so next to the price. */
-  protected readonly ninjaBaseOnly = computed(() => isValuableBasetype(this.item()));
-
-  /** Price as APT shows it: chaos, or divines from about one divine up (Divine Orb itself in chaos). */
-  protected readonly ninjaValue = computed<CurrencyValue | null>(() => {
-    const price = this.ninja()?.price;
-    if (!price) return null;
-    return this.item().info.refName === 'Divine Orb'
-      ? { min: price.chaos, max: price.chaos, currency: 'chaos' }
-      : autoCurrency(price.chaos, currencyRates.divine());
-  });
+  protected readonly ninjaBaseOnly = computed(() => this.ninja()?.baseOnly ?? false);
+  protected readonly ninjaValue = computed(() => this.ninja()?.value ?? null);
 
   protected readonly ninjaSpark = computed(() => {
     const trend = this.ninja()?.trend;
@@ -184,20 +166,15 @@ export class PriceCheckPanel {
   });
 
   protected price(value: CurrencyValue | null | undefined, fraction = false): string {
-    if (!value) return '?';
-    const unit = value.currency === 'div' ? 'div' : 'c';
-    const min = displayRounding(value.min, fraction);
-    const max = displayRounding(value.max, fraction);
-    return min === max ? `${min} ${unit}` : `${min} – ${max} ${unit}`;
+    return formatValue(value, fraction);
   }
 
   protected relatedPrice(chaos: number | undefined): string {
-    return chaos == null ? '—' : this.price(autoCurrency(chaos, currencyRates.divine()), true);
+    return chaos == null ? '—' : formatValue(autoCurrency(chaos, currencyRates.divine()), true);
   }
 
   protected percent(value: number): string {
-    const rounded = Math.abs(value) < 10 ? Math.round(value * 10) / 10 : Math.round(value);
-    return `${rounded > 0 ? '+' : rounded < 0 ? '−' : '±'}${Math.abs(rounded)} %`;
+    return formatPercent(value);
   }
 
   // Bulk
@@ -281,7 +258,7 @@ export class PriceCheckPanel {
   protected runSearch(): void {
     const active = this.active();
     if (!active || this.isSearching()) return;
-    if (this.activeTab() === 'ninja') this.tabChoice.set(null); // Search goes to trade or bulk
+    if (INFO_TABS.includes(this.activeTab())) this.tabChoice.set(null); // Search goes to trade or bulk
     this.stale.set(false);
     if (this.activeTab() === 'bulk') void this.bulk.search(this.item(), active.filters);
     else void this.search.search(active.filters, active.stats);
@@ -374,9 +351,10 @@ export class PriceCheckPanel {
     return value != null && filter.text.split('#').length === 2 ? filter.text.replace('#', String(value)) : filter.text;
   }
 
-  /** Short tag before non-explicit stats ("implicit", "crafted", …). */
+  /** Short tag before non-explicit stats ("implicit", "crafted", …); none for item properties (APT `showTag`). */
   protected statTag(filter: StatFilter): string {
-    return filter.tag === 'explicit' || filter.tag === 'pseudo' ? '' : t(`filters.tag_${filter.tag}`);
+    const untagged = ['explicit', 'pseudo', 'property', 'mercenary-support'];
+    return untagged.includes(filter.tag) ? '' : t(`filters.tag_${filter.tag.replace('-', '_')}`);
   }
 
   protected rollValue(filter: StatFilter, which: 'min' | 'max'): number | '' | undefined {

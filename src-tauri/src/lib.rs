@@ -3,6 +3,7 @@ mod constants;
 mod hotkeys;
 mod platform;
 mod popup;
+mod stash;
 mod state;
 
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
@@ -99,6 +100,22 @@ fn popup_release_focus(app: AppHandle) {
     popup::release_focus(&app, true);
 }
 
+/// "Find in stash": hide the popup and type `text` into the game's stash search.
+#[tauri::command]
+fn stash_search(app: AppHandle, text: String) -> Result<(), String> {
+    let Some(game) = app.state::<AppState>().game_hwnd() else {
+        return Err("The game is not active".into());
+    };
+    popup::hide(&app, true);
+    // Waits for the keyboard and the clipboard: keep it off the event loop.
+    std::thread::spawn(move || {
+        if let Err(e) = stash::search(game, &text) {
+            log_to_ui(&app, format!("Stash search failed: {e}"));
+        }
+    });
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -116,7 +133,8 @@ pub fn run() {
             set_game_title,
             hide_popup,
             popup_focus_input,
-            popup_release_focus
+            popup_release_focus,
+            stash_search
         ])
         .setup(|app| {
             let handle = app.handle().clone();

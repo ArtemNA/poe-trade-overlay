@@ -178,7 +178,10 @@ pub fn cursor_pos() -> Point {
 
 pub mod vk {
     pub const CONTROL: u16 = 0x11;
+    pub const RETURN: u16 = 0x0D;
     pub const C: u16 = 0x43;
+    pub const F: u16 = 0x46;
+    pub const V: u16 = 0x56;
 }
 
 #[derive(Clone, Copy)]

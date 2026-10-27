@@ -4,7 +4,7 @@
 
 import { BaseType, ITEM_BY_REF, ITEM_DROP } from '@/assets/data';
 import type { ParsedItem } from '@/parser';
-import { getDetailsId } from '../../lib/apt/web/price-check/trends/getDetailsId';
+import { getDetailsId, isValuableBasetype } from '../../lib/apt/web/price-check/trends/getDetailsId';
 import { NINJA_DIVINE_ROUNDING, POE_NINJA_NAMESPACES, POE_NINJA_SITE } from '../constants';
 
 export interface NinjaLine {
@@ -120,6 +120,21 @@ export function displayRounding(value: number, fraction = false): string {
   return Math.round(value).toString();
 }
 
+/** Price as shown: "4 c", "1.2 div", "1 / 4 c" (fractions), "2 – 3 div" (ranges). */
+export function formatValue(value: CurrencyValue | null | undefined, fraction = false): string {
+  if (!value) return '?';
+  const unit = value.currency === 'div' ? 'div' : 'c';
+  const min = displayRounding(value.min, fraction);
+  const max = displayRounding(value.max, fraction);
+  return min === max ? `${min} ${unit}` : `${min} – ${max} ${unit}`;
+}
+
+/** Signed percent: "+59 %", "−9.2 %", "±0 %". */
+export function formatPercent(value: number): string {
+  const rounded = Math.abs(value) < 10 ? Math.round(value * 10) / 10 : Math.round(value);
+  return `${rounded > 0 ? '+' : rounded < 0 ? '−' : '±'}${Math.abs(rounded)} %`;
+}
+
 export interface PriceTrend {
   /** poe.ninja's price change in percent against 7 days ago, per day (oldest first, gaps kept). */
   graph: Array<number | null>;
@@ -154,6 +169,41 @@ export function sparkline(graph: Array<number | null>, width: number, height: nu
     ? `${line} L${round(x(known[known.length - 1].i))},${height} L${round(x(known[0].i))},${height} Z`
     : '';
   return { line, area, zeroY: round(y(0)) };
+}
+
+/** What the price check and item check show about an item's poe.ninja price. */
+export interface ItemQuote {
+  query: DetailsQuery;
+  /** Undefined: poe.ninja has no line for the item. */
+  price: NinjaPrice | undefined;
+  /** The matched poe.ninja line, e.g. "Tabula Rasa, Simple Robe, 6L". */
+  label: string;
+  url: string | undefined;
+  trend: PriceTrend | null;
+  /** Chaos, or divines from about one divine up (Divine Orb itself in chaos, like APT). */
+  value: CurrencyValue | null;
+  /** Rares and magic bases are priced by base type only. */
+  baseOnly: boolean;
+}
+
+/** Null when the item has no poe.ninja id at all. */
+export function itemQuote(db: PriceDb, item: ParsedItem, leagueId: string | undefined, divine: number | undefined): ItemQuote | null {
+  const found = findItemPrice(db, item);
+  if (!found) return null;
+  const { query, price } = found;
+  return {
+    query,
+    price,
+    label: [query.name, query.variant].filter(Boolean).join(', '),
+    url: price && leagueId ? ninjaUrl(price, leagueId) : undefined,
+    trend: price ? priceTrend(price.graph) : null,
+    value: !price
+      ? null
+      : item.info.refName === 'Divine Orb'
+        ? { min: price.chaos, max: price.chaos, currency: 'chaos' }
+        : autoCurrency(price.chaos, divine),
+    baseOnly: isValuableBasetype(item),
+  };
 }
 
 export interface RelatedEntry {

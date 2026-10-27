@@ -4,6 +4,7 @@ Each release takes its "What's new" from the section of its tag.
 
 ## Unreleased
 
+- Settings: "What's new" next to the version opens its release page with the list of changes; the update banner links the new version's.
 - The Russian version of the game: Settings → General → Game language → Русский. Items copied in Russian are read with APT's Russian game data, and the price check, bulk exchange, leagues, "Open on trade site" and the built-in browser use ru.pathofexile.com (or www.pathofexile.com with "Search on the international site"). The game language is apart from the interface language; with English it is always www.pathofexile.com.
 - An item copied in another language than the settings say: the popup says which game language to choose.
 - Interface languages: English, Ukrainian and Russian (Settings → General → Interface language). Only the overlay's own texts change; item names and mods stay as the game copies them.

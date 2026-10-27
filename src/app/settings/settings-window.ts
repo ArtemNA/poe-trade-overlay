@@ -3,7 +3,7 @@ import { getName, getVersion } from '@tauri-apps/api/app';
 import { appLogDir, join } from '@tauri-apps/api/path';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { revealItemInDir } from '@tauri-apps/plugin-opener';
+import { openUrl, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { poeWebApi } from '@/web/Config';
 import {
   DEFAULT_CURRENCY_OPTIONS,
@@ -12,6 +12,7 @@ import {
   Lang,
   POE_INTL_WEB_API,
   PopupPosition,
+  releaseUrl,
   SEARCH_STAT_RANGE_MAX,
   STASH_SEARCH_MAX_LENGTH,
   UI_LANGS,
@@ -159,6 +160,11 @@ export class SettingsWindow {
   /** The language the game copies items in: its data and its trade site (ru.pathofexile.com). */
   protected setGameLanguage(language: Lang): void {
     updateSettings({ language });
+  }
+
+  /** The release page of `version`: what changed in it. */
+  protected openRelease(version: string): void {
+    void openUrl(releaseUrl(version));
   }
 
   protected setUseIntlSite(useIntlSite: boolean): void {

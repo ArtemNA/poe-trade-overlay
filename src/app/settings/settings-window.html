@@ -16,7 +16,13 @@
     <span class="flex-1"></span>
     @if (updates.status() === 'available' || updates.status() === 'installing') {
       <div class="mx-3 mb-0 flex flex-col gap-1.5 border border-gold bg-[#2a2218] px-2.5 py-2 text-[12px]">
-        <span class="text-gold-soft">{{ 'Version {0} is out' | tr: updates.version() ?? '' }}</span>
+        <span class="flex items-center gap-2 text-gold-soft">
+          {{ 'Version {0} is out' | tr: updates.version() ?? '' }}
+          <span class="flex-1"></span>
+          @if (updates.version(); as next) {
+            <button class="text-gold hover:text-[#e6c88a]" (click)="openRelease(next)">{{ "What's new ↗" | tr }}</button>
+          }
+        </span>
         <button class="h-7 border border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] font-semibold text-[#1a1208] disabled:opacity-60"
           [disabled]="updates.status() === 'installing'" (click)="updates.install()">
           {{ (updates.status() === 'installing' ? 'Installing…' : updates.portable() ? 'Download' : 'Install and restart') | tr }}
@@ -138,6 +144,9 @@
               <span class="text-bright">{{ 'Version' | tr }}</span>
               <div class="flex items-center gap-3">
                 <span class="tabular-nums">{{ version() }}@if (updates.portable()) {<span class="text-muted"> · {{ 'portable' | tr }}</span>}</span>
+                @if (version()) {
+                  <button class="text-gold hover:text-[#e6c88a]" [title]="'The release page of this version on GitHub' | tr" (click)="openRelease(version())">{{ "What's new ↗" | tr }}</button>
+                }
                 <button class="h-7 border border-line-strong bg-raised px-3 hover:border-gold disabled:opacity-50"
                   [disabled]="updates.status() === 'checking' || updates.status() === 'installing'" (click)="updates.check()">{{ 'Check for updates' | tr }}</button>
                 @switch (updates.status()) {

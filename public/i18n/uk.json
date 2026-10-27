@@ -601,6 +601,7 @@
     "The log file keeps the latest 2 MB.": "Файл журналу зберігає останні 2 МБ.",
     "The POE_GAME_TITLE variable overrides it: the overlay looks for \"{0}\".": "Змінна POE_GAME_TITLE перевизначає його: оверлей шукає «{0}».",
     "The presets' own hotkeys": "Власні гарячі клавіші пресетів",
+    "The release page of this version on GitHub": "Сторінка релізу цієї версії на GitHub",
     "The stash search presets hotkey opens these buttons in the game; a click types the text into the stash search.": "Гаряча клавіша шаблонів пошуку відкриває ці кнопки в грі; клацання вводить текст у пошук у сховищі.",
     "This base": "Ця база",
     "Tier": "Тир",
@@ -625,6 +626,7 @@
     "Version": "Версія",
     "Version {0} is out": "Вийшла версія {0}",
     "Warning": "Небезпечний",
+    "What's new ↗": "Що нового ↗",
     "White sockets": "Білі гнізда",
     "Your own listings are marked in the price check.": "Ваші власні пропозиції позначаються в перевірці ціни.",
     "Σ Mods behind totals": "Σ Моди в сумах"

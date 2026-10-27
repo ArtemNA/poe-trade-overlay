@@ -268,6 +268,8 @@ export const TOAST_WINDOW_LABEL = 'toast';
 
 /** Where the portable build sends the user for a new version. */
 export const RELEASES_URL = 'https://github.com/ArtemNA/price-of-exile/releases/latest';
+/** A version's release page, with its "What's new" (the tag's CHANGELOG section) and files. */
+export const releaseUrl = (version: string) => `https://github.com/ArtemNA/price-of-exile/releases/tag/v${version}`;
 
 /** Identifier suffix of dev builds (`tauri.dev.conf.json`), see `src-tauri/src/constants.rs`. */
 export const DEV_IDENTIFIER_SUFFIX = '.dev';

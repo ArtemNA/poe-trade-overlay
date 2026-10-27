@@ -86,6 +86,7 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `19-bulk-russian-game.png` | Сфера хаоса (Chaos Orb) copied in Russian: bulk offers from ru.pathofexile.com |
 | `19-game-language-mismatch.png` | A Russian item while the game language is English: the popup says which one to choose |
 | `19-browser-ru-site.png` | The built-in browser with the Russian game language: it opens ru.pathofexile.com (its own Cloudflare check) |
+| `19-settings-version-whats-new.png` | Settings, General, Version: "What's new ↗" opens the version's release page on GitHub ("portable": the dev build has no uninstaller next to it) |
 | `16-price-check-related-unfolded.png` | Farrul's Fur (a unique with mods): related open by default, the set with poe.ninja prices, the item itself marked (taken before the heading got its fold button ▾) |
 | `16-price-check-related-folded.png` | The same folded into one line "Related · 4" with icons |
 | `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |

@@ -26,6 +26,10 @@ pub const POPUP_HEIGHT_LOGICAL: f64 = 590.0;
 /// Item check window size in logical pixels; it is vertically centred on the game.
 pub const ITEM_CHECK_WIDTH_LOGICAL: f64 = 380.0;
 pub const ITEM_CHECK_HEIGHT_LOGICAL: f64 = 330.0;
+/// Stash search panel size in logical pixels until the page fits it; centred on the game,
+/// between the stash and the inventory.
+pub const STASH_PANEL_WIDTH_LOGICAL: f64 = 360.0;
+pub const STASH_PANEL_HEIGHT_LOGICAL: f64 = 300.0;
 /// Gap between the popup and the game window edge, logical pixels.
 pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
 /// The popup's top edge sits this share of the game height below the game's top.

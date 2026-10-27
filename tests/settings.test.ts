@@ -36,6 +36,15 @@ describe('settings', () => {
     expect(upgradeSettings({ configVersion: 1, commands: 'broken' }).commands).toEqual(defaultSettings().commands);
   });
 
+  it('gives old settings the stash search presets and the panel hotkey', () => {
+    const settings = upgradeSettings({ configVersion: 1, hotkeys: { 'price-check': 'Ctrl+KeyD' } });
+    expect(settings.hotkeys['stash-panel']).toBe('Alt+KeyF');
+    expect(settings.stashSearch.map((group) => group.title)).toEqual(['Map rolling', 'Dump sorting']);
+    expect(settings.stashSearch[0].entries.map((entry) => entry.text)).not.toContain('Reflect');
+    const groups = [{ id: 7, title: 'Mine', enableHotkeys: false, entries: [] }];
+    expect(upgradeSettings({ configVersion: 1, stashSearch: groups }).stashSearch).toEqual(groups);
+  });
+
   it('fills missing nested fields and survives a damaged file', () => {
     const settings = upgradeSettings({ configVersion: 1, hotkeys: { wiki: 'Alt+KeyW' }, priceCheck: { searchStatRange: 5 } });
     expect(settings.hotkeys).toEqual({ ...DEFAULT_HOTKEYS, wiki: 'Alt+KeyW' });

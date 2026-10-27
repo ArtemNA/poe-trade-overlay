@@ -9,10 +9,11 @@ import { loadGameData } from '../game-data';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { CheckTarget, host, ItemActionEvent, ItemTextEvent } from '../host';
 import { craftOfExileUrl, poedbUrl, stashSearchText, wikiUrl } from '../core/item-links';
-import { ITEM_CHECK_WIDTH, MAP_CHECK_WIDTH } from '../constants';
+import { ITEM_CHECK_WIDTH, MAP_CHECK_WIDTH, STASH_PANEL_WIDTH } from '../constants';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { isMapLike } from '../map-check/map-check';
 import { MapCheckPanel } from '../map-check/map-check-panel';
+import { StashPanel } from '../stash-search/stash-panel';
 import { formatChaos } from '../price-check/listing-summary';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
 import { ItemView, toItemView } from './item-view';
@@ -20,7 +21,7 @@ import { ItemView, toItemView } from './item-view';
 /** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -41,7 +42,13 @@ export class PopupWindow {
     return this.target() === 'item-check' && item !== null && isMapLike(item);
   });
   protected readonly title = computed(() =>
-    this.target() === 'price-check' ? 'Price check' : this.mapCheck() ? 'Map check' : 'Item check',
+    this.target() === 'price-check'
+      ? 'Price check'
+      : this.target() === 'stash-search'
+        ? 'Stash search'
+        : this.mapCheck()
+          ? 'Map check'
+          : 'Item check',
   );
   /** Item and map check content; the window takes its height (see `fit`). */
   private readonly fitContent = viewChild<ElementRef<HTMLElement>>('fitContent');
@@ -61,6 +68,10 @@ export class PopupWindow {
       this.menu.set(null);
       this.error.set(null);
       this.target.set(payload.target);
+      if (payload.target === 'stash-search') {
+        afterNextRender(() => this.fit(), { injector: this.injector });
+        return;
+      }
       try {
         await dataReady;
       } catch {
@@ -113,13 +124,14 @@ export class PopupWindow {
     });
   }
 
-  /** Item and map check: the window is as tall as the content; the price check keeps its size. */
+  /** Item, map check and the stash panel: the window is as tall as the content; the price check keeps its size. */
   private fit(): void {
     const content = this.fitContent()?.nativeElement;
     const section = content?.closest('section');
-    if (!content || !section || this.target() !== 'item-check') return;
+    if (!content || !section || this.target() === 'price-check') return;
     const chrome = section.offsetHeight - (content.parentElement?.clientHeight ?? 0);
-    void host.fitPopup(this.mapCheck() ? MAP_CHECK_WIDTH : ITEM_CHECK_WIDTH, Math.ceil(content.offsetHeight + chrome));
+    const width = this.target() === 'stash-search' ? STASH_PANEL_WIDTH : this.mapCheck() ? MAP_CHECK_WIDTH : ITEM_CHECK_WIDTH;
+    void host.fitPopup(width, Math.ceil(content.offsetHeight + chrome));
   }
 
   /** A click outside the number fields ends typing: keyboard back to the game (no-op otherwise). */

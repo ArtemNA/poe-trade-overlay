@@ -77,7 +77,8 @@ fn get_status(state: tauri::State<AppState>) -> Status {
     }
 }
 
-/// Settings the host needs (APT `update-host-config`): game window title, hotkeys, chat commands.
+/// Settings the host needs (APT `update-host-config`): game window title, hotkeys, chat commands
+/// and stash search presets.
 /// Returns a message for every hotkey that cannot be used.
 #[tauri::command]
 fn set_host_config(
@@ -85,10 +86,11 @@ fn set_host_config(
     game_title: String,
     hotkeys: HashMap<hotkeys::HotkeyAction, Option<String>>,
     commands: Vec<hotkeys::ChatHotkey>,
+    stash_presets: Vec<hotkeys::StashHotkey>,
 ) -> Vec<String> {
     app.state::<AppState>()
         .set_game_title(game_title.trim().to_string());
-    let errors = hotkeys::set_hotkeys(&app, &hotkeys, &commands);
+    let errors = hotkeys::set_hotkeys(&app, &hotkeys, &commands, &stash_presets);
     // The title may now match (or no longer match) the window in front.
     on_foreground(&app, platform::current_foreground());
     errors
@@ -130,7 +132,7 @@ fn stash_search(app: AppHandle, text: String) -> Result<(), String> {
     popup::hide(&app, true);
     // Waits for the keyboard and the clipboard: keep it off the event loop.
     std::thread::spawn(move || {
-        if let Err(e) = stash::search(game, &text) {
+        if let Err(e) = stash::search(game, &text, &[]) {
             log_to_ui(&app, format!("Stash search failed: {e}"));
         }
     });

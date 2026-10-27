@@ -1,0 +1,29 @@
+@for (group of settings().stashSearch; track group.id) {
+  <section class="flex flex-col gap-1">
+    <div class="flex items-center gap-2 px-0.5">
+      <span class="flex-1 truncate font-display text-[14px] text-gold-soft">{{ group.title || 'Untitled' }}</span>
+      @if (hasHotkeys(group)) {
+        <label class="flex items-center gap-1.5 text-[11px] text-muted" title="The presets' own hotkeys">
+          <input type="checkbox" class="accent-[#c9a15a]" [checked]="group.enableHotkeys" (change)="toggleHotkeys(group.id, $any($event.target).checked)" />
+          Hotkeys
+        </label>
+      }
+    </div>
+    @for (entry of group.entries; track entry.id) {
+      @if (entry.text.trim()) {
+        <button class="flex h-8 items-center gap-2 border border-line-strong bg-raised px-2.5 text-left hover:border-gold hover:bg-[#2a2218]"
+          [title]="entry.text" (click)="search(entry.text)">
+          <span class="min-w-0 flex-1 truncate text-bright">{{ entry.name || entry.text }}</span>
+          @if (entry.hotkey && group.enableHotkeys) {
+            <span class="flex-none border border-line bg-well px-1.5 text-[11px] text-muted tabular-nums">{{ label(entry.hotkey) }}</span>
+          }
+        </button>
+      }
+    }
+  </section>
+} @empty {
+  <p class="px-1 py-2 text-muted">No presets yet: add them in the settings, Stash search.</p>
+}
+@if (error(); as message) {
+  <p class="bg-[#3a1a14] px-2 py-1 text-bad">{{ message }}</p>
+}

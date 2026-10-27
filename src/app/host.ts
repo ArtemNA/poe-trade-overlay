@@ -2,6 +2,12 @@ import { invoke } from '@tauri-apps/api/core';
 import type { HotkeyAction } from './constants';
 import type { ChatCommand } from './core/settings';
 
+/** A stash search preset with a hotkey, for the host. */
+export interface StashHotkey {
+  hotkey: string;
+  text: string;
+}
+
 /**
  * Whether the popup currently holds the keyboard. Tracked here rather than read from
  * `document.hasFocus()`, which WebView2 keeps reporting as true after the window lost focus.
@@ -18,7 +24,8 @@ export interface Rect extends Point {
   height: number;
 }
 
-export type CheckTarget = 'price-check' | 'item-check';
+/** Which popup the host shows: a check of the hovered item or the stash search panel. */
+export type CheckTarget = 'price-check' | 'item-check' | 'stash-search';
 
 /** Payload of the `item-text` event, emitted to the popup after a price or item check hotkey. */
 export interface ItemTextEvent {
@@ -32,7 +39,7 @@ export interface ItemTextEvent {
 
 /** Payload of the `item-action` event: a link or stash search hotkey, handled without showing the popup. */
 export interface ItemActionEvent {
-  action: Exclude<HotkeyAction, CheckTarget>;
+  action: 'wiki' | 'poedb' | 'craft-of-exile' | 'stash-search';
   text: string;
 }
 
@@ -49,8 +56,12 @@ export interface Status {
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
   /** Game window title and hotkeys from the settings; returns a message per unusable hotkey. */
-  setHostConfig: (gameTitle: string, hotkeys: Record<HotkeyAction, string | null>, commands: ChatCommand[]) =>
-    invoke<string[]>('set_host_config', { gameTitle, hotkeys, commands }),
+  setHostConfig: (
+    gameTitle: string,
+    hotkeys: Record<HotkeyAction, string | null>,
+    commands: ChatCommand[],
+    stashPresets: StashHotkey[],
+  ) => invoke<string[]>('set_host_config', { gameTitle, hotkeys, commands, stashPresets }),
   hidePopup: () => invoke<void>('hide_popup'),
   /** The popup takes the keyboard (for typing into a field); false if Windows refused. */
   popupFocusInput: async () => (popupHasKeyboard = await invoke<boolean>('popup_focus_input')),

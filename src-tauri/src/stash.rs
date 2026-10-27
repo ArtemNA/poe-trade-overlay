@@ -14,14 +14,22 @@ fn tap(key: u16, ctrl: bool) -> Vec<KeyAction> {
 }
 
 /// Ctrl+F (focus the search box), Ctrl+V (`text` from the clipboard), Enter.
-pub fn search(game: RawHwnd, text: &str) -> Result<(), String> {
+/// `release`: keys of the hotkey that may still be held (Alt+1 would make Ctrl+F Ctrl+Alt+F).
+pub fn search(game: RawHwnd, text: &str, release: &[u16]) -> Result<(), String> {
     // The popup may just have handed the keyboard back: let the game take it first.
     std::thread::sleep(STASH_SEARCH_FOCUS_DELAY);
     if platform::current_foreground().hwnd != game {
         return Err("the game is not the foreground window".into());
     }
     clipboard::paste_text(text, || {
-        let keys = [tap(vk::F, true), tap(vk::V, true), tap(vk::RETURN, false)].concat();
+        let released = release.iter().map(|&key| KeyAction::Up(key)).collect();
+        let keys = [
+            released,
+            tap(vk::F, true),
+            tap(vk::V, true),
+            tap(vk::RETURN, false),
+        ]
+        .concat();
         platform::send_keys(&keys);
     })
 }

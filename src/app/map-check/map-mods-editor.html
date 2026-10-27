@@ -50,7 +50,7 @@
       <span class="flex w-8 justify-center">
         @if (marked(mod.matchStr)) {
           <button class="px-1" [class]="mod.tag === tags.Outdated ? 'text-bad' : 'text-muted hover:text-bright'"
-            [attr.aria-label]="'Remove mark: ' + mod.matchStr" (click)="set(mod.matchStr, '-')">✕</button>
+            [attr.aria-label]="'Remove mark: ' + mod.matchStr" (click)="set(mod.matchStr, '-')"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 1l8 8M9 1L1 9" /></svg></button>
         }
       </span>
     </li>

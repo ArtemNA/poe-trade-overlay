@@ -6,6 +6,7 @@ import {
   DEFAULT_HOTKEYS,
   DEFAULT_LANG,
   DEFAULT_MAP_CHECK,
+  DEFAULT_STASH_SEARCH,
   HotkeyAction,
   Lang,
   LEGACY_SETTINGS_STORAGE_KEY,
@@ -33,6 +34,15 @@ export interface ChatCommand {
   send: boolean;
 }
 
+/** A group of stash search presets (APT `StashSearchWidget`). */
+export interface StashSearchGroup {
+  id: number;
+  title: string;
+  /** The entries' hotkeys work only while this is on (APT `enableHotkeys`). */
+  enableHotkeys: boolean;
+  entries: Array<{ id: number; name: string; text: string; hotkey: string | null }>;
+}
+
 export interface Settings {
   configVersion: number;
   leagueId?: string;
@@ -45,6 +55,7 @@ export interface Settings {
   gameTitle: string;
   hotkeys: Record<HotkeyAction, string | null>;
   commands: ChatCommand[];
+  stashSearch: StashSearchGroup[];
   priceCheck: PriceCheckSettings;
   /** Map check profile and marked map mods (APT `ItemCheckWidget.maps`). */
   mapCheck: MapCheckConfig;
@@ -61,6 +72,7 @@ export function defaultSettings(): Settings {
     gameTitle: DEFAULT_GAME_TITLE,
     hotkeys: { ...DEFAULT_HOTKEYS },
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
+    stashSearch: structuredClone(DEFAULT_STASH_SEARCH),
     priceCheck: { searchStatRange, merchantOnly, collapseListings, activateStockFilter, defaultCurrency, smartInitialSearch },
     mapCheck: DEFAULT_MAP_CHECK,
   };
@@ -81,6 +93,7 @@ export function upgradeSettings(raw: unknown): Settings {
     configVersion: SETTINGS_VERSION,
     hotkeys: { ...defaults.hotkeys, ...stored.hotkeys },
     commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
+    stashSearch: Array.isArray(stored.stashSearch) ? stored.stashSearch : defaults.stashSearch,
     priceCheck: { ...defaults.priceCheck, ...stored.priceCheck },
     mapCheck: { ...defaults.mapCheck, ...stored.mapCheck },
   };

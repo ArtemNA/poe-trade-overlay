@@ -14,7 +14,7 @@ use crate::chat::{self, ChatCommand};
 use crate::constants::POPUP_WINDOW;
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
-use crate::{clipboard, log_to_ui, popup};
+use crate::{clipboard, log_to_ui, popup, stash};
 
 /// What a hotkey does with the hovered item.
 /// Declaration order is the priority when two actions share a hotkey.
@@ -31,6 +31,8 @@ pub enum HotkeyAction {
     Poedb,
     CraftOfExile,
     StashSearch,
+    /// The stash search panel with the presets; copies nothing.
+    StashPanel,
 }
 
 impl HotkeyAction {
@@ -39,6 +41,7 @@ impl HotkeyAction {
         match self {
             HotkeyAction::PriceCheck => Some(CheckTarget::PriceCheck),
             HotkeyAction::ItemCheck => Some(CheckTarget::ItemCheck),
+            HotkeyAction::StashPanel => Some(CheckTarget::StashSearch),
             _ => None,
         }
     }
@@ -49,6 +52,8 @@ impl HotkeyAction {
 pub enum Binding {
     Item(HotkeyAction),
     Chat(ChatCommand),
+    /// A stash search preset: its text goes into the stash search right away.
+    Stash(String),
 }
 
 /// A chat command as the settings page sends it.
@@ -59,12 +64,21 @@ pub struct ChatHotkey {
     command: ChatCommand,
 }
 
-/// Which popup a check opens (APT `copy-item` targets).
+/// A stash search preset with a hotkey, as the settings page sends it.
+#[derive(serde::Deserialize)]
+pub struct StashHotkey {
+    hotkey: String,
+    text: String,
+}
+
+/// Which popup a hotkey opens: a check of the hovered item (APT `copy-item` targets) or the
+/// stash search panel.
 #[derive(Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CheckTarget {
     PriceCheck,
     ItemCheck,
+    StashSearch,
 }
 
 /// Virtual key of the hotkey's main key, when it is one we can name (letters, digits, F-keys, numpad).
@@ -152,8 +166,10 @@ pub fn plugin() -> TauriPlugin<Wry> {
                 let app = app.clone();
                 // Clipboard polling and typing sleep, keep them off the event loop.
                 std::thread::spawn(move || match binding {
+                    Binding::Item(HotkeyAction::StashPanel) => open_stash_panel(&app),
                     Binding::Item(action) => check_item(&app, &shortcut, action),
                     Binding::Chat(command) => chat_command(&app, &shortcut, &command),
+                    Binding::Stash(text) => preset_search(&app, &shortcut, &text),
                 });
             }
         })
@@ -188,10 +204,11 @@ pub fn set_game_hotkeys(app: &AppHandle, enabled: bool) {
 
 /// Parses the hotkeys from the settings. Returns the usable ones and a message for each
 /// that does not parse. A hotkey set twice works for the first use only (item actions in
-/// declaration order, then chat commands in list order); the settings page marks such pairs itself.
+/// declaration order, then chat commands, then stash presets); the settings page marks such pairs itself.
 pub fn parse_hotkeys(
     config: &HashMap<HotkeyAction, Option<String>>,
     commands: &[ChatHotkey],
+    stash_presets: &[StashHotkey],
 ) -> (Vec<(Shortcut, Binding)>, Vec<String>) {
     let mut list: Vec<(Shortcut, Binding)> = Vec::new();
     let mut errors = Vec::new();
@@ -208,7 +225,12 @@ pub fn parse_hotkeys(
                 command.hotkey.as_deref()?,
                 Binding::Chat(command.command.clone()),
             ))
-        }));
+        }))
+        .chain(
+            stash_presets
+                .iter()
+                .map(|preset| (preset.hotkey.as_str(), Binding::Stash(preset.text.clone()))),
+        );
     for (text, binding) in bindings {
         match Shortcut::from_str(text) {
             Err(e) => errors.push(format!("{text}: {e}")),
@@ -224,8 +246,9 @@ pub fn set_hotkeys(
     app: &AppHandle,
     config: &HashMap<HotkeyAction, Option<String>>,
     commands: &[ChatHotkey],
+    stash_presets: &[StashHotkey],
 ) -> Vec<String> {
-    let (list, errors) = parse_hotkeys(config, commands);
+    let (list, errors) = parse_hotkeys(config, commands, stash_presets);
     let state = app.state::<AppState>();
     let game_active = state.game_hwnd().is_some();
     for (shortcut, _) in state.replace_hotkeys(list.clone()) {
@@ -244,6 +267,35 @@ fn chat_command(app: &AppHandle, shortcut: &Shortcut, command: &ChatCommand) {
     if let Err(e) = chat::type_in_chat(game, command, &held_keys(shortcut)) {
         log_to_ui(app, format!("Chat command failed: {e}"));
     }
+}
+
+fn preset_search(app: &AppHandle, shortcut: &Shortcut, text: &str) {
+    let Some(game) = app.state::<AppState>().game_hwnd() else {
+        return;
+    };
+    if let Err(e) = stash::search(game, text, &held_keys(shortcut)) {
+        log_to_ui(app, format!("Stash search failed: {e}"));
+    }
+}
+
+/// The stash search panel: the popup with the presets, nothing is copied.
+fn open_stash_panel(app: &AppHandle) {
+    let Some(game) = app.state::<AppState>().game_hwnd() else {
+        return;
+    };
+    let Some(game_rect) = platform::client_rect(game) else {
+        return;
+    };
+    let cursor = platform::cursor_pos();
+    let payload = ItemTextPayload {
+        target: CheckTarget::StashSearch,
+        text: String::new(),
+        cursor,
+        game_rect,
+        elapsed_ms: 0,
+    };
+    let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
+    popup::show(app, game_rect, cursor, CheckTarget::StashSearch);
 }
 
 fn check_item(app: &AppHandle, shortcut: &Shortcut, action: HotkeyAction) {
@@ -323,9 +375,14 @@ mod tests {
                 (HotkeyAction::Poedb, None),
             ]),
             &[chat(Some("F5"), "/hideout"), chat(None, "@last ty")],
+            &[StashHotkey {
+                hotkey: "Alt+Digit1".into(),
+                text: "\"Map Tier\"".into(),
+            }],
         );
         assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(list.len(), 3);
+        assert_eq!(list.len(), 4);
+        assert!(matches!(&list[3].1, Binding::Stash(text) if text == "\"Map Tier\""));
         let wiki = list
             .iter()
             .find(|(_, b)| matches!(b, Binding::Item(HotkeyAction::Wiki)))
@@ -348,6 +405,7 @@ mod tests {
                 (HotkeyAction::Wiki, Some("Ctrl+Nonsense")),
             ]),
             &[chat(Some("Ctrl+KeyD"), "/hideout")],
+            &[],
         );
         assert_eq!(list.len(), 1);
         assert!(matches!(list[0].1, Binding::Item(HotkeyAction::PriceCheck)));

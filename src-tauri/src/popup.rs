@@ -5,6 +5,7 @@ use tauri::{AppHandle, Manager};
 use crate::constants::{
     FOCUS_RETRY_DELAY, ITEM_CHECK_HEIGHT_LOGICAL, ITEM_CHECK_WIDTH_LOGICAL, POPUP_HEIGHT_LOGICAL,
     POPUP_MARGIN_LOGICAL, POPUP_TOP_RATIO, POPUP_WIDTH_LOGICAL, POPUP_WINDOW as LABEL,
+    STASH_PANEL_HEIGHT_LOGICAL, STASH_PANEL_WIDTH_LOGICAL,
 };
 use crate::hotkeys::CheckTarget;
 use crate::platform::{self, Point, Rect};
@@ -32,6 +33,7 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
 /// Like APT: the popup sits in the half of the game window opposite to the cursor
 /// (item in the inventory on the right → popup on the left). The price check hangs from
 /// near the top, the smaller item check is centred vertically (APT anchors it at 50 %).
+/// The stash search panel is centred both ways: the stash and the inventory are open then.
 /// `size` is in logical pixels: the target's default, or what the page asked for (`fit`).
 pub fn geometry(
     game: Rect,
@@ -47,14 +49,16 @@ pub fn geometry(
     let height = px(logical_height).min(game.height - 2 * margin).max(0);
 
     let cursor_on_right = cursor.x > game.x + game.width / 2;
-    let x = if cursor_on_right {
+    let x = if target == CheckTarget::StashSearch {
+        game.x + (game.width - width) / 2
+    } else if cursor_on_right {
         game.x + margin
     } else {
         game.x + game.width - margin - width
     };
     let top = match target {
         CheckTarget::PriceCheck => (game.height as f64 * POPUP_TOP_RATIO).round() as i32,
-        CheckTarget::ItemCheck => (game.height - height) / 2,
+        CheckTarget::ItemCheck | CheckTarget::StashSearch => (game.height - height) / 2,
     };
     let y = game.y + top.min(game.height - margin - height).max(margin);
     Rect {
@@ -69,6 +73,7 @@ pub fn default_size(target: CheckTarget) -> (f64, f64) {
     match target {
         CheckTarget::PriceCheck => (POPUP_WIDTH_LOGICAL, POPUP_HEIGHT_LOGICAL),
         CheckTarget::ItemCheck => (ITEM_CHECK_WIDTH_LOGICAL, ITEM_CHECK_HEIGHT_LOGICAL),
+        CheckTarget::StashSearch => (STASH_PANEL_WIDTH_LOGICAL, STASH_PANEL_HEIGHT_LOGICAL),
     }
 }
 
@@ -147,6 +152,21 @@ mod tests {
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
             (24, (1080 - 330) / 2, 380, 330)
+        );
+    }
+
+    #[test]
+    fn stash_panel_is_centred() {
+        let rect = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::StashSearch,
+            (360.0, 200.0),
+        );
+        assert_eq!(
+            (rect.x, rect.y, rect.width, rect.height),
+            ((1920 - 360) / 2, (1080 - 200) / 2, 360, 200)
         );
     }
 

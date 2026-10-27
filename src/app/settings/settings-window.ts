@@ -1,8 +1,8 @@
 import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
-import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, SEARCH_STAT_RANGE_MAX } from '../constants';
+import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH } from '../constants';
 import { Leagues } from '../core/leagues';
-import { type ChatCommand, type PriceCheckSettings, settings, updateSettings } from '../core/settings';
+import { type ChatCommand, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
 import { ForegroundEvent, host } from '../host';
 import { MapModsEditor } from '../map-check/map-mods-editor';
 import { hotkeyConflicts } from './hotkey';
@@ -15,12 +15,13 @@ interface LogLine {
 
 const MAX_LOG_LINES = 200;
 
-type Section = 'general' | 'hotkeys' | 'chat' | 'price-check' | 'map-check' | 'log';
+type Section = 'general' | 'hotkeys' | 'chat' | 'stash-search' | 'price-check' | 'map-check' | 'log';
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'general', label: 'General' },
   { id: 'hotkeys', label: 'Hotkeys' },
   { id: 'chat', label: 'Chat' },
+  { id: 'stash-search', label: 'Stash search' },
   { id: 'price-check', label: 'Price check' },
   { id: 'map-check', label: 'Map check' },
   { id: 'log', label: 'Log' },
@@ -33,6 +34,7 @@ const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
   { action: 'poedb', label: 'Open on PoEDB', hint: 'poedb.tw page of the item, without the popup' },
   { action: 'craft-of-exile', label: 'Open in Craft of Exile', hint: 'The item in the crafting simulator' },
   { action: 'stash-search', label: 'Find in stash', hint: 'Types the item name into the stash search' },
+  { action: 'stash-panel', label: 'Stash search presets', hint: 'Buttons with your stash searches, between the stash and the inventory' },
 ];
 
 /** The main window: settings (APT `SettingsWindow.vue`) and the host log. Pushes the host's part of the settings. */
@@ -46,6 +48,7 @@ export class SettingsWindow {
   protected readonly hotkeyRows = HOTKEYS;
   protected readonly currencies = DEFAULT_CURRENCY_OPTIONS;
   protected readonly statRangeMax = SEARCH_STAT_RANGE_MAX;
+  protected readonly stashTextMax = STASH_SEARCH_MAX_LENGTH;
   protected readonly section = signal<Section>('general');
   protected readonly settings = settings;
   protected readonly leagues = inject(Leagues);
@@ -60,6 +63,11 @@ export class SettingsWindow {
     hotkeyConflicts({
       ...settings().hotkeys,
       ...Object.fromEntries(settings().commands.map((command, i) => [`chat-${i}`, command.hotkey])),
+      ...Object.fromEntries(
+        settings().stashSearch.flatMap((group) =>
+          group.enableHotkeys ? group.entries.map((entry) => [`stash-${group.id}-${entry.id}`, entry.hotkey]) : [],
+        ),
+      ),
     }),
   );
 
@@ -69,9 +77,14 @@ export class SettingsWindow {
 
     // The host keeps no settings of its own: every change of the title or the hotkeys goes there.
     effect(() => {
-      const { gameTitle, hotkeys, commands } = settings();
+      const { gameTitle, hotkeys, commands, stashSearch } = settings();
+      const stashPresets = stashSearch
+        .filter((group) => group.enableHotkeys)
+        .flatMap((group) => group.entries)
+        .filter((entry) => entry.hotkey && entry.text.trim())
+        .map((entry) => ({ hotkey: entry.hotkey!, text: entry.text }));
       host
-        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()))
+        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()), stashPresets)
         .then((errors) => {
           this.hotkeyErrors.set(errors);
           return host.getStatus();
@@ -115,6 +128,36 @@ export class SettingsWindow {
 
   protected removeCommand(index: number): void {
     updateSettings({ commands: settings().commands.filter((_, i) => i !== index) });
+  }
+
+  protected updateGroup(groupId: number, patch: Partial<StashSearchGroup>): void {
+    updateSettings({ stashSearch: settings().stashSearch.map((group) => (group.id === groupId ? { ...group, ...patch } : group)) });
+  }
+
+  protected updateEntry(groupId: number, entryId: number, patch: Partial<StashSearchGroup['entries'][number]>): void {
+    const group = settings().stashSearch.find((g) => g.id === groupId)!;
+    this.updateGroup(groupId, { entries: group.entries.map((entry) => (entry.id === entryId ? { ...entry, ...patch } : entry)) });
+  }
+
+  protected addEntry(groupId: number): void {
+    const group = settings().stashSearch.find((g) => g.id === groupId)!;
+    const id = Math.max(0, ...group.entries.map((entry) => entry.id)) + 1;
+    this.updateGroup(groupId, { entries: [...group.entries, { id, name: '', text: '', hotkey: null }] });
+  }
+
+  protected removeEntry(groupId: number, entryId: number): void {
+    const group = settings().stashSearch.find((g) => g.id === groupId)!;
+    this.updateGroup(groupId, { entries: group.entries.filter((entry) => entry.id !== entryId) });
+  }
+
+  protected addGroup(): void {
+    const id = Math.max(0, ...settings().stashSearch.map((group) => group.id)) + 1;
+    const group: StashSearchGroup = { id, title: '', enableHotkeys: true, entries: [{ id: 1, name: '', text: '', hotkey: null }] };
+    updateSettings({ stashSearch: [...settings().stashSearch, group] });
+  }
+
+  protected removeGroup(groupId: number): void {
+    updateSettings({ stashSearch: settings().stashSearch.filter((group) => group.id !== groupId) });
   }
 
   protected setPriceCheck(patch: Partial<PriceCheckSettings>): void {

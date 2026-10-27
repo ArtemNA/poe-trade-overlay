@@ -49,5 +49,10 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `12-settings-chat-hotkeys.png` | Chat commands with hotkeys F6 and F7 set for the `@last` commands |
 | `12-chat-hideout-fake-game.png` | F5 in the fake game: `/hideout` sent, chat closed again (top of the game window) |
 | `12-chat-last-whisper-fake-game.png` | F6 and F7: `@last ty` → whisper to the last partner, `/invite @last` → `/invite LastWhisper` |
+| `11-stash-panel.png` | Stash search panel (Alt+F) with the default groups, centred on the game |
+| `11-stash-panel-click-fake-game.png` | After a click on "Map Tier": the text in the fake game's stash search, popup hidden (top of the game window) |
+| `11-settings-stash-search.png` | Settings, Stash search: groups and presets |
+| `11-stash-preset-hotkey-fake-game.png` | A preset's own hotkey (Alt+1): searched right away, no popup |
+| `11-stash-panel-named-hotkey.png` | The panel with a named preset and its hotkey; "Hotkeys" toggle of the group |
 
 Not captured yet: the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

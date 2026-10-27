@@ -58,7 +58,13 @@
     </div>
   }
 
-  @if (parsed(); as parsedItem) {
+  @if (target() === 'stash-search') {
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      <div #fitContent class="flex flex-col">
+        <app-stash-panel />
+      </div>
+    </div>
+  } @else if (parsed(); as parsedItem) {
     @if (target() === 'item-check') {
       <div class="min-h-0 flex-1 overflow-y-auto">
         <div #fitContent class="flex flex-col">

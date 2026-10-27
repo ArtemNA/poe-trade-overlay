@@ -192,7 +192,7 @@ export const DEFAULT_CHAT_COMMANDS: Array<{ text: string; hotkey: string | null;
 export const DEFAULT_GAME_TITLE = 'Path of Exile';
 
 /** What a hotkey does: open a check of the hovered item, or act on it without the popup. */
-export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search'] as const;
+export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search', 'stash-panel'] as const;
 export type HotkeyAction = (typeof HOTKEY_ACTIONS)[number];
 
 /** Hotkeys in `tauri-plugin-global-shortcut` format (modifiers + `KeyboardEvent.code`); null = none. */
@@ -206,11 +206,47 @@ export const DEFAULT_HOTKEYS: Record<HotkeyAction, string | null> = {
   poedb: null,
   'craft-of-exile': null,
   'stash-search': null,
+  /** The stash search presets; APT shows them in its overlay mode (Shift+Space) instead. */
+  'stash-panel': 'Alt+KeyF',
 };
+
+/**
+ * Stash search presets (APT `WidgetStashSearch.vue defaultInstances`). APT's "Reflect" preset
+ * looked for map reflect mods, which left the game (FINDINGS F-39): "less Recovery" takes its place.
+ */
+export const DEFAULT_STASH_SEARCH = [
+  {
+    id: 1,
+    title: 'Map rolling',
+    enableHotkeys: true,
+    entries: [
+      { id: 1, name: '', text: '"Pack Size: +3"', hotkey: null },
+      { id: 2, name: '', text: '"less Recovery"', hotkey: null },
+      { id: 3, name: '', text: '"Cannot Leech Life"', hotkey: null },
+      { id: 4, name: '', text: '"Cannot Leech Mana"', hotkey: null },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Dump sorting',
+    enableHotkeys: true,
+    entries: [
+      { id: 1, name: '', text: 'Currency', hotkey: null },
+      { id: 2, name: '', text: '"Divination Card"', hotkey: null },
+      { id: 3, name: '', text: 'Fossil', hotkey: null },
+      { id: 4, name: '', text: '"Map Tier"', hotkey: null },
+      { id: 5, name: '', text: '"Map Device" "Rarity: Normal"', hotkey: null },
+      { id: 6, name: '', text: 'Tane Laboratory', hotkey: null },
+    ],
+  },
+];
+/** The game's stash search takes at most this many characters (APT marks longer texts red). */
+export const STASH_SEARCH_MAX_LENGTH = 250;
 
 /** Popup widths the item check asks for (logical pixels); the height follows the content. */
 export const ITEM_CHECK_WIDTH = 380;
 export const MAP_CHECK_WIDTH = 440;
+export const STASH_PANEL_WIDTH = 360;
 
 /** Map check (APT `map-check/MapCheck.vue`): maps whose boss counts for a Maven's Invitation. */
 export const MEMORY_MAPS = ['Courtyard of Wasting', 'Chambers of Impurity', 'Theatre of Lies'];

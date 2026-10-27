@@ -2,7 +2,7 @@
 
 Each release takes its "What's new" from the section of its tag.
 
-## Unreleased
+## v0.1.6
 
 - Related items of an item with mods (uniques such as Farrul's Fur) can be folded into one line, "Related · 4", by a click on their heading.
 - Related items are found for linked uniques too: poe.ninja names those by links ("6L"), the sets by base.

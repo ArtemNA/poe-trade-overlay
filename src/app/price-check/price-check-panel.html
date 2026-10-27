@@ -1,6 +1,6 @@
 <div class="flex min-h-0 flex-1">
   <!-- Filters -->
-  <div class="flex w-[340px] flex-col border-r border-line">
+  <div class="flex w-[420px] flex-col border-r border-line">
     <div class="flex flex-col items-center border-y px-2.5 pt-2 pb-1.5" [style.background]="plate().plate" [style.border-color]="plate().rule">
       <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ view().name }}</span>
       @if (view().baseType) {
@@ -49,7 +49,7 @@
     }
 
     @if (active(); as preset) {
-      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5">
+      <div #filtersScroll class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5">
         <!-- Stat filters -->
         <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'stats', title: 'Stat filters', aside: 'min · max' }" />
         @if (open().stats) {
@@ -417,6 +417,12 @@
 <ng-template #statRow let-stat let-nested="nested">
   <label class="flex items-center gap-2 px-1 py-1" [class.pl-5]="nested" [class.bg-mod/[0.06]]="!stat.disabled">
     <input type="checkbox" class="size-3.5 accent-gold" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
+    @if (fracturedState(stat); as fractured) {
+      <button class="flex h-4 w-4 flex-none items-center justify-center border text-[10px] leading-none"
+        [class]="fractured === 'on' ? 'border-[#a29160] bg-[#3a3220] text-[#e2d29a]' : 'border-line text-muted opacity-40 hover:opacity-100'"
+        [title]="fractured === 'on' ? 'Searched as a fractured mod: click to search it as a regular one' : 'Click to search it as a fractured mod'"
+        [attr.aria-pressed]="fractured === 'on'" (click)="$event.preventDefault(); toggleFractured(stat)">F</button>
+    }
     @if (statTag(stat); as tag) {
       <span class="border border-line-strong px-1 text-[10px] text-muted">{{ tag }}</span>
     }

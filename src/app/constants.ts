@@ -54,6 +54,15 @@ export const POE_BROWSER_HOST = 'www.pathofexile.com';
 /** Error text when pathofexile.com answers with a Cloudflare check instead of data; the UI offers the browser. */
 export const CLOUDFLARE_CHECK_ERROR = 'pathofexile.com asks to confirm you are human (Cloudflare)';
 
+/** Id and label of the price check preset with every mod on its own (no pseudo totals). */
+export const MODS_PRESET_ID = 'mods';
+export const MODS_PRESET_LABEL = 'Mods';
+
+/** Price check window (logical px): its height follows the filters, between these two. */
+export const PRICE_CHECK_WIDTH = 960;
+export const PRICE_CHECK_MIN_HEIGHT = 590;
+export const PRICE_CHECK_MAX_HEIGHT = 900;
+
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;
 /** Buyout currency filter choices in the settings; values are trade API price options. */

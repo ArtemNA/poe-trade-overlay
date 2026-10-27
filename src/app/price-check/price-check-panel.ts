@@ -1,15 +1,25 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, effect, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import type { ParsedItem } from '@/parser';
-import type { FilterNumeric, FilterOrGroup, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
+import type { FilterNumeric, FilterOrGroup, FilterTag, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
 import {
   apiToSatisfySearch,
   RATE_LIMIT_RULES,
   RATE_LIMIT_RULES_REVISION,
   tradeTag,
 } from '../../lib/apt/web/price-check/trade/common';
-import { CLOUDFLARE_CHECK_ERROR, CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
+import {
+  CLOUDFLARE_CHECK_ERROR,
+  CURRENCY_COLOR_OTHER,
+  CURRENCY_COLORS,
+  MODS_PRESET_ID,
+  MODS_PRESET_LABEL,
+  PRICE_CHECK_MAX_HEIGHT,
+  PRICE_CHECK_MIN_HEIGHT,
+  PRICE_CHECK_WIDTH,
+  RARITY_COLORS,
+} from '../constants';
 import { currencyRates, toChaos } from '../core/currency-rates';
 import {
   autoCurrency,
@@ -232,10 +242,53 @@ export class PriceCheckPanel {
     return [trade.offline ? 'online & offline' : 'online', trade.merchantOnly ? 'instant buyout' : 'any listing'].join(' · ');
   });
 
+  private readonly filtersScroll = viewChild<ElementRef<HTMLElement>>('filtersScroll');
+
   constructor() {
     effect(() => {
       const item = this.item();
       untracked(() => this.start(item));
+    });
+    this.fitHeightToFilters();
+  }
+
+  /**
+   * The window is as tall as the filters need (within PRICE_CHECK_MIN/MAX_HEIGHT and the game),
+   * so items with many mods do not scroll. Watches the filter list for any change.
+   */
+  private fitHeightToFilters(): void {
+    let frame = 0;
+    let lastHeight = 0;
+    const fit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const scroller = this.filtersScroll()?.nativeElement;
+        if (!scroller) return;
+        const content = Array.from(scroller.children).reduce((sum, child) => {
+          const style = getComputedStyle(child);
+          return sum + child.getBoundingClientRect().height + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+        }, 0);
+        const wanted = window.innerHeight - scroller.clientHeight + Math.ceil(content);
+        const height = Math.min(PRICE_CHECK_MAX_HEIGHT, Math.max(PRICE_CHECK_MIN_HEIGHT, wanted));
+        if (height === lastHeight) return;
+        lastHeight = height;
+        void host.fitPopup(PRICE_CHECK_WIDTH, height);
+      });
+    };
+    const observer = new MutationObserver(fit);
+    effect(() => {
+      observer.disconnect();
+      this.item(); // a new item: fit again even if the list looks the same
+      lastHeight = 0;
+      const scroller = this.filtersScroll()?.nativeElement;
+      if (scroller) {
+        observer.observe(scroller, { childList: true, subtree: true, attributes: true, characterData: true });
+        fit();
+      }
+    });
+    inject(DestroyRef).onDestroy(() => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
     });
   }
 
@@ -272,7 +325,7 @@ export class PriceCheckPanel {
   }
 
   protected presetLabel(id: string): string {
-    return t(id);
+    return id === MODS_PRESET_ID ? MODS_PRESET_LABEL : t(id);
   }
 
   protected isOpen(key: string): boolean {
@@ -356,7 +409,24 @@ export class PriceCheckPanel {
   /** Short tag before non-explicit stats ("implicit", "crafted", …); none for item properties (APT `showTag`). */
   protected statTag(filter: StatFilter): string {
     const untagged = ['explicit', 'pseudo', 'property', 'mercenary-support'];
-    return untagged.includes(filter.tag) ? '' : t(`filters.tag_${filter.tag.replace('-', '_')}`);
+    if (untagged.includes(filter.tag) || this.fracturedState(filter)) return ''; // the F button shows fractured
+    return t(`filters.tag_${filter.tag.replace('-', '_')}`);
+  }
+
+  /** A mod the trade site knows both as explicit and as fractured: 'on' while searched as fractured. */
+  protected fracturedState(filter: StatFilter): 'on' | 'off' | null {
+    if (filter.tag !== 'explicit' && filter.tag !== 'fractured') return null;
+    const ids = filter.sources[0]?.stat.stat.trade.ids;
+    if (!ids?.explicit || !ids?.fractured) return null;
+    return filter.tag === 'fractured' ? 'on' : 'off';
+  }
+
+  protected toggleFractured(filter: StatFilter): void {
+    const type = filter.tag === 'fractured' ? 'explicit' : 'fractured';
+    const ids = filter.sources[0].stat.stat.trade.ids;
+    filter.tag = type as FilterTag;
+    filter.tradeId = ids[type];
+    this.markChanged();
   }
 
   protected rollValue(filter: StatFilter, which: 'min' | 'max'): number | '' | undefined {

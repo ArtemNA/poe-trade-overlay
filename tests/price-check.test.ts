@@ -17,7 +17,7 @@ describe('createItemPresets', () => {
   it('builds pseudo stat filters for a rare ring', () => {
     const presets = createItemPresets(parse(items.RARE_RING), 'Allflame');
     expect(presets.active).toBe('filters.preset_pseudo');
-    expect(presets.presets.map((p) => p.id)).toEqual(['filters.preset_pseudo', 'filters.preset_base_item']);
+    expect(presets.presets.map((p) => p.id)).toEqual(['filters.preset_pseudo', 'mods', 'filters.preset_base_item']);
 
     const stats = activePreset(presets).stats as StatFilter[];
     const byRef = (ref: string) => stats.find((s) => s.statRef === ref);
@@ -26,6 +26,16 @@ describe('createItemPresets', () => {
     // Cold (implicit) + fire + lightning resistances merge into one pseudo stat.
     expect(byRef('+#% total Elemental Resistance')).toMatchObject({ disabled: false, roll: { value: 110, min: 99 } });
     expect(byRef('+#% total to Fire Resistance')).toMatchObject({ disabled: true, hidden: 'filters.hide_ele_res' });
+  });
+
+  it('has a Mods preset with every mod on its own instead of pseudo totals', () => {
+    const presets = createItemPresets(parse(items.RARE_RING), 'Allflame');
+    const mods = presets.presets.find((p) => p.id === 'mods')!.stats as StatFilter[];
+    const refs = mods.map((s) => s.statRef);
+    expect(refs).toContain('+# to maximum Life');
+    expect(refs).toContain('+#% to Fire Resistance');
+    expect(refs).not.toContain('+# total maximum Life');
+    expect(mods.every((s) => s.tag !== 'pseudo')).toBe(true);
   });
 
   it('uses the selected league and merchant-only listings', () => {

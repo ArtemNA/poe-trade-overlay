@@ -2,6 +2,12 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## v0.1.4
+
+- Price check: a **Mods** tab next to Pseudo, with every mod on its own ("+70 to maximum Life", "+18 to Strength") instead of pseudo totals ("+79 total maximum Life").
+- Price check: an **F** button on mods that also exist as fractured: search the mod as fractured, or as a regular one.
+- The price check window is wider (960 px, so mod texts fit) and as tall as its filters need, up to 900 px: items with many mods no longer scroll.
+
 ## v0.1.3
 
 - The repository is now [ArtemNA/price-of-exile](https://github.com/ArtemNA/price-of-exile): updates and release links use the new address (the old one still redirects).

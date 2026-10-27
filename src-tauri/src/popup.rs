@@ -131,7 +131,7 @@ mod tests {
         );
         assert_eq!(
             (left.x, left.y, left.width, left.height),
-            (24, 108, 820, 590)
+            (24, 108, 960, 590)
         );
         let right = geometry(
             GAME,
@@ -141,7 +141,7 @@ mod tests {
             default_size(CheckTarget::PriceCheck),
             false,
         );
-        assert_eq!(right.x, 1920 - 24 - 820);
+        assert_eq!(right.x, 1920 - 24 - 960);
     }
 
     #[test]
@@ -154,7 +154,7 @@ mod tests {
             default_size(CheckTarget::PriceCheck),
             false,
         );
-        assert_eq!((scaled.width, scaled.height), (1025, 738));
+        assert_eq!((scaled.width, scaled.height), (1200, 738));
         let small = Rect {
             x: 100,
             y: 50,
@@ -201,7 +201,7 @@ mod tests {
             default_size(CheckTarget::PriceCheck),
             true,
         );
-        assert_eq!((rect.x, rect.y), ((1920 - 820) / 2, 108));
+        assert_eq!((rect.x, rect.y), ((1920 - 960) / 2, 108));
     }
 
     #[test]

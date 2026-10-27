@@ -63,5 +63,9 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `14-settings-general-version.png` | Settings, General: version and "Check for updates"; the new app icon in the title bar |
 | `14-settings-log.png` | Settings, Log: "Show the log file" |
 | `14-start-message.png` | The message in the screen corner when the overlay starts (4.5 s, click opens the settings) |
+| `15-price-check-many-mods-fitted.png` | Boots with many mods: the window grew to fit the filters, no scroll; F buttons, the fractured mod twice (explicit and F on) |
+| `15-price-check-pseudo.png` | Shield, Pseudo tab: "+79 total maximum Life" from life and strength |
+| `15-price-check-mods-preset.png` | The same shield, Mods tab: life (crafted) and strength on their own |
+| `15-price-check-fractured-toggle.png` | F turned on for "74% increased Chance to Block": searched as fractured |
 
 Not captured yet: the tray menu and the update banner (no release to update to yet), the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

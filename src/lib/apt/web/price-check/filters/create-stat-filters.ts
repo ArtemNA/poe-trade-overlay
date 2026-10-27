@@ -139,6 +139,7 @@ export function initUiModFilters (
   item: ParsedItem,
   opts: {
     searchStatRange: number
+    noPseudo?: boolean // [port] the "Mods" preset: every mod on its own, no pseudo totals
   }
 ): FilterOrGroup[] {
   const ctx: FiltersCreationContext = {
@@ -160,7 +161,7 @@ export function initUiModFilters (
     filterBasePercentile(ctx)
   }
   filterMemoryStrands(ctx, 'hide_memory_strands')
-  if (item.info.refName !== 'Split Personality') {
+  if (item.info.refName !== 'Split Personality' && !opts.noPseudo) { // [port] noPseudo
     filterPseudo(ctx)
   }
   if (item.uniqueBase?.refName === 'Timeless Jewel') {

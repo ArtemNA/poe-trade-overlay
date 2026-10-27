@@ -47,7 +47,7 @@ pub const MAIN_WINDOW: &str = "main";
 pub const POPUP_WINDOW: &str = "popup";
 
 /// Price check window size in logical pixels (shrinks to fit a smaller game window).
-pub const POPUP_WIDTH_LOGICAL: f64 = 820.0;
+pub const POPUP_WIDTH_LOGICAL: f64 = 960.0;
 pub const POPUP_HEIGHT_LOGICAL: f64 = 590.0;
 /// Item check window size in logical pixels; it is vertically centred on the game.
 pub const ITEM_CHECK_WIDTH_LOGICAL: f64 = 380.0;

@@ -1,8 +1,13 @@
 import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { getName, getVersion } from '@tauri-apps/api/app';
+import { appLogDir, join } from '@tauri-apps/api/path';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, PopupPosition, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH } from '../constants';
 import { Leagues } from '../core/leagues';
-import { type ChatCommand, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
+import { type ChatCommand, isFirstStart, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
+import { updates } from '../core/updates';
 import { ForegroundEvent, host } from '../host';
 import { MapModsEditor } from '../map-check/map-mods-editor';
 import { hotkeyConflicts } from './hotkey';
@@ -76,7 +81,14 @@ export class SettingsWindow {
     }),
   );
 
+  protected readonly updates = updates;
+  protected readonly version = signal('');
+
   constructor() {
+    // The window starts hidden (the app lives in the tray): show it once after installing.
+    if (isFirstStart()) void getCurrentWindow().show().then(() => getCurrentWindow().setFocus());
+    void getVersion().then((version) => this.version.set(version));
+    void updates.checkOnStart();
     void this.loadLeagues();
     host.getStatus().then((status) => this.gameActive.set(status.gameActive));
 
@@ -167,6 +179,11 @@ export class SettingsWindow {
 
   protected removeGroup(groupId: number): void {
     updateSettings({ stashSearch: settings().stashSearch.filter((group) => group.id !== groupId) });
+  }
+
+  /** The log file of the host, in the app's log folder (tauri-plugin-log names it after the app). */
+  protected async openLogFolder(): Promise<void> {
+    await revealItemInDir(await join(await appLogDir(), `${await getName()}.log`));
   }
 
   protected openBrowser(): void {

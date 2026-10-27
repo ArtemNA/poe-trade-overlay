@@ -7,12 +7,13 @@ mod platform;
 mod popup;
 mod stash;
 mod state;
+mod tray;
 
 use std::collections::HashMap;
 
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
-use constants::{BROWSER_WINDOW, DEV_IDENTIFIER_SUFFIX, MAIN_WINDOW};
+use constants::{BROWSER_WINDOW, DEV_IDENTIFIER_SUFFIX, LOG_MAX_BYTES, MAIN_WINDOW};
 use platform::ForegroundInfo;
 use state::AppState;
 
@@ -178,13 +179,21 @@ fn stash_search(app: AppHandle, text: String) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // First: a second launch only brings up the settings of the running one.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tray::show_settings(app);
+        }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .manage(AppState::default())
         .plugin(
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Info)
+                .max_file_size(LOG_MAX_BYTES)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
                 .build(),
         )
         .plugin(hotkeys::plugin())
@@ -203,12 +212,18 @@ pub fn run() {
             let identifier = &app.config().identifier;
             if cfg!(debug_assertions) && !identifier.ends_with(DEV_IDENTIFIER_SUFFIX) {
                 return Err(format!(
-                    "debug build with the release identifier {identifier}: start it with `npm run dev`,                      so it does not use the settings of an installed release"
+                    "debug build with the release identifier {identifier}: start it with `npm run dev`, so it does not use the settings of an installed release"
                 )
                 .into());
             }
             let handle = app.handle().clone();
             popup::init(&handle)?;
+            tray::init(&handle)?;
+            // The settings window starts hidden (the app lives in the tray); the page shows it on
+            // the first start. Dev builds show it right away.
+            if cfg!(debug_assertions) {
+                tray::show_settings(&handle);
+            }
 
             let watcher_handle = handle.clone();
             platform::watch_foreground(move |info| on_foreground(&watcher_handle, info));
@@ -216,10 +231,12 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // The hidden popup would otherwise keep the process alive.
-            if window.label() == MAIN_WINDOW && matches!(event, WindowEvent::CloseRequested { .. })
-            {
-                window.app_handle().exit(0);
+            // Closing the settings window keeps the app running in the tray; Quit is in its menu.
+            if window.label() == MAIN_WINDOW {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
             }
             // Closing the built-in browser only hides it: its page keeps serving trade requests.
             if window.label() == BROWSER_WINDOW {

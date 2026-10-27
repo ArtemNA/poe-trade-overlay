@@ -129,6 +129,12 @@ interface Persistence {
   broadcast(value: Settings): Promise<void>;
 }
 let persistence: Persistence | null = null;
+let firstStart = false;
+
+/** No settings file was there: the app was just installed. */
+export function isFirstStart(): boolean {
+  return firstStart;
+}
 
 /**
  * Loads the settings before the app starts (call once per window). Without Tauri (unit tests)
@@ -142,6 +148,7 @@ export async function initSettings(): Promise<void> {
   let stored = await store.get<unknown>(SETTINGS_STORE_KEY);
   if (stored === undefined) {
     stored = readLegacy();
+    firstStart = stored === undefined;
   }
   const settings = upgradeSettings(stored);
   state.set(settings);

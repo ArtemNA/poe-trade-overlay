@@ -16,6 +16,7 @@
         "title": "PoE Trade Overlay",
         "width": 900,
         "height": 640,
+        "visible": false,
         "resizable": true
       },
       {
@@ -39,13 +40,34 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "nsis"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true,
+    "publisher": "ArtemNA",
+    "shortDescription": "Path of Exile price check overlay",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY0QzlGRkU3OURBMDk3NDUKUldSRmw2Q2Q1Ly9KOU9SUTl3dXViWUJyNnprZmVTeG5rUzcvUTNtdUI4VGZEYVlNUWZWMCtyemwK",
+      "endpoints": [
+        "https://github.com/ArtemNA/poe-trade-overlay/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

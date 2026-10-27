@@ -199,6 +199,9 @@ export const DEFAULT_CHAT_COMMANDS: Array<{ text: string; hotkey: string | null;
 export type PopupPosition = 'center' | 'opposite-cursor';
 export const DEFAULT_POPUP_POSITION: PopupPosition = 'center';
 
+/** Identifier suffix of dev builds (`tauri.dev.conf.json`), see `src-tauri/src/constants.rs`. */
+export const DEV_IDENTIFIER_SUFFIX = '.dev';
+
 /** Exact title of the game window (APT `windowTitle`). */
 export const DEFAULT_GAME_TITLE = 'Path of Exile';
 

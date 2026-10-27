@@ -14,6 +14,15 @@
       }
     </ul>
     <span class="flex-1"></span>
+    @if (updates.status() === 'available' || updates.status() === 'installing') {
+      <div class="mx-3 mb-0 flex flex-col gap-1.5 border border-gold bg-[#2a2218] px-2.5 py-2 text-[12px]">
+        <span class="text-gold-soft">Version {{ updates.version() }} is out</span>
+        <button class="h-7 border border-gold bg-linear-to-b from-[#a7823f] to-[#7a5c26] font-semibold text-[#1a1208] disabled:opacity-60"
+          [disabled]="updates.status() === 'installing'" (click)="updates.install()">
+          {{ updates.status() === 'installing' ? 'Installing…' : 'Install and restart' }}
+        </button>
+      </div>
+    }
     <div class="m-3 flex items-center gap-2 border px-2.5 py-1.5 text-[12px]"
       [class]="gameActive() ? 'border-[#2f5a32] bg-[#14261a] text-good' : 'border-line bg-panel text-muted'">
       <span class="size-2 rounded-full" [class]="gameActive() ? 'bg-good' : 'bg-muted'"></span>
@@ -81,6 +90,21 @@
                 placeholder="Name#1234" [value]="settings().accountName" (blur)="setAccountName(account.value)" (keydown.enter)="setAccountName(account.value)" />
               <span class="text-[12px] text-muted">Your own listings are marked in the price check.</span>
             </label>
+
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">Version</span>
+              <div class="flex items-center gap-3">
+                <span class="tabular-nums">{{ version() }}</span>
+                <button class="h-7 border border-line-strong bg-raised px-3 hover:border-gold disabled:opacity-50"
+                  [disabled]="updates.status() === 'checking' || updates.status() === 'installing'" (click)="updates.check()">Check for updates</button>
+                @switch (updates.status()) {
+                  @case ('checking') { <span class="text-muted">Checking…</span> }
+                  @case ('latest') { <span class="text-good">Up to date</span> }
+                  @case ('available') { <span class="text-gold-soft">{{ updates.version() }} is out: install it from the left</span> }
+                  @case ('error') { <span class="text-bad" [title]="updates.error() ?? ''">Could not check for updates</span> }
+                }
+              </div>
+            </div>
           </div>
         }
 
@@ -254,6 +278,10 @@
         }
 
         @case ('log') {
+          <div class="mb-2 flex items-center gap-3">
+            <span class="flex-1 text-muted">Hotkeys, foreground changes and requests of this session. The log file keeps the latest 2 MB.</span>
+            <button class="h-7 border border-line-strong bg-raised px-3 hover:border-gold" (click)="openLogFolder()">Show the log file</button>
+          </div>
           <ol class="min-h-0 flex-1 overflow-auto border border-line bg-well p-2 font-mono text-[12px]">
             @for (line of log(); track $index) {
               <li><span class="text-muted">{{ line.time }}</span> {{ line.text }}</li>

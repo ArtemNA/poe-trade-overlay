@@ -15,6 +15,13 @@ installed release. A debug build started with the release identifier (plain `tau
 Testing without the game: run `scripts/fake-game.ps1` and start the app with `POE_GAME_TITLE="PoE Fake Game"`
 (and `POE_KEEP_POPUP=1` for screenshots); see the comments in `scripts/`.
 
+## Releases
+
+Push a tag that matches `version` in `src-tauri/tauri.conf.json` (`git tag v0.1.0 && git push origin v0.1.0`):
+`.github/workflows/release.yml` builds the NSIS installer, signs it for the updater and publishes the release
+with `latest.json`. The signing key is the repository secret `TAURI_SIGNING_PRIVATE_KEY`; its public half is in
+`tauri.conf.json`. Bump `version` in `tauri.conf.json`, `Cargo.toml` and `package.json` together.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

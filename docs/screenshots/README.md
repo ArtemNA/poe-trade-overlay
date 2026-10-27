@@ -60,5 +60,7 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `08-unidentified-unique-picker.png` | Unidentified unique Simple Robe: which of its four uniques |
 | `08-unidentified-unique-picked.png` | After picking Tabula Rasa: the price check for it, Unidentified filter on |
 | `08-unidentified-unique-single.png` | Occultist's Vestment: its only unique (Shavronne's Wrappings) picked without asking |
+| `14-settings-general-version.png` | Settings, General: version and "Check for updates"; the new app icon in the title bar |
+| `14-settings-log.png` | Settings, Log: "Show the log file" |
 
-Not captured yet: the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.
+Not captured yet: the tray menu and the update banner (no release to update to yet), the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

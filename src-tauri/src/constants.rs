@@ -32,6 +32,10 @@ pub const BROWSER_POLL_DELAY: Duration = Duration::from_millis(25);
 pub const BROWSER_LOAD_TIMEOUT: Duration = Duration::from_secs(20);
 pub const BROWSER_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Log file size before it is started over (only the latest file is kept).
+pub const LOG_MAX_BYTES: u128 = 2 * 1024 * 1024;
+pub const TRAY_ID: &str = "main";
+
 /// Window labels, as declared in `tauri.conf.json`.
 pub const MAIN_WINDOW: &str = "main";
 pub const POPUP_WINDOW: &str = "popup";

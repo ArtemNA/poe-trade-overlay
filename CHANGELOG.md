@@ -4,7 +4,7 @@ Each release takes its "What's new" from the section of its tag.
 
 ## Unreleased
 
-- Related items of an item with mods (uniques such as Farrul's Fur) are folded into one line, "Related · 4", opened by a click. Currencies, fragments and cards still show them open.
+- Related items of an item with mods (uniques such as Farrul's Fur) can be folded into one line, "Related · 4", by a click on their heading.
 - Related items are found for linked uniques too: poe.ninja names those by links ("6L"), the sets by base.
 
 ## v0.1.5

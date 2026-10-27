@@ -319,12 +319,13 @@ export class PriceCheckPanel {
     return group && !('error' in group) && group.related.length ? group : null;
   });
 
-  /** Items with mods keep the related list folded into one line until clicked; the rest show it open. */
-  protected readonly relatedOpen = signal(false);
-  protected readonly relatedFolded = computed(() => {
+  /** The related list is open; for items with mods it can be folded into one line by its heading. */
+  protected readonly relatedOpen = signal(true);
+  protected readonly relatedFoldable = computed(() => {
     const view = this.statView();
-    return !this.relatedOpen() && (view.groups.length > 0 || view.hidden.length > 0);
+    return view.groups.length > 0 || view.hidden.length > 0;
   });
+  protected readonly relatedFolded = computed(() => this.relatedFoldable() && !this.relatedOpen());
   protected readonly relatedCount = computed(() => {
     const group = this.relatedGroup();
     return group ? group.related.length + group.items.length : 0;
@@ -449,7 +450,7 @@ export class PriceCheckPanel {
     this.bulk.reset();
     this.tabChoice.set(null);
     this.error.set(null);
-    this.relatedOpen.set(false);
+    this.relatedOpen.set(true);
     const leagueId = settings().leagueId;
     if (!leagueId) {
       this.presets.set(null);

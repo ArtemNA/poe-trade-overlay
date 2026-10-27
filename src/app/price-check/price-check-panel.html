@@ -152,7 +152,7 @@
             <span class="normal-case tracking-normal">poe.ninja ▸</span>
           </button>
         } @else if (relatedGroup(); as group) {
-          <ng-container *ngTemplateOutlet="relatedList; context: { title: 'Related', entries: group.related }" />
+          <ng-container *ngTemplateOutlet="relatedList; context: { title: 'Related', entries: group.related, fold: relatedFoldable() }" />
           @if (group.items.length) {
             <ng-container *ngTemplateOutlet="relatedList; context: { title: 'Drops · turns into', entries: group.items }" />
           }
@@ -467,11 +467,15 @@
   </div>
 </ng-template>
 
-<ng-template #relatedList let-title="title" let-entries="entries">
+<ng-template #relatedList let-title="title" let-entries="entries" let-fold="fold">
   <div class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-[11px] tracking-[.06em] text-muted uppercase">
     {{ title }}
     <span class="flex-1"></span>
-    <span class="normal-case tracking-normal">poe.ninja</span>
+    @if (fold) {
+      <button class="normal-case tracking-normal hover:text-text" (click)="relatedOpen.set(false)">poe.ninja ▾</button>
+    } @else {
+      <span class="normal-case tracking-normal">poe.ninja</span>
+    }
   </div>
   <div class="grid grid-cols-2 gap-x-2 py-1">
     @for (entry of entries; track entry.name) {

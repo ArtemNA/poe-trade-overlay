@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
 import { host } from '../host';
 import { hotkeyLabel } from '../settings/hotkey';
@@ -6,6 +7,7 @@ import { hotkeyLabel } from '../settings/hotkey';
 /** Stash search presets (APT `WidgetStashSearch.vue`): a click types the text into the stash search. */
 @Component({
   selector: 'app-stash-panel',
+  imports: [TrPipe],
   templateUrl: './stash-panel.html',
   host: { class: 'flex flex-col gap-2.5 p-2.5' },
 })

@@ -1,11 +1,12 @@
 import { Component, computed, signal } from '@angular/core';
 import type { StatMatcher } from '@/web/map-check/common';
 import { MAP_CHECK_PROFILES } from '../constants';
+import { TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
 import { loadGameData } from '../game-data';
 import { allAreaMods, decisionHasColor, decisionOf, filterAreaMods, StatTag, withDecision } from './map-check';
 
-/** Marks the user can set per mod in the editor; the order of APT's columns. */
+/** Marks the user can set per mod in the editor; the order of APT's columns. `label` is English, the template translates it. */
 const COLUMNS = [
   { decision: 'w', label: 'Warning', class: 'accent-[#d9a441]' },
   { decision: 'd', label: 'Deadly', class: 'accent-[#d0503c]' },
@@ -15,6 +16,7 @@ const COLUMNS = [
 /** Settings page of the map check (APT `settings-maps.vue` + `SettingsMatcherEntry.vue`). */
 @Component({
   selector: 'app-map-mods-editor',
+  imports: [TrPipe],
   templateUrl: './map-mods-editor.html',
   host: { class: 'flex min-h-0 flex-1 flex-col gap-2' },
 })

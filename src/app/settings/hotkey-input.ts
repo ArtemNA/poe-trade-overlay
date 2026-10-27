@@ -1,9 +1,11 @@
 import { Component, input, output, signal } from '@angular/core';
+import { TrPipe } from '../core/i18n';
 import { hotkeyLabel, recordHotkey } from './hotkey';
 
 /** Hotkey field (APT `HotkeyInput.vue`): click, press the keys; Backspace clears, Esc cancels. */
 @Component({
   selector: 'app-hotkey-input',
+  imports: [TrPipe],
   template: `
     <button
       class="h-7 w-44 border px-2 text-center tabular-nums outline-none"
@@ -14,17 +16,17 @@ import { hotkeyLabel, recordHotkey } from './hotkey';
             ? 'border-[#8a3a2c] bg-well text-bad'
             : 'border-line-strong bg-well text-bright hover:border-gold'
       "
-      [attr.aria-label]="label() + ' hotkey'"
+      [attr.aria-label]="'{0} hotkey' | tr: label()"
       (click)="recording.set(true)"
       (blur)="recording.set(false)"
       (keydown)="keydown($event)"
     >
       @if (recording()) {
-        Press keys…
+        {{ 'Press keys…' | tr }}
       } @else if (value(); as hotkey) {
         {{ format(hotkey) }}
       } @else {
-        <span class="text-muted">None</span>
+        <span class="text-muted">{{ 'None' | tr }}</span>
       }
     </button>
   `,

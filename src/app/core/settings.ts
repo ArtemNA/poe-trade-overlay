@@ -5,11 +5,13 @@ import {
   DEFAULT_GAME_TITLE,
   DEFAULT_HOTKEYS,
   DEFAULT_LANG,
+  DEFAULT_UI_LANG,
   DEFAULT_MAP_CHECK,
   DEFAULT_POPUP_POSITION,
   DEFAULT_STASH_SEARCH,
   HotkeyAction,
   Lang,
+  UiLang,
   PopupPosition,
   LEGACY_SETTINGS_STORAGE_KEY,
   PRICE_CHECK_DEFAULTS,
@@ -51,6 +53,8 @@ export interface Settings {
   configVersion: number;
   leagueId?: string;
   language: Lang;
+  /** Language of the overlay's own texts (menus, buttons, hints); the game data stays `language`. */
+  uiLanguage: UiLang;
   /** Use the international (English) trade site regardless of game language. */
   useIntlSite: boolean;
   /** PoE account name: own listings are marked in results. */
@@ -81,6 +85,7 @@ export function defaultSettings(): Settings {
   return {
     configVersion: SETTINGS_VERSION,
     language: DEFAULT_LANG,
+    uiLanguage: DEFAULT_UI_LANG,
     useIntlSite: false,
     accountName: '',
     gameTitle: DEFAULT_GAME_TITLE,

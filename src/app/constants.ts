@@ -14,6 +14,19 @@ export const USER_AGENT = `${APP_NAME}/${APP_VERSION} (+${APP_CONTACT})`;
 export type Lang = 'en';
 export const DEFAULT_LANG: Lang = 'en';
 
+/**
+ * Interface language, apart from the game data language above: only the overlay's own texts
+ * change. English is the source text; the others come from public/i18n/<id>.json.
+ */
+export type UiLang = 'en' | 'uk';
+export const DEFAULT_UI_LANG: UiLang = 'en';
+export const UI_LANGS: ReadonlyArray<{ id: UiLang; label: string }> = [
+  { id: 'en', label: 'English' },
+  { id: 'uk', label: 'Українська' },
+];
+/** Interface translations folder, relative to the app base URL. */
+export const UI_I18N_PATH = 'i18n';
+
 /** Game data folder, relative to the app base URL. */
 export const DATA_PATH = 'data';
 

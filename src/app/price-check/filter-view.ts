@@ -3,6 +3,7 @@
 // header's base / corrupted switches. The filter objects stay APT's; only the view is ours.
 
 import { STAT_GROUP_OTHER, STAT_GROUPS } from '../constants';
+import { tr } from '../core/i18n';
 import type { FilterOrGroup, ItemFilters, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
 
 export type CorruptedState = 'any' | 'not' | 'only';
@@ -108,8 +109,9 @@ export function setCorrupted(filters: ItemFilters, state: CorruptedState): void 
 export function baseSwitch(filters: ItemFilters): { category: string; base: string; exact: boolean } | null {
   const relaxed = filters.searchRelaxed;
   if (!relaxed) return null;
-  const base = filters.searchExact.baseType ?? filters.searchExact.name ?? 'This base';
-  return { category: relaxed.category ? `Any ${relaxed.category}` : 'Any', base, exact: relaxed.disabled };
+  const base = filters.searchExact.baseType ?? filters.searchExact.name ?? tr('This base');
+  // The category is game data and stays as the trade site names it.
+  return { category: relaxed.category ? tr('Any {0}', relaxed.category) : tr('Any'), base, exact: relaxed.disabled };
 }
 
 export function setExactBase(filters: ItemFilters, exact: boolean): void {

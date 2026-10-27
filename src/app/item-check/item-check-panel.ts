@@ -3,7 +3,7 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import type { ParsedItem } from '@/parser';
 import { RARITY_COLORS } from '../constants';
 import { currencyRates } from '../core/currency-rates';
-import { TranslatePipe } from '../core/i18n';
+import { tr, TranslatePipe, TrPipe } from '../core/i18n';
 import { canCraftOfExile, craftOfExileUrl, poedbUrl, stashSearchText, weaponDps, wikiUrl } from '../core/item-links';
 import { formatPercent, formatValue, itemQuote } from '../core/ninja-prices';
 import { settings } from '../core/settings';
@@ -13,7 +13,7 @@ import type { ItemView } from '../popup-window/item-view';
 /** Item check (APT `ItemInfo.vue`): links to item databases, find in stash, weapon DPS, dust, poe.ninja. */
 @Component({
   selector: 'app-item-check',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TrPipe],
   templateUrl: './item-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -25,9 +25,9 @@ export class ItemCheckPanel {
 
   protected readonly plate = computed(() => RARITY_COLORS[this.view().rarity] ?? RARITY_COLORS['Normal']);
   protected readonly flags = computed(() =>
-    [this.item().isCorrupted && 'Corrupted', this.item().isMirrored && 'Mirrored', this.item().isUnidentified && 'Unidentified'].filter(
-      (flag): flag is string => Boolean(flag),
-    ),
+    [this.item().isCorrupted && 'Corrupted', this.item().isMirrored && 'Mirrored', this.item().isUnidentified && 'Unidentified']
+      .filter((flag): flag is string => Boolean(flag))
+      .map((flag) => tr(flag)),
   );
   protected readonly showCoE = computed(() => canCraftOfExile(this.item()));
   protected readonly dps = computed(() => weaponDps(this.item()));

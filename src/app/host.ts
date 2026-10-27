@@ -79,6 +79,8 @@ export const host = {
   /** The start message in the screen corner, for a few seconds. */
   showToast: () => invoke<void>('show_toast'),
   openSettings: () => invoke<void>('open_settings'),
+  /** Tray menu labels in the interface language. */
+  setTrayLabels: (labels: { settings: string; browser: string; quit: string }) => invoke<void>('set_tray_labels', { labels }),
   /** The bare exe without the installer: no self-update. */
   isPortable: () => invoke<boolean>('is_portable'),
   /** Shows the built-in browser (pathofexile.com), on `url` if given. */

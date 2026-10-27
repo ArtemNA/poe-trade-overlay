@@ -16,12 +16,42 @@ pub fn show_settings(app: &AppHandle) {
     }
 }
 
-pub fn init(app: &AppHandle) -> tauri::Result<()> {
-    let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
-    let browser = MenuItem::with_id(app, "browser", "Built-in browser", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+/// The tray menu with these labels (English until the page sends the interface language's).
+fn menu(app: &AppHandle, labels: &TrayLabels) -> tauri::Result<Menu<tauri::Wry>> {
+    let settings = MenuItem::with_id(app, "settings", &labels.settings, true, None::<&str>)?;
+    let browser = MenuItem::with_id(app, "browser", &labels.browser, true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", &labels.quit, true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&settings, &browser, &separator, &quit])?;
+    Menu::with_items(app, &[&settings, &browser, &separator, &quit])
+}
+
+#[derive(serde::Deserialize)]
+pub struct TrayLabels {
+    pub settings: String,
+    pub browser: String,
+    pub quit: String,
+}
+
+impl Default for TrayLabels {
+    fn default() -> Self {
+        Self {
+            settings: "Settings".into(),
+            browser: "Built-in browser".into(),
+            quit: "Quit".into(),
+        }
+    }
+}
+
+/// New labels after the interface language changed.
+pub fn set_labels(app: &AppHandle, labels: &TrayLabels) -> tauri::Result<()> {
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        tray.set_menu(Some(menu(app, labels)?))?;
+    }
+    Ok(())
+}
+
+pub fn init(app: &AppHandle) -> tauri::Result<()> {
+    let menu = menu(app, &TrayLabels::default())?;
 
     let mut tray = TrayIconBuilder::with_id(TRAY_ID)
         .tooltip(app.package_info().name.clone())

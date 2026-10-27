@@ -1,5 +1,5 @@
 import type { FilterNumeric, ItemFilters } from '../../lib/apt/web/price-check/filters/interfaces';
-import { t } from '../core/i18n';
+import { t, tr } from '../core/i18n';
 
 /** One item property filter row (item level, links, quality, corrupted, …). */
 export interface ItemFilterChip {
@@ -32,10 +32,10 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
 
   const relaxed = filters.searchRelaxed;
   if (relaxed) {
-    const base = filters.searchExact.baseType ?? filters.searchExact.name ?? 'base';
+    const base = filters.searchExact.baseType ?? filters.searchExact.name ?? tr('base');
     chips.push({
       key: 'base',
-      label: `Only ${base}`,
+      label: tr('Only {0}', base),
       enabled: relaxed.disabled,
       toggle: () => (relaxed.disabled = !relaxed.disabled),
     });
@@ -43,7 +43,7 @@ export function itemFilterChips(filters: ItemFilters): ItemFilterChip[] {
 
   const rarity = filters.rarity;
   if (rarity) {
-    const label = rarity.value === 'nonunique' ? 'Not unique' : rarity.value.charAt(0).toUpperCase() + rarity.value.slice(1);
+    const label = rarity.value === 'nonunique' ? tr('Not unique') : rarity.value.charAt(0).toUpperCase() + rarity.value.slice(1);
     chips.push({ key: 'rarity', label, enabled: !rarity.disabled, toggle: () => (rarity.disabled = !rarity.disabled) });
   }
 

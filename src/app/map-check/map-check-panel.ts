@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import type { ParsedItem } from '@/parser';
 import { MAP_CHECK_PROFILES, RARITY_COLORS } from '../constants';
-import { TranslatePipe } from '../core/i18n';
+import { tr, TranslatePipe, TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
 import type { ItemView } from '../popup-window/item-view';
 import { cycleDecision, type Decision, mapCheckView, modTextParts, toggleSeen } from './map-check';
@@ -10,7 +10,7 @@ import { cycleDecision, type Decision, mapCheckView, modTextParts, toggleSeen } 
 /** Map check (APT `MapCheck.vue` + `MapStatButton.vue`): the map's mods coloured by the user's marks. */
 @Component({
   selector: 'app-map-check',
-  imports: [NgTemplateOutlet, TranslatePipe],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe],
   templateUrl: './map-check-panel.html',
   host: { class: 'flex flex-col' },
 })
@@ -26,9 +26,9 @@ export class MapCheckPanel {
   protected readonly areaProps = computed(() => {
     const item = this.item();
     return [
-      item.areaItemQuantity && { label: 'Quantity', value: item.areaItemQuantity },
-      item.areaItemRarity && { label: 'Rarity', value: item.areaItemRarity },
-      item.areaPackSize && { label: 'Pack size', value: item.areaPackSize },
+      item.areaItemQuantity && { label: tr('Quantity'), value: item.areaItemQuantity },
+      item.areaItemRarity && { label: tr('Rarity'), value: item.areaItemRarity },
+      item.areaPackSize && { label: tr('Pack size'), value: item.areaPackSize },
     ].filter((prop): prop is { label: string; value: number } => Boolean(prop));
   });
 

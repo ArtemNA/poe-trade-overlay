@@ -18,7 +18,7 @@
       <span [style.color]="plate().text">{{ view().name }}</span> ·
     }
     @if (item().mapTier; as tier) {
-      Tier {{ tier }}
+      {{ 'Tier {0}' | tr: tier }}
     }
   </span>
 </ng-template>
@@ -48,7 +48,7 @@
 <div class="mx-2.5 mb-2.5 flex flex-col border border-line bg-well">
   @for (stat of map().stats; track stat.matcher) {
     <div class="flex border-l-[3px] not-last:border-b not-last:border-b-line" [class]="rowClass(stat.decision)">
-      <button class="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-1 pl-2 text-left" title="Mark: deadly → warning → good → seen → none"
+      <button class="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-1 pl-2 text-left" [title]="'Mark: deadly → warning → good → seen → none' | tr"
         (click)="cycle(stat.matcher)">
         <span class="flex w-3.5 flex-none justify-center" aria-hidden="true">
           @switch (stat.decision) {
@@ -69,10 +69,10 @@
       </button>
       @if (config().showNewStats) {
         <button class="flex w-7 flex-none items-center justify-center text-muted hover:text-bright"
-          [title]="stat.decision === '-' ? 'New mod: mark as seen' : stat.decision === 's' ? 'Seen: mark as new' : ''"
+          [title]="(stat.decision === '-' ? 'New mod: mark as seen' : stat.decision === 's' ? 'Seen: mark as new' : '') | tr"
           [disabled]="stat.decision !== '-' && stat.decision !== 's'" (click)="toggleSeen(stat.matcher)">
           @if (stat.decision === '-') {
-            <svg width="14" height="12" viewBox="0 0 14 12" aria-label="New mod"><circle cx="7" cy="6" r="3.2" fill="var(--color-gold)"/></svg>
+            <svg width="14" height="12" viewBox="0 0 14 12" [attr.aria-label]="'New mod' | tr"><circle cx="7" cy="6" r="3.2" fill="var(--color-gold)"/></svg>
           }
         </button>
       }
@@ -80,7 +80,7 @@
   }
   @for (text of map().unknown; track text) {
     <div class="border-l-[3px] border-l-transparent px-2 py-1.5 not-last:border-b not-last:border-b-line">
-      <span class="text-warn">Not recognized modifier —</span> {{ text }}
+      <span class="text-warn">{{ 'Not recognized modifier —' | tr }}</span> {{ text }}
     </div>
   }
   @if (!map().stats.length && !map().unknown.length) {

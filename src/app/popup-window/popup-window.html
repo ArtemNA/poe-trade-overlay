@@ -8,7 +8,7 @@
     @if (target() === 'price-check') {
 
     <button class="flex h-6 items-center gap-1.5 border border-line bg-raised px-2 hover:border-line-strong" (click)="toggleMenu('league')">
-      {{ settings().leagueId ?? 'No league' }}
+      {{ settings().leagueId ?? ('No league' | tr) }}
       <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 2.5l3 3 3-3" fill="none" stroke="var(--color-muted)" stroke-width="1.3" /></svg>
     </button>
 
@@ -28,7 +28,7 @@
     </button>
     }
 
-    <button aria-label="Close" class="flex h-6 w-[26px] items-center justify-center text-muted hover:text-bright" (click)="close()">
+    <button [attr.aria-label]="'Close' | tr" class="flex h-6 w-[26px] items-center justify-center text-muted hover:text-bright" (click)="close()">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 1l8 8M9 1L1 9" /></svg>
     </button>
   </header>
@@ -40,7 +40,7 @@
           {{ league.id }}
         </button>
       } @empty {
-        <span class="px-2.5 py-1.5 text-muted">{{ leagues.error() ?? 'Loading leagues…' }}</span>
+        <span class="px-2.5 py-1.5 text-muted">{{ leagues.error() ?? ('Loading leagues…' | tr) }}</span>
       }
     </div>
   }
@@ -85,9 +85,9 @@
   } @else {
     <div class="flex flex-1 items-center justify-center p-6 text-center">
       @if (error(); as message) {
-        <p class="text-bad">Cannot read this item: {{ message }}</p>
+        <p class="text-bad">{{ 'Cannot read this item: {0}' | tr: message }}</p>
       } @else {
-        <p class="text-muted">Hover an item in the game and press the price check or item check hotkey.</p>
+        <p class="text-muted">{{ 'Hover an item in the game and press the price check or item check hotkey.' | tr }}</p>
       }
     </div>
   }

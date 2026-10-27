@@ -175,6 +175,12 @@ fn show_toast(app: AppHandle) {
     toast::show_when_ready(&app);
 }
 
+/// Tray menu labels in the interface language.
+#[tauri::command]
+fn set_tray_labels(app: AppHandle, labels: tray::TrayLabels) -> Result<(), String> {
+    tray::set_labels(&app, &labels).map_err(|e| e.to_string())
+}
+
 /// The settings window (a click on the start message).
 #[tauri::command]
 fn open_settings(app: AppHandle) {
@@ -228,6 +234,7 @@ pub fn run() {
             get_status,
             set_host_config,
             show_toast,
+            set_tray_labels,
             is_portable,
             open_settings,
             browser_fetch,

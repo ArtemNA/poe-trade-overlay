@@ -4,7 +4,8 @@ import { appLogDir, join } from '@tauri-apps/api/path';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { revealItemInDir } from '@tauri-apps/plugin-opener';
-import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, PopupPosition, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH } from '../constants';
+import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, PopupPosition, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH, UI_LANGS, UiLang } from '../constants';
+import { TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { type ChatCommand, isFirstStart, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
 import { updates } from '../core/updates';
@@ -22,6 +23,7 @@ const MAX_LOG_LINES = 200;
 
 type Section = 'general' | 'hotkeys' | 'chat' | 'stash-search' | 'price-check' | 'map-check' | 'log';
 
+// Labels and hints are English texts: the template translates them with `tr`.
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'general', label: 'General' },
   { id: 'hotkeys', label: 'Hotkeys' },
@@ -46,7 +48,7 @@ const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
 /** The main window: settings (APT `SettingsWindow.vue`) and the host log. Pushes the host's part of the settings. */
 @Component({
   selector: 'app-settings-window',
-  imports: [HotkeyInput, MapModsEditor],
+  imports: [HotkeyInput, MapModsEditor, TrPipe],
   templateUrl: './settings-window.html',
 })
 export class SettingsWindow {
@@ -59,6 +61,9 @@ export class SettingsWindow {
     { value: 'opposite-cursor', label: 'Opposite the cursor' },
   ];
   protected readonly stashTextMax = STASH_SEARCH_MAX_LENGTH;
+  protected readonly uiLangs = UI_LANGS;
+  /** The chat placeholder for the last whisperer (an `@` cannot stand in template text). */
+  protected readonly lastTarget = '@last';
   protected readonly section = signal<Section>('general');
   protected readonly settings = settings;
   protected readonly leagues = inject(Leagues);
@@ -129,6 +134,10 @@ export class SettingsWindow {
   protected setGameTitle(title: string): void {
     const trimmed = title.trim();
     if (trimmed && trimmed !== settings().gameTitle) updateSettings({ gameTitle: trimmed });
+  }
+
+  protected setUiLanguage(uiLanguage: UiLang): void {
+    updateSettings({ uiLanguage });
   }
 
   protected setStartMessage(startMessage: boolean): void {

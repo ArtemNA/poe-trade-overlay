@@ -32,7 +32,7 @@ import {
   relatedItems,
   sparkline,
 } from '../core/ninja-prices';
-import { t, TranslatePipe } from '../core/i18n';
+import { t, tr, TranslatePipe, TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
 import { host } from '../host';
 import type { ItemView } from '../popup-window/item-view';
@@ -88,7 +88,7 @@ const TABS = [
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, NumInput, ItemCheckPanel, Currency],
+  imports: [NgTemplateOutlet, TranslatePipe, TrPipe, NumInput, ItemCheckPanel, Currency],
   templateUrl: './price-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -163,7 +163,8 @@ export class PriceCheckPanel {
   protected readonly rarityChip = computed(() => this.chips().find((chip) => chip.key === 'rarity') ?? null);
 
   protected chipLabel(chip: ItemFilterChip): string {
-    return ITEM_CHIP_SHORT_LABELS[chip.key] ?? chip.label;
+    const short = ITEM_CHIP_SHORT_LABELS[chip.key];
+    return short ? tr(short) : chip.label;
   }
 
   /** A unique the trade site prices by name: links and corruption decide, no stat filters. */
@@ -241,8 +242,8 @@ export class PriceCheckPanel {
     RATE_LIMIT_RULES_REVISION();
     const format = (usage?: { used: number; max: number }) => (usage ? `${usage.used}/${usage.max}` : '—');
     return this.activeTab() === 'bulk'
-      ? `Exchange ${format(limiterUsage(RATE_LIMIT_RULES.EXCHANGE))}`
-      : `Search ${format(limiterUsage(RATE_LIMIT_RULES.SEARCH))} · Fetch ${format(limiterUsage(RATE_LIMIT_RULES.FETCH))}`;
+      ? tr('Exchange {0}', format(limiterUsage(RATE_LIMIT_RULES.EXCHANGE)))
+      : tr('Search {0} · Fetch {1}', format(limiterUsage(RATE_LIMIT_RULES.SEARCH)), format(limiterUsage(RATE_LIMIT_RULES.FETCH)));
   });
 
   // Tabs
@@ -284,7 +285,7 @@ export class PriceCheckPanel {
     const date = currencyRates.updatedAt();
     if (!date) return '';
     const minutes = Math.round((Date.now() - date.getTime()) / 60000);
-    return minutes < 1 ? 'just now' : `${minutes} min ago`;
+    return minutes < 1 ? tr('updated just now') : tr('updated {0} min ago', minutes);
   }
 
   protected readonly ninjaLoading = computed(() => currencyRates.updatedAt() == null && !currencyRates.error());
@@ -345,6 +346,12 @@ export class PriceCheckPanel {
     return { text: formatValue(value, true).replace(/\s*(c|div)$/, ''), currency: value.currency === 'div' ? 'divine' : 'chaos' };
   }
 
+  /** A translated sentence split around its `{0}`, for a value shown with its own style. */
+  protected around(text: string): [string, string] {
+    const at = text.indexOf('{0}');
+    return at < 0 ? [text, ''] : [text.slice(0, at), text.slice(at + 3)];
+  }
+
   protected percent(value: number): string {
     return formatPercent(value);
   }
@@ -399,7 +406,7 @@ export class PriceCheckPanel {
   protected readonly tradeSummary = computed(() => {
     const trade = this.active()?.filters.trade;
     if (!trade) return '';
-    return [trade.offline ? 'online & offline' : 'online', trade.merchantOnly ? 'instant buyout' : 'any listing'].join(' · ');
+    return [tr(trade.offline ? 'online & offline' : 'online'), tr(trade.merchantOnly ? 'instant buyout' : 'any listing')].join(' · ');
   });
 
   private readonly filtersScroll = viewChild<ElementRef<HTMLElement>>('filtersScroll');
@@ -486,7 +493,7 @@ export class PriceCheckPanel {
   }
 
   protected presetLabel(id: string): string {
-    return id === MODS_PRESET_ID ? MODS_PRESET_LABEL : t(id);
+    return id === MODS_PRESET_ID ? tr(MODS_PRESET_LABEL) : t(id);
   }
 
   protected isOpen(key: string): boolean {
@@ -618,8 +625,8 @@ export class PriceCheckPanel {
   }
 
   protected detailHeader(rows: GroupedResult[]): string {
-    if (rows.some((r) => r.stackSize != null)) return 'Stack';
-    if (rows.some((r) => r.level != null)) return 'Lvl / Q';
+    if (rows.some((r) => r.stackSize != null)) return tr('Stack');
+    if (rows.some((r) => r.level != null)) return tr('Lvl / Q');
     return 'iLvl';
   }
 

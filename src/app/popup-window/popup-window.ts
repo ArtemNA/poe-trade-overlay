@@ -3,7 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { parseClipboard, type ParsedItem } from '@/parser';
 import { Currency } from '../shared/currency';
 import { currencyRates, divineFractions, trackCurrencyRates } from '../core/currency-rates';
-import { loadI18n } from '../core/i18n';
+import { loadI18n, tr, TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
@@ -25,7 +25,7 @@ import { ItemView, toItemView } from './item-view';
 /** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TrPipe],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -48,13 +48,15 @@ export class PopupWindow {
     return this.target() === 'item-check' && item !== null && isMapLike(item);
   });
   protected readonly title = computed(() =>
-    this.target() === 'price-check'
-      ? 'Price check'
-      : this.target() === 'stash-search'
-        ? 'Stash search'
-        : this.mapCheck()
-          ? 'Map check'
-          : 'Item check',
+    tr(
+      this.target() === 'price-check'
+        ? 'Price check'
+        : this.target() === 'stash-search'
+          ? 'Stash search'
+          : this.mapCheck()
+            ? 'Map check'
+            : 'Item check',
+    ),
   );
   /** Item and map check content; the window takes its height (see `fit`). */
   private readonly fitContent = viewChild<ElementRef<HTMLElement>>('fitContent');
@@ -174,7 +176,7 @@ export class PopupWindow {
   protected minutesAgo(date: Date | null): string {
     if (!date) return '';
     const minutes = Math.round((Date.now() - date.getTime()) / 60000);
-    return minutes < 1 ? 'just now' : `${minutes} min ago`;
+    return minutes < 1 ? tr('just now') : tr('{0} min ago', minutes);
   }
 
   protected identify(unique: BaseType): void {

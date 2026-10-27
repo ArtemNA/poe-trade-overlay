@@ -37,6 +37,12 @@ pub const LOG_MAX_BYTES: u128 = 2 * 1024 * 1024;
 pub const TRAY_ID: &str = "main";
 /// The NSIS installer puts this next to the exe; without it the exe is the portable build.
 pub const INSTALLER_UNINSTALLER: &str = "uninstall.exe";
+/// Before 0.1.2 the app was "PoE Trade Overlay" and installed into its own folder, so an update
+/// to Price of Exile left the Start menu and desktop shortcuts on the old exe (FINDINGS F-56).
+/// Shortcuts with this name that start this exe are moved to the current one.
+pub const OLD_SHORTCUT_FILE: &str = "PoE Trade Overlay.lnk";
+pub const OLD_EXE_FILE: &str = "poe-trade-overlay.exe";
+pub const SHORTCUT_FILE: &str = "Price of Exile.lnk";
 /// Start message in the screen corner: label, gap to the work area edge, how long it stays.
 pub const TOAST_WINDOW: &str = "toast";
 pub const TOAST_MARGIN_LOGICAL: f64 = 16.0;

@@ -5,6 +5,7 @@ mod constants;
 mod hotkeys;
 mod platform;
 mod popup;
+mod shortcuts;
 mod stash;
 mod state;
 mod toast;
@@ -244,6 +245,16 @@ pub fn run() {
                     "debug build with the release identifier {identifier}: start it with `npm run dev`, so it does not use the settings of an installed release"
                 )
                 .into());
+            }
+            // An install updated from "PoE Trade Overlay": its shortcuts still start the old exe.
+            if !cfg!(debug_assertions) && !is_portable() {
+                std::thread::spawn(|| {
+                    if let Ok(exe) = std::env::current_exe() {
+                        for old in shortcuts::migrate(&exe) {
+                            log::info!("Shortcut {} now starts {}", old.display(), exe.display());
+                        }
+                    }
+                });
             }
             let handle = app.handle().clone();
             popup::init(&handle)?;

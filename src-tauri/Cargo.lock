@@ -2964,7 +2964,7 @@ dependencies = [
 
 [[package]]
 name = "poe-trade-overlay"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "arboard",
  "log",

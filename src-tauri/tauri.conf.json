@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "PoE Trade Overlay",
-  "version": "0.1.1",
+  "productName": "Price of Exile",
+  "version": "0.1.2",
   "identifier": "com.artemna.poe-trade-overlay",
   "build": {
     "frontendDist": "../dist/poe-trade-overlay/browser",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "PoE Trade Overlay",
+        "title": "Price of Exile",
         "width": 900,
         "height": 640,
         "visible": false,
@@ -21,7 +21,7 @@
       },
       {
         "label": "popup",
-        "title": "PoE Trade Overlay — popup",
+        "title": "Price of Exile — popup",
         "width": 820,
         "height": 590,
         "visible": false,
@@ -35,7 +35,7 @@
       },
       {
         "label": "toast",
-        "title": "PoE Trade Overlay — started",
+        "title": "Price of Exile — started",
         "width": 340,
         "height": 92,
         "visible": false,

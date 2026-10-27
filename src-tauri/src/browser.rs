@@ -54,7 +54,7 @@ fn window(app: &AppHandle) -> Result<WebviewWindow, String> {
     }
     let url = BROWSER_HOME.parse().map_err(|e| format!("{e}"))?;
     let window = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::External(url))
-        .title("pathofexile.com — PoE Trade Overlay")
+        .title("pathofexile.com — Price of Exile")
         .inner_size(BROWSER_WIDTH_LOGICAL, BROWSER_HEIGHT_LOGICAL)
         .visible(false)
         .on_page_load(|_, payload| {

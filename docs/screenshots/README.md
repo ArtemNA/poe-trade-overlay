@@ -45,5 +45,9 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `13-item-check-rebound-hotkey.png` | Item check opened by a re-bound hotkey (Alt+Q) |
 | `13-stash-search-hotkey-fake-game.png` | Find in stash hotkey: item name typed into the fake game, no popup (whole game window) |
 | `13-price-check-exact-range.png` | Price check with the stat range set to 0 %: filters at the exact rolls |
+| `12-settings-chat.png` | Settings, Chat: the default commands |
+| `12-settings-chat-hotkeys.png` | Chat commands with hotkeys F6 and F7 set for the `@last` commands |
+| `12-chat-hideout-fake-game.png` | F5 in the fake game: `/hideout` sent, chat closed again (top of the game window) |
+| `12-chat-last-whisper-fake-game.png` | F6 and F7: `@last ty` → whisper to the last partner, `/invite @last` → `/invite LastWhisper` |
 
 Not captured yet: the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

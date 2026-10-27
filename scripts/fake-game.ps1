@@ -1,7 +1,8 @@
 # Stand-in "game" window for testing the overlay without Path of Exile.
 # Ctrl+C puts item text on the clipboard, like the game does for a hovered item. Ctrl+F opens a
-# stash search box like the game's (Enter shows what was searched); nothing else reacts to keys,
-# so stray test input cannot change anything. The item file is read on every Ctrl+C: overwrite
+# stash search box like the game's (Enter shows what was searched). Enter opens a chat box,
+# Ctrl+Enter the same box with the last whisper partner ("@LastWhisper "); Enter in it shows what
+# was sent, Esc closes it. Nothing else reacts to keys, so stray test input cannot change anything. The item file is read on every Ctrl+C: overwrite
 # it to check another item without restarting.
 #
 #   powershell -STA -File scripts/fake-game.ps1 [-ItemFile <path>] [-X <left>] [-Y <top>]
@@ -44,13 +45,20 @@ $search = New-Object Windows.Forms.TextBox
 $search.Dock = 'Top'
 $search.Font = New-Object Drawing.Font('Consolas', 14)
 $search.Visible = $false
+$chat = New-Object Windows.Forms.TextBox
+$chat.Dock = 'Bottom'
+$chat.Font = New-Object Drawing.Font('Consolas', 14)
+$chat.Visible = $false
 $form.Controls.Add($label)
 $form.Controls.Add($search)
+$form.Controls.Add($chat)
 $searched = ''
+$sent = @()
 
 function Update-Label {
   $text = "PoE Fake Game - hover anywhere and press the price check hotkey.`r`nCtrl+C copies:`r`n`r`n$item"
   if ($searched) { $text = "Stash search: $searched`r`n`r`n$text" }
+  if ($sent.Count) { $text = (($sent | ForEach-Object { "Chat sent: $_" }) -join "`r`n") + "`r`n`r`n$text" }
   $label.Text = $text
 }
 
@@ -66,12 +74,44 @@ $search.Add_KeyDown({
   }
 })
 
+function Open-Chat([string]$text) {
+  $chat.Text = $text
+  $chat.Visible = $true
+  $chat.Focus()
+  $chat.SelectionStart = $chat.Text.Length
+}
+
+$chat.Add_KeyDown({
+  param($sender, $e)
+  if ($e.KeyCode -eq 'Return') {
+    if ($chat.Text) { $script:sent = @($sent + $chat.Text | Select-Object -Last 3) }
+    $chat.Visible = $false
+    $form.Focus()
+    Update-Label
+    $e.Handled = $true
+    $e.SuppressKeyPress = $true
+  } elseif ($e.KeyCode -eq 'Escape') {
+    $chat.Visible = $false
+    $form.Focus()
+    $e.Handled = $true
+    $e.SuppressKeyPress = $true
+  } elseif ($e.Control -and $e.KeyCode -eq 'A') {
+    $chat.SelectAll()
+    $e.Handled = $true
+    $e.SuppressKeyPress = $true
+  }
+})
+
 $form.Add_KeyDown({
   param($sender, $e)
   if ($e.Control -and $e.KeyCode -eq 'C') {
     $script:item = [IO.File]::ReadAllText($ItemFile)
     [Windows.Forms.Clipboard]::SetText($item)
     $e.Handled = $true
+  } elseif ($e.KeyCode -eq 'Return' -and -not $chat.Visible -and -not $search.Visible) {
+    Open-Chat ($(if ($e.Control) { '@LastWhisper ' } else { '' }))
+    $e.Handled = $true
+    $e.SuppressKeyPress = $true
   } elseif ($e.Control -and $e.KeyCode -eq 'F') {
     $search.Visible = $true
     $search.SelectAll()

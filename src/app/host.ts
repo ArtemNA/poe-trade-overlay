@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { HotkeyAction } from './constants';
+import type { ChatCommand } from './core/settings';
 
 /**
  * Whether the popup currently holds the keyboard. Tracked here rather than read from
@@ -48,8 +49,8 @@ export interface Status {
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
   /** Game window title and hotkeys from the settings; returns a message per unusable hotkey. */
-  setHostConfig: (gameTitle: string, hotkeys: Record<HotkeyAction, string | null>) =>
-    invoke<string[]>('set_host_config', { gameTitle, hotkeys }),
+  setHostConfig: (gameTitle: string, hotkeys: Record<HotkeyAction, string | null>, commands: ChatCommand[]) =>
+    invoke<string[]>('set_host_config', { gameTitle, hotkeys, commands }),
   hidePopup: () => invoke<void>('hide_popup'),
   /** The popup takes the keyboard (for typing into a field); false if Windows refused. */
   popupFocusInput: async () => (popupHasKeyboard = await invoke<boolean>('popup_focus_input')),

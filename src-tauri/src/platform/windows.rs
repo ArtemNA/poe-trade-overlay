@@ -9,8 +9,8 @@ use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_KEYUP,
-    MAPVK_VK_TO_VSC, MapVirtualKeyW, SendInput, VIRTUAL_KEY, VK_ESCAPE,
+    INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
+    KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, MapVirtualKeyW, SendInput, VIRTUAL_KEY, VK_ESCAPE,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GWL_EXSTYLE,
@@ -182,6 +182,11 @@ pub mod vk {
     pub const SHIFT: u16 = 0x10;
     pub const LWIN: u16 = 0x5B;
     pub const RETURN: u16 = 0x0D;
+    pub const ESCAPE: u16 = 0x1B;
+    pub const HOME: u16 = 0x24;
+    pub const UP: u16 = 0x26;
+    pub const DELETE: u16 = 0x2E;
+    pub const A: u16 = 0x41;
     pub const C: u16 = 0x43;
     pub const F: u16 = 0x46;
     pub const V: u16 = 0x56;
@@ -193,14 +198,22 @@ pub enum KeyAction {
     Up(u16),
 }
 
+/// Page Up/Down, End, Home, the arrows, Insert, Delete.
+const EXTENDED_KEYS: [u16; 10] = [0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E];
+
 pub fn send_keys(actions: &[KeyAction]) {
     let inputs: Vec<INPUT> = actions
         .iter()
         .map(|action| {
-            let (vk, flags) = match *action {
+            let (vk, mut flags) = match *action {
                 KeyAction::Down(vk) => (vk, KEYBD_EVENT_FLAGS(0)),
                 KeyAction::Up(vk) => (vk, KEYEVENTF_KEYUP),
             };
+            // Without the flag, the scan codes of Home, Delete and the arrows are the numpad
+            // ones: with Num Lock on a game reading scan codes would get digits.
+            if EXTENDED_KEYS.contains(&vk) {
+                flags |= KEYEVENTF_EXTENDEDKEY;
+            }
             // Some games read scan codes rather than virtual keys, so send both.
             let scan = unsafe { MapVirtualKeyW(vk as u32, MAPVK_VK_TO_VSC) } as u16;
             INPUT {

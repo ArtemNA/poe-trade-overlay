@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import type { MapCheckConfig } from '@/web/map-check/common';
 import {
+  DEFAULT_CHAT_COMMANDS,
   DEFAULT_GAME_TITLE,
   DEFAULT_HOTKEYS,
   DEFAULT_LANG,
@@ -25,6 +26,13 @@ export interface PriceCheckSettings {
   smartInitialSearch: boolean;
 }
 
+/** A chat command (APT `Config.commands`): `text` is typed into the chat, `send` presses Enter. */
+export interface ChatCommand {
+  text: string;
+  hotkey: string | null;
+  send: boolean;
+}
+
 export interface Settings {
   configVersion: number;
   leagueId?: string;
@@ -36,6 +44,7 @@ export interface Settings {
   /** Exact title of the game window. */
   gameTitle: string;
   hotkeys: Record<HotkeyAction, string | null>;
+  commands: ChatCommand[];
   priceCheck: PriceCheckSettings;
   /** Map check profile and marked map mods (APT `ItemCheckWidget.maps`). */
   mapCheck: MapCheckConfig;
@@ -51,6 +60,7 @@ export function defaultSettings(): Settings {
     accountName: '',
     gameTitle: DEFAULT_GAME_TITLE,
     hotkeys: { ...DEFAULT_HOTKEYS },
+    commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
     priceCheck: { searchStatRange, merchantOnly, collapseListings, activateStockFilter, defaultCurrency, smartInitialSearch },
     mapCheck: DEFAULT_MAP_CHECK,
   };
@@ -70,6 +80,7 @@ export function upgradeSettings(raw: unknown): Settings {
     ...stored,
     configVersion: SETTINGS_VERSION,
     hotkeys: { ...defaults.hotkeys, ...stored.hotkeys },
+    commands: Array.isArray(stored.commands) ? stored.commands : defaults.commands,
     priceCheck: { ...defaults.priceCheck, ...stored.priceCheck },
     mapCheck: { ...defaults.mapCheck, ...stored.mapCheck },
   };

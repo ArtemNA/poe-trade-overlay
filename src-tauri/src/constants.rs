@@ -31,6 +31,12 @@ pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
 /// The popup's top edge sits this share of the game height below the game's top.
 pub const POPUP_TOP_RATIO: f64 = 0.1;
 
+/// Chat commands (APT `text-box.ts`): the last whisper partner, at the start or end of a command.
+pub const CHAT_PLACEHOLDER_LAST: &str = "@last";
+/// First characters the game clears the chat input for by itself: global, party, whisper,
+/// trade, guild channels and commands.
+pub const CHAT_AUTO_CLEAR: [char; 6] = ['#', '%', '@', '$', '&', '/'];
+
 /// The clipboard is put back this long after a stash search pasted into the game (APT `RESTORE_AFTER`).
 pub const CLIPBOARD_RESTORE_AFTER: Duration = Duration::from_millis(120);
 /// Wait for the game to have the keyboard again after the popup gave it back, before typing into it.

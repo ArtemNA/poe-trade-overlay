@@ -1,3 +1,4 @@
+mod chat;
 mod clipboard;
 mod constants;
 mod hotkeys;
@@ -76,17 +77,18 @@ fn get_status(state: tauri::State<AppState>) -> Status {
     }
 }
 
-/// Settings the host needs (APT `update-host-config`): the game window title and the hotkeys.
+/// Settings the host needs (APT `update-host-config`): game window title, hotkeys, chat commands.
 /// Returns a message for every hotkey that cannot be used.
 #[tauri::command]
 fn set_host_config(
     app: AppHandle,
     game_title: String,
     hotkeys: HashMap<hotkeys::HotkeyAction, Option<String>>,
+    commands: Vec<hotkeys::ChatHotkey>,
 ) -> Vec<String> {
     app.state::<AppState>()
         .set_game_title(game_title.trim().to_string());
-    let errors = hotkeys::set_hotkeys(&app, &hotkeys);
+    let errors = hotkeys::set_hotkeys(&app, &hotkeys, &commands);
     // The title may now match (or no longer match) the window in front.
     on_foreground(&app, platform::current_foreground());
     errors

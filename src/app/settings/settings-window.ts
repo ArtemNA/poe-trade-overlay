@@ -2,7 +2,7 @@ import { Component, computed, DestroyRef, effect, inject, signal } from '@angula
 import { listen } from '@tauri-apps/api/event';
 import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, SEARCH_STAT_RANGE_MAX } from '../constants';
 import { Leagues } from '../core/leagues';
-import { type PriceCheckSettings, settings, updateSettings } from '../core/settings';
+import { type ChatCommand, type PriceCheckSettings, settings, updateSettings } from '../core/settings';
 import { ForegroundEvent, host } from '../host';
 import { MapModsEditor } from '../map-check/map-mods-editor';
 import { hotkeyConflicts } from './hotkey';
@@ -15,11 +15,12 @@ interface LogLine {
 
 const MAX_LOG_LINES = 200;
 
-type Section = 'general' | 'hotkeys' | 'price-check' | 'map-check' | 'log';
+type Section = 'general' | 'hotkeys' | 'chat' | 'price-check' | 'map-check' | 'log';
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'general', label: 'General' },
   { id: 'hotkeys', label: 'Hotkeys' },
+  { id: 'chat', label: 'Chat' },
   { id: 'price-check', label: 'Price check' },
   { id: 'map-check', label: 'Map check' },
   { id: 'log', label: 'Log' },
@@ -54,7 +55,13 @@ export class SettingsWindow {
   protected readonly log = signal<LogLine[]>([]);
   /** Messages from the host about hotkeys it could not register. */
   protected readonly hotkeyErrors = signal<string[]>([]);
-  protected readonly conflicts = computed(() => hotkeyConflicts(settings().hotkeys));
+  /** Hotkey owners that share a key: action ids and `chat-<index>` for chat commands. */
+  protected readonly conflicts = computed(() =>
+    hotkeyConflicts({
+      ...settings().hotkeys,
+      ...Object.fromEntries(settings().commands.map((command, i) => [`chat-${i}`, command.hotkey])),
+    }),
+  );
 
   constructor() {
     void this.loadLeagues();
@@ -62,9 +69,9 @@ export class SettingsWindow {
 
     // The host keeps no settings of its own: every change of the title or the hotkeys goes there.
     effect(() => {
-      const { gameTitle, hotkeys } = settings();
+      const { gameTitle, hotkeys, commands } = settings();
       host
-        .setHostConfig(gameTitle, hotkeys)
+        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()))
         .then((errors) => {
           this.hotkeyErrors.set(errors);
           return host.getStatus();
@@ -96,6 +103,18 @@ export class SettingsWindow {
 
   protected setHotkey(action: HotkeyAction, hotkey: string | null): void {
     updateSettings({ hotkeys: { ...settings().hotkeys, [action]: hotkey } });
+  }
+
+  protected updateCommand(index: number, patch: Partial<ChatCommand>): void {
+    updateSettings({ commands: settings().commands.map((command, i) => (i === index ? { ...command, ...patch } : command)) });
+  }
+
+  protected addCommand(): void {
+    updateSettings({ commands: [...settings().commands, { text: '', hotkey: null, send: true }] });
+  }
+
+  protected removeCommand(index: number): void {
+    updateSettings({ commands: settings().commands.filter((_, i) => i !== index) });
   }
 
   protected setPriceCheck(patch: Partial<PriceCheckSettings>): void {

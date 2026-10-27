@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use tauri_plugin_global_shortcut::Shortcut;
 
 use crate::constants::{DEFAULT_GAME_TITLE, ENV_GAME_TITLE, ENV_KEEP_POPUP};
-use crate::hotkeys::HotkeyAction;
+use crate::hotkeys::Binding;
 use crate::platform::RawHwnd;
 use crate::popup::Placement;
 
@@ -13,7 +13,7 @@ pub struct AppState {
     /// Set from `ENV_GAME_TITLE`: the settings do not change the title then.
     game_title_fixed: bool,
     /// Hotkeys from the settings and what they do.
-    hotkeys: Mutex<Vec<(Shortcut, HotkeyAction)>>,
+    hotkeys: Mutex<Vec<(Shortcut, Binding)>>,
     /// Foreground game window, 0 when the game is not active.
     game_hwnd: AtomicIsize,
     popup_hwnd: AtomicIsize,
@@ -56,14 +56,11 @@ impl AppState {
         }
     }
 
-    pub fn hotkeys(&self) -> Vec<(Shortcut, HotkeyAction)> {
+    pub fn hotkeys(&self) -> Vec<(Shortcut, Binding)> {
         self.hotkeys.lock().unwrap().clone()
     }
     /// Returns the previous list.
-    pub fn replace_hotkeys(
-        &self,
-        list: Vec<(Shortcut, HotkeyAction)>,
-    ) -> Vec<(Shortcut, HotkeyAction)> {
+    pub fn replace_hotkeys(&self, list: Vec<(Shortcut, Binding)>) -> Vec<(Shortcut, Binding)> {
         std::mem::replace(&mut *self.hotkeys.lock().unwrap(), list)
     }
     pub fn is_game_window(&self, title: &str) -> bool {

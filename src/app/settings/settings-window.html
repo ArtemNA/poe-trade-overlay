@@ -94,6 +94,34 @@
           </div>
         }
 
+        @case ('chat') {
+          <div class="flex max-w-2xl flex-col">
+            <p class="mb-3 text-muted">
+              A hotkey types the text into the game chat. <span class="text-bright">&#64;last</span> is the player who whispered you last:
+              "&#64;last ty" whispers them, "/invite &#64;last" invites them.
+            </p>
+            @for (command of settings().commands; track $index; let i = $index) {
+              <div class="flex items-center gap-3 border-b border-line py-2">
+                <input #text class="h-7 min-w-0 flex-1 border border-line-strong bg-well px-2 text-bright outline-none focus:border-gold"
+                  placeholder="/hideout" [attr.aria-label]="'Chat command ' + (i + 1)" [value]="command.text"
+                  (blur)="updateCommand(i, { text: text.value })" (keydown.enter)="updateCommand(i, { text: text.value })" />
+                <label class="flex items-center gap-1.5 text-[12px] text-muted" title="Press Enter after typing">
+                  <input type="checkbox" class="accent-[#c9a15a]" [checked]="command.send" (change)="updateCommand(i, { send: $any($event.target).checked })" />
+                  Send
+                </label>
+                @if (conflicts().has('chat-' + i)) {
+                  <span class="text-[12px] text-bad">Used twice</span>
+                }
+                <app-hotkey-input [value]="command.hotkey" [label]="command.text || 'Chat command'" [invalid]="conflicts().has('chat-' + i)"
+                  (changed)="updateCommand(i, { hotkey: $event })" />
+                <button class="flex size-7 items-center justify-center text-muted hover:text-bad" [attr.aria-label]="'Remove ' + (command.text || 'command')"
+                  (click)="removeCommand(i)">✕</button>
+              </div>
+            }
+            <button class="mt-3 h-8 self-start border border-line-strong bg-raised px-3 hover:border-gold" (click)="addCommand()">Add command</button>
+          </div>
+        }
+
         @case ('price-check') {
           <div class="flex max-w-xl flex-col gap-5">
             <div class="flex flex-col gap-1.5">

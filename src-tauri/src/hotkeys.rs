@@ -10,6 +10,7 @@ use tauri::plugin::TauriPlugin;
 use tauri::{AppHandle, Emitter, Manager, Wry};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
+use crate::chat::{self, ChatCommand};
 use crate::constants::POPUP_WINDOW;
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
@@ -41,6 +42,21 @@ impl HotkeyAction {
             _ => None,
         }
     }
+}
+
+/// What a registered hotkey is bound to.
+#[derive(Clone)]
+pub enum Binding {
+    Item(HotkeyAction),
+    Chat(ChatCommand),
+}
+
+/// A chat command as the settings page sends it.
+#[derive(serde::Deserialize)]
+pub struct ChatHotkey {
+    hotkey: Option<String>,
+    #[serde(flatten)]
+    command: ChatCommand,
 }
 
 /// Which popup a check opens (APT `copy-item` targets).
@@ -132,10 +148,13 @@ pub fn plugin() -> TauriPlugin<Wry> {
                 .hotkeys()
                 .into_iter()
                 .find(|(s, _)| s == shortcut);
-            if let Some((shortcut, action)) = found {
+            if let Some((shortcut, binding)) = found {
                 let app = app.clone();
-                // Clipboard polling sleeps, keep it off the event loop.
-                std::thread::spawn(move || check_item(&app, &shortcut, action));
+                // Clipboard polling and typing sleep, keep them off the event loop.
+                std::thread::spawn(move || match binding {
+                    Binding::Item(action) => check_item(&app, &shortcut, action),
+                    Binding::Chat(command) => chat_command(&app, &shortcut, &command),
+                });
             }
         })
         .build()
@@ -168,31 +187,45 @@ pub fn set_game_hotkeys(app: &AppHandle, enabled: bool) {
 }
 
 /// Parses the hotkeys from the settings. Returns the usable ones and a message for each
-/// that does not parse. A hotkey set for two actions works for the first one only; the
-/// settings page marks such pairs itself.
+/// that does not parse. A hotkey set twice works for the first use only (item actions in
+/// declaration order, then chat commands in list order); the settings page marks such pairs itself.
 pub fn parse_hotkeys(
     config: &HashMap<HotkeyAction, Option<String>>,
-) -> (Vec<(Shortcut, HotkeyAction)>, Vec<String>) {
-    let mut list: Vec<(Shortcut, HotkeyAction)> = Vec::new();
+    commands: &[ChatHotkey],
+) -> (Vec<(Shortcut, Binding)>, Vec<String>) {
+    let mut list: Vec<(Shortcut, Binding)> = Vec::new();
     let mut errors = Vec::new();
     let mut entries: Vec<_> = config
         .iter()
         .filter_map(|(action, text)| Some((*action, text.as_deref()?)))
         .collect();
     entries.sort_by_key(|(action, _)| *action);
-    for (action, text) in entries {
+    let bindings = entries
+        .into_iter()
+        .map(|(action, text)| (text, Binding::Item(action)))
+        .chain(commands.iter().filter_map(|command| {
+            Some((
+                command.hotkey.as_deref()?,
+                Binding::Chat(command.command.clone()),
+            ))
+        }));
+    for (text, binding) in bindings {
         match Shortcut::from_str(text) {
             Err(e) => errors.push(format!("{text}: {e}")),
             Ok(shortcut) if list.iter().any(|(s, _)| *s == shortcut) => {}
-            Ok(shortcut) => list.push((shortcut, action)),
+            Ok(shortcut) => list.push((shortcut, binding)),
         }
     }
     (list, errors)
 }
 
 /// New hotkeys from the settings: unregister the old ones, register the new ones if the game is active.
-pub fn set_hotkeys(app: &AppHandle, config: &HashMap<HotkeyAction, Option<String>>) -> Vec<String> {
-    let (list, errors) = parse_hotkeys(config);
+pub fn set_hotkeys(
+    app: &AppHandle,
+    config: &HashMap<HotkeyAction, Option<String>>,
+    commands: &[ChatHotkey],
+) -> Vec<String> {
+    let (list, errors) = parse_hotkeys(config, commands);
     let state = app.state::<AppState>();
     let game_active = state.game_hwnd().is_some();
     for (shortcut, _) in state.replace_hotkeys(list.clone()) {
@@ -202,6 +235,15 @@ pub fn set_hotkeys(app: &AppHandle, config: &HashMap<HotkeyAction, Option<String
         set_registered(app, shortcut, game_active);
     }
     errors
+}
+
+fn chat_command(app: &AppHandle, shortcut: &Shortcut, command: &ChatCommand) {
+    let Some(game) = app.state::<AppState>().game_hwnd() else {
+        return;
+    };
+    if let Err(e) = chat::type_in_chat(game, command, &held_keys(shortcut)) {
+        log_to_ui(app, format!("Chat command failed: {e}"));
+    }
 }
 
 fn check_item(app: &AppHandle, shortcut: &Shortcut, action: HotkeyAction) {
@@ -262,40 +304,53 @@ mod tests {
             .collect()
     }
 
+    fn chat(hotkey: Option<&str>, text: &str) -> ChatHotkey {
+        ChatHotkey {
+            hotkey: hotkey.map(str::to_owned),
+            command: ChatCommand {
+                text: text.to_owned(),
+                send: true,
+            },
+        }
+    }
+
     #[test]
     fn parses_the_settings_format() {
-        let (list, errors) = parse_hotkeys(&config(&[
-            (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
-            (HotkeyAction::Wiki, Some("Alt+Shift+Digit1")),
-            (HotkeyAction::Poedb, None),
-        ]));
+        let (list, errors) = parse_hotkeys(
+            &config(&[
+                (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
+                (HotkeyAction::Wiki, Some("Alt+Shift+Digit1")),
+                (HotkeyAction::Poedb, None),
+            ]),
+            &[chat(Some("F5"), "/hideout"), chat(None, "@last ty")],
+        );
         assert!(errors.is_empty(), "{errors:?}");
-        assert_eq!(list.len(), 2);
+        assert_eq!(list.len(), 3);
         let wiki = list
             .iter()
-            .find(|(_, a)| *a == HotkeyAction::Wiki)
+            .find(|(_, b)| matches!(b, Binding::Item(HotkeyAction::Wiki)))
             .unwrap()
             .0;
         assert_eq!(
             wiki,
             Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Digit1)
         );
+        assert!(matches!(&list[2],
+            (s, Binding::Chat(c)) if *s == Shortcut::new(None, Code::F5) && c.text == "/hideout"));
     }
 
     #[test]
     fn skips_bad_and_repeated_hotkeys() {
-        let (list, errors) = parse_hotkeys(&config(&[
-            (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
-            (HotkeyAction::ItemCheck, Some("Ctrl+KeyD")),
-            (HotkeyAction::Wiki, Some("Ctrl+Nonsense")),
-        ]));
-        assert_eq!(
-            list,
-            vec![(
-                Shortcut::new(Some(Modifiers::CONTROL), Code::KeyD),
-                HotkeyAction::PriceCheck
-            )]
+        let (list, errors) = parse_hotkeys(
+            &config(&[
+                (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
+                (HotkeyAction::ItemCheck, Some("Ctrl+KeyD")),
+                (HotkeyAction::Wiki, Some("Ctrl+Nonsense")),
+            ]),
+            &[chat(Some("Ctrl+KeyD"), "/hideout")],
         );
+        assert_eq!(list.len(), 1);
+        assert!(matches!(list[0].1, Binding::Item(HotkeyAction::PriceCheck)));
         assert_eq!(errors.len(), 1, "{errors:?}");
     }
 

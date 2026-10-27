@@ -178,6 +178,16 @@ export const SETTINGS_VERSION = 1;
 /** Event the window that changed the settings sends to the other windows. */
 export const SETTINGS_CHANGED_EVENT = 'settings-changed';
 
+/** Chat commands (APT `Config.ts` `commands`). `@last` is the last whisper partner. */
+export const DEFAULT_CHAT_COMMANDS: Array<{ text: string; hotkey: string | null; send: boolean }> = [
+  { text: '/hideout', hotkey: 'F5', send: true },
+  { text: '/exit', hotkey: 'F9', send: true },
+  { text: '@last ty', hotkey: null, send: true },
+  { text: '/invite @last', hotkey: null, send: true },
+  { text: '/tradewith @last', hotkey: null, send: true },
+  { text: '/hideout @last', hotkey: null, send: true },
+];
+
 /** Exact title of the game window (APT `windowTitle`). */
 export const DEFAULT_GAME_TITLE = 'Path of Exile';
 

@@ -30,7 +30,8 @@ Used parts:
   `SettingsMatcherEntry.vue`, `ui/ItemModifierText.vue` and `isMapLike` of `item-check/WidgetItemCheck.vue`.
 - `src/app/settings/*`, `src/app/core/settings.ts`: port of `settings/SettingsWindow.vue`, `settings/HotkeyInput.vue`,
   `price-check/settings-price-check.vue` and the versioned config of `web/Config.ts` (`upgradeConfig`);
-  `src-tauri/src/hotkeys.rs`: hotkeys from the settings, as `main/src/shortcuts/Shortcuts.ts`.
+  `src-tauri/src/hotkeys.rs`: hotkeys from the settings, as `main/src/shortcuts/Shortcuts.ts`;
+  `src-tauri/src/chat.rs`: port of `main/src/shortcuts/text-box.ts` `typeInChat` and `settings/chat.vue` defaults.
 - `public/images/maven-witness.png`: APT image (from Path of Exile game art, which belongs to Grinding Gear Games).
 - `scripts/make-data-indexes.mjs`: port of `renderer/src/assets/make-index-files.mjs`.
 - `public/data/en/app_i18n.json`: APT UI strings.

@@ -22,6 +22,20 @@ describe('settings', () => {
     expect(settings.hotkeys).toEqual(DEFAULT_HOTKEYS);
   });
 
+  it('gives old settings the default chat commands and keeps edited ones', () => {
+    expect(upgradeSettings({ language: 'en' }).commands.map((c) => [c.text, c.hotkey])).toEqual([
+      ['/hideout', 'F5'],
+      ['/exit', 'F9'],
+      ['@last ty', null],
+      ['/invite @last', null],
+      ['/tradewith @last', null],
+      ['/hideout @last', null],
+    ]);
+    const commands = [{ text: '/kingsmarch', hotkey: 'F6', send: true }];
+    expect(upgradeSettings({ configVersion: 1, commands }).commands).toEqual(commands);
+    expect(upgradeSettings({ configVersion: 1, commands: 'broken' }).commands).toEqual(defaultSettings().commands);
+  });
+
   it('fills missing nested fields and survives a damaged file', () => {
     const settings = upgradeSettings({ configVersion: 1, hotkeys: { wiki: 'Alt+KeyW' }, priceCheck: { searchStatRange: 5 } });
     expect(settings.hotkeys).toEqual({ ...DEFAULT_HOTKEYS, wiki: 'Alt+KeyW' });

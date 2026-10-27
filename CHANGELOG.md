@@ -4,7 +4,7 @@ Each release takes its "What's new" from the section of its tag.
 
 ## v0.1.2
 
-- New name: **Price of Exile**. After the update, Windows may still list the old "PoE Trade Overlay" in installed apps: uninstall that entry, the settings stay.
+- New name: **Price of Exile**. After the update, Windows may still list the old "PoE Trade Overlay" in installed apps: uninstall that entry and leave "Delete the application data" unchecked, so the settings stay.
 - A short message in the corner of the screen when the overlay starts: it runs, its hotkeys, where the settings are. Can be turned off in Settings → General.
 - The settings window opens on the very first start again (it stayed in the tray).
 - Portable version: a single exe that runs without installing; it shows when a new version is out instead of updating itself.

@@ -5,7 +5,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use tauri::{AppHandle, Manager};
 
-use crate::constants::{TOAST_DURATION, TOAST_MARGIN_LOGICAL, TOAST_WINDOW};
+use crate::constants::{
+    TOAST_DURATION, TOAST_MARGIN_LOGICAL, TOAST_WAIT, TOAST_WAIT_STEP, TOAST_WINDOW,
+};
 use crate::platform::{self, Rect};
 
 /// Each show restarts the timer; only the latest one hides the toast.
@@ -18,7 +20,21 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-pub fn show(app: &AppHandle) -> Result<(), String> {
+/// Shows the start message once its window exists (FINDINGS F-57), off the caller's thread.
+pub fn show_when_ready(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let started = std::time::Instant::now();
+        while app.get_webview_window(TOAST_WINDOW).is_none() && started.elapsed() < TOAST_WAIT {
+            std::thread::sleep(TOAST_WAIT_STEP);
+        }
+        if let Err(e) = show(&app) {
+            log::warn!("Start message not shown: {e}");
+        }
+    });
+}
+
+fn show(app: &AppHandle) -> Result<(), String> {
     let window = app
         .get_webview_window(TOAST_WINDOW)
         .ok_or("no toast window")?;

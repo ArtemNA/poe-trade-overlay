@@ -47,6 +47,10 @@ pub const SHORTCUT_FILE: &str = "Price of Exile.lnk";
 pub const TOAST_WINDOW: &str = "toast";
 pub const TOAST_MARGIN_LOGICAL: f64 = 16.0;
 pub const TOAST_DURATION: Duration = Duration::from_millis(4500);
+/// The settings page asks for the start message while the toast window may not exist yet (a
+/// release build loads the page faster than the windows are created): wait for it this long.
+pub const TOAST_WAIT: Duration = Duration::from_secs(5);
+pub const TOAST_WAIT_STEP: Duration = Duration::from_millis(50);
 
 /// Window labels, as declared in `tauri.conf.json`.
 pub const MAIN_WINDOW: &str = "main";

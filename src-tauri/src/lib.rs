@@ -171,8 +171,8 @@ fn is_portable() -> bool {
 
 /// The start message in the screen corner.
 #[tauri::command]
-fn show_toast(app: AppHandle) -> Result<(), String> {
-    toast::show(&app)
+fn show_toast(app: AppHandle) {
+    toast::show_when_ready(&app);
 }
 
 /// The settings window (a click on the start message).

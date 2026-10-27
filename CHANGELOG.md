@@ -4,6 +4,7 @@ Each release takes its "What's new" from the section of its tag.
 
 ## Unreleased
 
+- Fix: the start message in the screen corner did not show in installed builds.
 - Installs updated from "PoE Trade Overlay" (before 0.1.2): the Start menu and desktop shortcuts that still started the old version now start Price of Exile.
 - Fix: Corrupted / Not corrupted, the base switch, the iLvl and links chips, "Not unique", the stat count and the trade options summary change at once on a click, not only after switching between Pseudo and Mods.
 

@@ -38,8 +38,16 @@ fn on_foreground(app: &AppHandle, info: ForegroundInfo) {
     let state = app.state::<AppState>();
     if info.is_own_process && info.hwnd == state.popup_hwnd() {
         // Expected only while the user types into the popup; otherwise it is WS_EX_NOACTIVATE.
+        // Windows still lets a click activate it right after our own main window was in front
+        // (FINDINGS F-44): give the keyboard straight back to the game.
         if !state.popup_focused() {
-            log_to_ui(app, "WARNING: popup became the foreground window".into());
+            log_to_ui(
+                app,
+                "WARNING: popup became the foreground window, focusing the game".into(),
+            );
+            if let Some(game) = state.game_hwnd() {
+                platform::focus(game);
+            }
         }
         // Keep the game state as is.
         return;
@@ -78,7 +86,7 @@ fn get_status(state: tauri::State<AppState>) -> Status {
 }
 
 /// Settings the host needs (APT `update-host-config`): game window title, hotkeys, chat commands
-/// and stash search presets.
+/// and stash search presets, and where the popup goes ("center" or "opposite-cursor").
 /// Returns a message for every hotkey that cannot be used.
 #[tauri::command]
 fn set_host_config(
@@ -87,9 +95,11 @@ fn set_host_config(
     hotkeys: HashMap<hotkeys::HotkeyAction, Option<String>>,
     commands: Vec<hotkeys::ChatHotkey>,
     stash_presets: Vec<hotkeys::StashHotkey>,
+    popup_position: String,
 ) -> Vec<String> {
-    app.state::<AppState>()
-        .set_game_title(game_title.trim().to_string());
+    let state = app.state::<AppState>();
+    state.set_game_title(game_title.trim().to_string());
+    state.set_popup_centred(popup_position != "opposite-cursor");
     let errors = hotkeys::set_hotkeys(&app, &hotkeys, &commands, &stash_presets);
     // The title may now match (or no longer match) the window in front.
     on_foreground(&app, platform::current_foreground());

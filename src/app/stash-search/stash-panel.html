@@ -3,10 +3,16 @@
     <div class="flex items-center gap-2 px-0.5">
       <span class="flex-1 truncate font-display text-[14px] text-gold-soft">{{ group.title || 'Untitled' }}</span>
       @if (hasHotkeys(group)) {
-        <label class="flex items-center gap-1.5 text-[11px] text-muted" title="The presets' own hotkeys">
-          <input type="checkbox" class="accent-[#c9a15a]" [checked]="group.enableHotkeys" (change)="toggleHotkeys(group.id, $any($event.target).checked)" />
+        <!-- A button, not a checkbox: focusing a real input would activate the popup and take the game's focus. -->
+        <button class="flex items-center gap-1.5 text-[11px] text-muted hover:text-bright" title="The presets' own hotkeys"
+          [attr.aria-pressed]="group.enableHotkeys" (mousedown)="$event.preventDefault()" (click)="toggleHotkeys(group.id, !group.enableHotkeys)">
+          <span class="flex size-3 items-center justify-center border" [class]="group.enableHotkeys ? 'border-gold bg-gold' : 'border-line-strong bg-well'">
+            @if (group.enableHotkeys) {
+              <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 4l2 2 4-4" fill="none" stroke="#1a1208" stroke-width="1.6" /></svg>
+            }
+          </span>
           Hotkeys
-        </label>
+        </button>
       }
     </div>
     @for (entry of group.entries; track entry.id) {

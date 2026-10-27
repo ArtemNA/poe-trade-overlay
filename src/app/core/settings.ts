@@ -6,9 +6,11 @@ import {
   DEFAULT_HOTKEYS,
   DEFAULT_LANG,
   DEFAULT_MAP_CHECK,
+  DEFAULT_POPUP_POSITION,
   DEFAULT_STASH_SEARCH,
   HotkeyAction,
   Lang,
+  PopupPosition,
   LEGACY_SETTINGS_STORAGE_KEY,
   PRICE_CHECK_DEFAULTS,
   SETTINGS_CHANGED_EVENT,
@@ -53,6 +55,7 @@ export interface Settings {
   accountName: string;
   /** Exact title of the game window. */
   gameTitle: string;
+  popupPosition: PopupPosition;
   hotkeys: Record<HotkeyAction, string | null>;
   commands: ChatCommand[];
   stashSearch: StashSearchGroup[];
@@ -70,6 +73,7 @@ export function defaultSettings(): Settings {
     useIntlSite: false,
     accountName: '',
     gameTitle: DEFAULT_GAME_TITLE,
+    popupPosition: DEFAULT_POPUP_POSITION,
     hotkeys: { ...DEFAULT_HOTKEYS },
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
     stashSearch: structuredClone(DEFAULT_STASH_SEARCH),

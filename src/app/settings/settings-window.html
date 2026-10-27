@@ -47,6 +47,18 @@
             </label>
 
             <div class="flex flex-col gap-1.5">
+              <span class="text-bright">Popup position</span>
+              <div class="flex gap-1">
+                @for (option of positions; track option.value) {
+                  <button class="h-8 border px-3"
+                    [class]="settings().popupPosition === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().popupPosition === option.value" (click)="setPopupPosition(option.value)">{{ option.label }}</button>
+                }
+              </div>
+              <span class="text-[12px] text-muted">Opposite the cursor is how Awakened PoE Trade places it: the popup never covers the item. A click into the game outside the popup closes it.</span>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
               <span class="text-bright">League</span>
               <div class="flex gap-2">
                 <select class="h-8 flex-1 border border-line-strong bg-well px-1.5 text-bright outline-none focus:border-gold"

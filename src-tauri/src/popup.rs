@@ -27,13 +27,43 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
         let inner = handle.clone();
         let _ = handle.run_on_main_thread(move || hide(&inner, true));
     });
+
+    let handle = app.clone();
+    platform::watch_clicks(move |point| {
+        // Runs inside the mouse hook: decide fast, post the work.
+        let state = handle.state::<AppState>();
+        if !clicked_outside_in_game(&state, point) {
+            return false;
+        }
+        log::info!("[focus] click outside the popup");
+        let inner = handle.clone();
+        let _ = handle.run_on_main_thread(move || hide(&inner, true));
+        true
+    });
     Ok(())
 }
 
-/// Like APT: the popup sits in the half of the game window opposite to the cursor
-/// (item in the inventory on the right → popup on the left). The price check hangs from
-/// near the top, the smaller item check is centred vertically (APT anchors it at 50 %).
-/// The stash search panel is centred both ways: the stash and the inventory are open then.
+/// A click into the game but not on the popup closes the popup and does not reach the game
+/// (no walking to where the user clicked). Clicks on other windows pass as usual.
+fn clicked_outside_in_game(state: &AppState, point: Point) -> bool {
+    let Some(game) = state.game_hwnd() else {
+        return false;
+    };
+    let inside = |rect: Option<Rect>| {
+        rect.is_some_and(|r| {
+            point.x >= r.x && point.x < r.x + r.width && point.y >= r.y && point.y < r.y + r.height
+        })
+    };
+    state.popup_visible()
+        && platform::current_foreground().hwnd == game
+        && inside(platform::client_rect(game))
+        && !inside(platform::window_rect(state.popup_hwnd()))
+}
+
+/// Horizontally the popup is centred on the game (the default), or, like APT, sits in the half
+/// opposite to the cursor (item in the inventory on the right → popup on the left). The stash
+/// search panel is always centred: the stash and the inventory are both open then. Vertically
+/// the price check hangs from near the top, the smaller ones are centred (APT anchors them at 50 %).
 /// `size` is in logical pixels: the target's default, or what the page asked for (`fit`).
 pub fn geometry(
     game: Rect,
@@ -41,6 +71,7 @@ pub fn geometry(
     scale: f64,
     target: CheckTarget,
     size: (f64, f64),
+    centred: bool,
 ) -> Rect {
     let px = |logical: f64| (logical * scale).round() as i32;
     let (logical_width, logical_height) = size;
@@ -49,7 +80,7 @@ pub fn geometry(
     let height = px(logical_height).min(game.height - 2 * margin).max(0);
 
     let cursor_on_right = cursor.x > game.x + game.width / 2;
-    let x = if target == CheckTarget::StashSearch {
+    let x = if centred || target == CheckTarget::StashSearch {
         game.x + (game.width - width) / 2
     } else if cursor_on_right {
         game.x + margin
@@ -96,6 +127,7 @@ mod tests {
             1.0,
             CheckTarget::PriceCheck,
             default_size(CheckTarget::PriceCheck),
+            false,
         );
         assert_eq!(
             (left.x, left.y, left.width, left.height),
@@ -107,6 +139,7 @@ mod tests {
             1.0,
             CheckTarget::PriceCheck,
             default_size(CheckTarget::PriceCheck),
+            false,
         );
         assert_eq!(right.x, 1920 - 24 - 820);
     }
@@ -119,6 +152,7 @@ mod tests {
             1.25,
             CheckTarget::PriceCheck,
             default_size(CheckTarget::PriceCheck),
+            false,
         );
         assert_eq!((scaled.width, scaled.height), (1025, 738));
         let small = Rect {
@@ -133,6 +167,7 @@ mod tests {
             1.0,
             CheckTarget::PriceCheck,
             default_size(CheckTarget::PriceCheck),
+            false,
         );
         assert_eq!(
             (fitted.x, fitted.y, fitted.width, fitted.height),
@@ -148,11 +183,25 @@ mod tests {
             1.0,
             CheckTarget::ItemCheck,
             default_size(CheckTarget::ItemCheck),
+            false,
         );
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
             (24, (1080 - 330) / 2, 380, 330)
         );
+    }
+
+    #[test]
+    fn centred_by_default_setting() {
+        let rect = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::PriceCheck,
+            default_size(CheckTarget::PriceCheck),
+            true,
+        );
+        assert_eq!((rect.x, rect.y), ((1920 - 820) / 2, 108));
     }
 
     #[test]
@@ -163,6 +212,7 @@ mod tests {
             1.0,
             CheckTarget::StashSearch,
             (360.0, 200.0),
+            false,
         );
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
@@ -178,6 +228,7 @@ mod tests {
             1.0,
             CheckTarget::ItemCheck,
             (440.0, 600.0),
+            false,
         );
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
@@ -189,6 +240,7 @@ mod tests {
             1.0,
             CheckTarget::ItemCheck,
             (440.0, 2000.0),
+            false,
         );
         assert_eq!((tall.y, tall.height), (24, 1080 - 48));
     }
@@ -208,10 +260,18 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
     state.set_placement(placement);
     platform::show_no_activate(
         state.popup_hwnd(),
-        geometry(game, cursor, scale, target, default_size(target)),
+        geometry(
+            game,
+            cursor,
+            scale,
+            target,
+            default_size(target),
+            state.popup_centred(),
+        ),
     );
     state.set_popup_visible(true);
     platform::set_escape_enabled(true);
+    platform::set_click_watch_enabled(true);
 }
 
 /// The page measured its content (the map check grows with the mods): resize the shown popup to it,
@@ -235,7 +295,14 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
     let scale = window.scale_factor().unwrap_or(1.0);
     platform::show_no_activate(
         state.popup_hwnd(),
-        geometry(game, cursor, scale, target, (width, height)),
+        geometry(
+            game,
+            cursor,
+            scale,
+            target,
+            (width, height),
+            state.popup_centred(),
+        ),
     );
 }
 
@@ -253,6 +320,7 @@ pub fn hide(app: &AppHandle, return_focus: bool) {
     let state = app.state::<AppState>();
     log::info!("[focus] hide popup (return focus: {return_focus})");
     platform::set_escape_enabled(false);
+    platform::set_click_watch_enabled(false);
     // Hide first, then hand focus back: focusing the game while the popup still shows a
     // focused text field let the Windows text input host grab the foreground instead.
     platform::hide(state.popup_hwnd());

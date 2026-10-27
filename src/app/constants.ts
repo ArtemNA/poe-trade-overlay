@@ -188,6 +188,10 @@ export const DEFAULT_CHAT_COMMANDS: Array<{ text: string; hotkey: string | null;
   { text: '/hideout @last', hotkey: null, send: true },
 ];
 
+/** Where the popup opens: centred on the game, or in the half opposite to the cursor (APT). */
+export type PopupPosition = 'center' | 'opposite-cursor';
+export const DEFAULT_POPUP_POSITION: PopupPosition = 'center';
+
 /** Exact title of the game window (APT `windowTitle`). */
 export const DEFAULT_GAME_TITLE = 'Path of Exile';
 

@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
-import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH } from '../constants';
+import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, PopupPosition, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH } from '../constants';
 import { Leagues } from '../core/leagues';
 import { type ChatCommand, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
 import { ForegroundEvent, host } from '../host';
@@ -48,6 +48,10 @@ export class SettingsWindow {
   protected readonly hotkeyRows = HOTKEYS;
   protected readonly currencies = DEFAULT_CURRENCY_OPTIONS;
   protected readonly statRangeMax = SEARCH_STAT_RANGE_MAX;
+  protected readonly positions: Array<{ value: PopupPosition; label: string }> = [
+    { value: 'center', label: 'Centre of the game' },
+    { value: 'opposite-cursor', label: 'Opposite the cursor' },
+  ];
   protected readonly stashTextMax = STASH_SEARCH_MAX_LENGTH;
   protected readonly section = signal<Section>('general');
   protected readonly settings = settings;
@@ -77,14 +81,14 @@ export class SettingsWindow {
 
     // The host keeps no settings of its own: every change of the title or the hotkeys goes there.
     effect(() => {
-      const { gameTitle, hotkeys, commands, stashSearch } = settings();
+      const { gameTitle, hotkeys, commands, stashSearch, popupPosition } = settings();
       const stashPresets = stashSearch
         .filter((group) => group.enableHotkeys)
         .flatMap((group) => group.entries)
         .filter((entry) => entry.hotkey && entry.text.trim())
         .map((entry) => ({ hotkey: entry.hotkey!, text: entry.text }));
       host
-        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()), stashPresets)
+        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()), stashPresets, popupPosition)
         .then((errors) => {
           this.hotkeyErrors.set(errors);
           return host.getStatus();
@@ -108,6 +112,10 @@ export class SettingsWindow {
   protected setGameTitle(title: string): void {
     const trimmed = title.trim();
     if (trimmed && trimmed !== settings().gameTitle) updateSettings({ gameTitle: trimmed });
+  }
+
+  protected setPopupPosition(popupPosition: PopupPosition): void {
+    updateSettings({ popupPosition });
   }
 
   protected setAccountName(name: string): void {

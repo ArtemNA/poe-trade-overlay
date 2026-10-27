@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { HotkeyAction } from './constants';
+import type { HotkeyAction, PopupPosition } from './constants';
 import type { ChatCommand } from './core/settings';
 
 /** A stash search preset with a hotkey, for the host. */
@@ -61,7 +61,8 @@ export const host = {
     hotkeys: Record<HotkeyAction, string | null>,
     commands: ChatCommand[],
     stashPresets: StashHotkey[],
-  ) => invoke<string[]>('set_host_config', { gameTitle, hotkeys, commands, stashPresets }),
+    popupPosition: PopupPosition,
+  ) => invoke<string[]>('set_host_config', { gameTitle, hotkeys, commands, stashPresets, popupPosition }),
   hidePopup: () => invoke<void>('hide_popup'),
   /** The popup takes the keyboard (for typing into a field); false if Windows refused. */
   popupFocusInput: async () => (popupHasKeyboard = await invoke<boolean>('popup_focus_input')),

@@ -1,7 +1,7 @@
 //! All WinAPI calls live here, so other modules stay platform-agnostic.
 
 use std::sync::OnceLock;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::ClientToScreen;
@@ -15,10 +15,12 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GWL_EXSTYLE,
     GetClientRect, GetCursorPos, GetForegroundWindow, GetMessageW, GetWindowLongPtrW,
-    GetWindowTextW, GetWindowThreadProcessId, HC_ACTION, HWND_TOPMOST, KBDLLHOOKSTRUCT, MSG,
-    SW_HIDE, SWP_NOACTIVATE, SWP_SHOWWINDOW, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos,
-    SetWindowsHookExW, ShowWindow, TranslateMessage, WH_KEYBOARD_LL, WINEVENT_OUTOFCONTEXT,
-    WM_KEYDOWN, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    GetWindowRect, GetWindowTextW, GetWindowThreadProcessId, HC_ACTION, HWND_TOPMOST,
+    KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT, SW_HIDE, SWP_NOACTIVATE, SWP_SHOWWINDOW,
+    SetForegroundWindow, SetWindowLongPtrW, SetWindowPos, SetWindowsHookExW, ShowWindow,
+    TranslateMessage, WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT, WM_KEYDOWN,
+    WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_RBUTTONDOWN, WM_RBUTTONUP,
+    WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
 };
 
 fn run_message_loop() {
@@ -150,6 +152,75 @@ pub fn watch_escape(cb: impl Fn() + Send + Sync + 'static) {
 
 pub fn set_escape_enabled(enabled: bool) {
     ESCAPE_ENABLED.store(enabled, Ordering::SeqCst);
+}
+
+type ClickCb = Box<dyn Fn(Point) -> bool + Send + Sync>;
+static CLICK_CB: OnceLock<ClickCb> = OnceLock::new();
+static CLICK_ENABLED: AtomicBool = AtomicBool::new(false);
+/// Button-up message to swallow after a swallowed button-down, so the game never sees half a click.
+static SWALLOW_UP: AtomicU32 = AtomicU32::new(0);
+
+unsafe extern "system" fn on_mouse(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    if code == HC_ACTION as i32 {
+        let message = wparam.0 as u32;
+        let up = match message {
+            WM_LBUTTONDOWN => Some(WM_LBUTTONUP),
+            WM_RBUTTONDOWN => Some(WM_RBUTTONUP),
+            WM_MBUTTONDOWN => Some(WM_MBUTTONUP),
+            _ => None,
+        };
+        if let Some(up) = up {
+            if CLICK_ENABLED.load(Ordering::SeqCst) {
+                let info = unsafe { &*(lparam.0 as *const MSLLHOOKSTRUCT) };
+                let point = Point {
+                    x: info.pt.x,
+                    y: info.pt.y,
+                };
+                if CLICK_CB.get().is_some_and(|cb| cb(point)) {
+                    SWALLOW_UP.store(up, Ordering::SeqCst);
+                    return LRESULT(1);
+                }
+            }
+        } else if message != 0
+            && SWALLOW_UP
+                .compare_exchange(message, 0, Ordering::SeqCst, Ordering::SeqCst)
+                .is_ok()
+        {
+            return LRESULT(1);
+        }
+    }
+    unsafe { CallNextHookEx(None, code, wparam, lparam) }
+}
+
+/// Mouse button presses while enabled (`set_click_watch_enabled`): `cb` gets the screen point and
+/// returns true to swallow the click (press and release). `cb` must return quickly.
+pub fn watch_clicks(cb: impl Fn(Point) -> bool + Send + Sync + 'static) {
+    if CLICK_CB.set(Box::new(cb)).is_err() {
+        return;
+    }
+    std::thread::spawn(|| {
+        let _hook = unsafe {
+            let module = GetModuleHandleW(None).ok();
+            SetWindowsHookExW(WH_MOUSE_LL, Some(on_mouse), module.map(Into::into), 0)
+        };
+        run_message_loop();
+    });
+}
+
+pub fn set_click_watch_enabled(enabled: bool) {
+    CLICK_ENABLED.store(enabled, Ordering::SeqCst);
+}
+
+/// Whole window in screen coordinates (physical pixels).
+pub fn window_rect(raw: RawHwnd) -> Option<Rect> {
+    let mut rc = RECT::default();
+    unsafe { GetWindowRect(hwnd(raw), &mut rc).ok()? };
+    Some(Rect {
+        x: rc.left,
+        y: rc.top,
+        width: rc.right - rc.left,
+        height: rc.bottom - rc.top,
+    })
 }
 
 /// Client area of a window in screen coordinates (physical pixels).

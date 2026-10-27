@@ -20,6 +20,8 @@ pub struct AppState {
     popup_visible: AtomicBool,
     /// The popup temporarily has keyboard focus (the user is typing into it).
     popup_focused: AtomicBool,
+    /// Popup centred on the game rather than opposite to the cursor (settings).
+    popup_centred: AtomicBool,
     /// Guards against a second price check while the clipboard is still being polled.
     busy: AtomicBool,
     placement: Mutex<Option<Placement>>,
@@ -38,6 +40,7 @@ impl Default for AppState {
             popup_hwnd: AtomicIsize::new(0),
             popup_visible: AtomicBool::new(false),
             popup_focused: AtomicBool::new(false),
+            popup_centred: AtomicBool::new(true),
             busy: AtomicBool::new(false),
             placement: Mutex::new(None),
             keep_popup_on_blur: std::env::var(ENV_KEEP_POPUP).is_ok_and(|v| v == "1"),
@@ -100,6 +103,13 @@ impl AppState {
     }
     pub fn set_placement(&self, placement: Placement) {
         *self.placement.lock().unwrap() = Some(placement);
+    }
+
+    pub fn popup_centred(&self) -> bool {
+        self.popup_centred.load(Ordering::SeqCst)
+    }
+    pub fn set_popup_centred(&self, centred: bool) {
+        self.popup_centred.store(centred, Ordering::SeqCst);
     }
 
     /// Returns false if a check is already running.

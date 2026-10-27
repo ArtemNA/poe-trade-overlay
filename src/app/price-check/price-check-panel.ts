@@ -319,6 +319,17 @@ export class PriceCheckPanel {
     return group && !('error' in group) && group.related.length ? group : null;
   });
 
+  /** Items with mods keep the related list folded into one line until clicked; the rest show it open. */
+  protected readonly relatedOpen = signal(false);
+  protected readonly relatedFolded = computed(() => {
+    const view = this.statView();
+    return !this.relatedOpen() && (view.groups.length > 0 || view.hidden.length > 0);
+  });
+  protected readonly relatedCount = computed(() => {
+    const group = this.relatedGroup();
+    return group ? group.related.length + group.items.length : 0;
+  });
+
   /** A related item's price as an amount and a currency id for its icon. */
   protected relatedPrice(chaos: number | undefined): { text: string; currency: string } | null {
     if (chaos == null) return null;
@@ -438,6 +449,7 @@ export class PriceCheckPanel {
     this.bulk.reset();
     this.tabChoice.set(null);
     this.error.set(null);
+    this.relatedOpen.set(false);
     const leagueId = settings().leagueId;
     if (!leagueId) {
       this.presets.set(null);

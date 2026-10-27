@@ -232,13 +232,16 @@ function findItemById(id: string): BaseType | undefined {
  * (`related`) and what that set drops or turns into (`items`), with poe.ninja prices.
  */
 export function relatedItems(id: string, db: PriceDb): RelatedItems | null {
-  const drop = ITEM_DROP.find((entry) => entry.query.includes(id));
+  // poe.ninja names a variant by links ("Farrul's Fur // 6L"), the sets by base: match by name then.
+  const name = `${id.split(' // ')[0]} // `;
+  const same = (itemId: string) => itemId === id || itemId.startsWith(name);
+  const drop = ITEM_DROP.find((entry) => entry.query.includes(id)) ?? ITEM_DROP.find((entry) => entry.query.some(same));
   if (!drop) return null;
 
   const entry = (itemId: string): RelatedEntry | string => {
     const item = findItemById(itemId);
     if (!item) return `Can't find "${itemId}".`;
-    return { name: item.name, icon: item.icon, chaos: db.get(itemId)?.chaos, highlight: itemId === id };
+    return { name: item.name, icon: item.icon, chaos: db.get(itemId)?.chaos, highlight: same(itemId) };
   };
   const related: RelatedEntry[] = [];
   const items: RelatedEntry[] = [];

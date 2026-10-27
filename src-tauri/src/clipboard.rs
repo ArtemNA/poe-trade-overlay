@@ -50,3 +50,16 @@ pub fn paste_text(text: &str, paste: impl FnOnce()) -> Result<(), String> {
         None => clipboard.clear().map_err(|e| e.to_string()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn item_text_in_english_and_russian() {
+        assert!(is_poe_item("Item Class: Rings\nRarity: Rare"));
+        assert!(is_poe_item("Класс предмета: Кольца\nРедкость: Редкий"));
+        assert!(!is_poe_item("Rarity: Rare"));
+        assert!(!is_poe_item("some text"));
+    }
+}

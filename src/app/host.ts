@@ -79,6 +79,8 @@ export const host = {
   /** The start message in the screen corner, for a few seconds. */
   showToast: () => invoke<void>('show_toast'),
   openSettings: () => invoke<void>('open_settings'),
+  /** The trade site of the game language: the built-in browser opens and makes requests there. */
+  setTradeHost: (host: string) => invoke<void>('set_trade_host', { host }),
   /** Tray menu labels in the interface language. */
   setTrayLabels: (labels: { settings: string; browser: string; quit: string }) => invoke<void>('set_tray_labels', { labels }),
   /** The bare exe without the installer: no self-update. */

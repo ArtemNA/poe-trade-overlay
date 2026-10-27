@@ -81,6 +81,11 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `18-price-check-ukrainian.png` | The price check in Ukrainian; item, base and mod texts stay as the game copies them, game terms (Corrupted, Fractured, Shaper…) in English |
 | `18-settings-russian.png` | Settings, General in Russian |
 | `18-price-check-russian.png` | The price check in Russian (game terms as in the official Russian localisation of PoE) |
+| `19-settings-game-language.png` | Settings: "Game language" English / Русский apart from the interface language, the trade site it uses (ru.pathofexile.com) and "Search on the international site" |
+| `19-price-check-russian-game.png` | A rare ring copied in Russian: Russian names and mods, a live search on ru.pathofexile.com |
+| `19-bulk-russian-game.png` | Сфера хаоса (Chaos Orb) copied in Russian: bulk offers from ru.pathofexile.com |
+| `19-game-language-mismatch.png` | A Russian item while the game language is English: the popup says which one to choose |
+| `19-browser-ru-site.png` | The built-in browser with the Russian game language: it opens ru.pathofexile.com (its own Cloudflare check) |
 | `16-price-check-related-unfolded.png` | Farrul's Fur (a unique with mods): related open by default, the set with poe.ninja prices, the item itself marked (taken before the heading got its fold button ▾) |
 | `16-price-check-related-folded.png` | The same folded into one line "Related · 4" with icons |
 | `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |

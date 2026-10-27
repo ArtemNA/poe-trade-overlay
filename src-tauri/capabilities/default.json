@@ -16,6 +16,9 @@
           "url": "https://www.pathofexile.com/*"
         },
         {
+          "url": "https://ru.pathofexile.com/*"
+        },
+        {
           "url": "https://poe.ninja/*"
         }
       ]

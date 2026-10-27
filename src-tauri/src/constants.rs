@@ -18,9 +18,13 @@ pub const DEV_IDENTIFIER_SUFFIX: &str = ".dev";
 
 /// Built-in browser (FINDINGS F-45): created on first use; trade requests run inside its page.
 pub const BROWSER_WINDOW: &str = "browser";
-pub const BROWSER_HOME: &str = "https://www.pathofexile.com/trade";
-/// Origin the page must be on to make trade requests with its cookies.
-pub const BROWSER_HOST: &str = "www.pathofexile.com";
+/// The trade sites the browser may be on and make requests for (FINDINGS F-60): the page has to be
+/// on the request's host to send it with its cookies. The game language picks one (ru for Russian).
+pub const BROWSER_HOSTS: [&str; 2] = ["www.pathofexile.com", "ru.pathofexile.com"];
+/// Until the settings tell the game language's site (`set_trade_host`).
+pub const DEFAULT_TRADE_HOST: &str = "www.pathofexile.com";
+/// Page the browser opens on its host.
+pub const BROWSER_HOME_PATH: &str = "/trade";
 pub const BROWSER_WIDTH_LOGICAL: f64 = 1100.0;
 pub const BROWSER_HEIGHT_LOGICAL: f64 = 800.0;
 /// Global of the page where request results wait to be collected.
@@ -96,5 +100,5 @@ pub const CLIPBOARD_POLL_LIMIT: Duration = Duration::from_millis(500);
 /// Second attempt to give the keyboard back to the game if the first one was intercepted.
 pub const FOCUS_RETRY_DELAY: Duration = Duration::from_millis(150);
 
-/// First line of copied item text, per game language. Only EN for now.
-pub const ITEM_FIRST_LINES: &[&str] = &["Item Class: "];
+/// First line of copied item text, per game language (APT `HostClipboard.ts`): EN and RU.
+pub const ITEM_FIRST_LINES: &[&str] = &["Item Class: ", "Класс предмета: "];

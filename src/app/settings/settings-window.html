@@ -61,6 +61,24 @@
               <span class="text-[12px] text-muted">{{ "Only the overlay's own texts. Item names and mods stay as the game copies them." | tr }}</span>
             </div>
 
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">{{ 'Game language' | tr }}</span>
+              <div class="flex gap-1">
+                @for (lang of gameLangs; track lang.id) {
+                  <button class="h-8 border px-3" [attr.lang]="lang.id"
+                    [class]="settings().language === lang.id ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().language === lang.id" (click)="setGameLanguage(lang.id)">{{ lang.label }}</button>
+                }
+              </div>
+              <span class="text-[12px] text-muted">{{ 'The language your game runs in: the overlay reads the items it copies and searches the trade site {0}.' | tr: tradeSite() }}</span>
+              @if (settings().language !== 'en') {
+                <label class="mt-1 flex items-center gap-2">
+                  <input type="checkbox" class="accent-[#c9a15a]" [checked]="settings().useIntlSite" (change)="setUseIntlSite($any($event.target).checked)" />
+                  <span>{{ 'Search on the international site {0}' | tr: intlSite }}</span>
+                </label>
+              }
+            </div>
+
             <label class="flex flex-col gap-1.5">
               <span class="text-bright">{{ 'Game window title' | tr }}</span>
               <input #title class="h-8 border border-line-strong bg-well px-2 text-bright outline-none focus:border-gold"

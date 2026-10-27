@@ -6,6 +6,7 @@ import { computed, signal } from '@angular/core';
 import { ITEMS_ITERATOR } from '@/assets/data';
 import { DIVINE_FRACTIONS, POE_NINJA_BULK_TYPES, POE_NINJA_OVERVIEWS, POE_NINJA_REFRESH_MS } from '../constants';
 import { poeFetch } from './http';
+import { settings } from './settings';
 import { NinjaOverviews, PriceDb, priceDbFromNinja } from './ninja-prices';
 
 /** Chaos value per currency or stackable item name ("Divine Orb" → 342.6). */
@@ -28,14 +29,16 @@ export function divineFractions(divineChaos: number): Array<{ divine: number; ch
   return DIVINE_FRACTIONS.map((divine) => ({ divine, chaos: Math.round(divine * divineChaos) }));
 }
 
-const byTradeTag = new Map<string, { name: string; icon: string } | null>();
+/** Per game language: the names differ, the English `refName` (poe.ninja's) does not. */
+const byTradeTag = new Map<string, { name: string; refName: string; icon: string } | null>();
 
-function currencyItem(tradeTag: string): { name: string; icon: string } | null {
-  if (!byTradeTag.has(tradeTag)) {
+function currencyItem(tradeTag: string): { name: string; refName: string; icon: string } | null {
+  const key = `${settings().language}:${tradeTag}`;
+  if (!byTradeTag.has(key)) {
     const item = ITEMS_ITERATOR(`"tradeTag":"${tradeTag}"`).next().value;
-    byTradeTag.set(tradeTag, item?.tradeTag === tradeTag ? { name: item.name, icon: item.icon } : null);
+    byTradeTag.set(key, item?.tradeTag === tradeTag ? { name: item.name, refName: item.refName, icon: item.icon } : null);
   }
-  return byTradeTag.get(tradeTag) ?? null;
+  return byTradeTag.get(key) ?? null;
 }
 
 /** Trade site currency id ("chrome") → item name ("Chromatic Orb"), from the game data. */
@@ -51,7 +54,7 @@ export function currencyIcon(tradeTag: string): string | undefined {
 /** Chaos value of `amount` units of a trade currency, if poe.ninja knows it. */
 export function toChaos(amount: number, tradeTag: string, rates: ChaosRates): number | undefined {
   if (tradeTag === 'chaos') return amount;
-  const name = currencyName(tradeTag);
+  const name = currencyItem(tradeTag)?.refName;
   const rate = name ? rates.get(name) : undefined;
   return rate != null ? amount * rate : undefined;
 }

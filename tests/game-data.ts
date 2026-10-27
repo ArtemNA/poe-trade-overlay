@@ -5,10 +5,17 @@ import { init, setDataSource } from '@/assets/data';
 const dataPath = (path: string) => fileURLToPath(new URL(`../public/data/${path}`, import.meta.url));
 
 let loading: Promise<void> | undefined;
+let loadedLang: string | undefined;
 
-/** Loads public/data from disk, the way the app loads it over HTTP. */
+/** Loads public/data from disk, the way the app loads it over HTTP (each test file has its own module state). */
 export function loadGameDataFromDisk(): Promise<void> {
-  if (!loading) {
+  return loadGameDataInLanguage('en');
+}
+
+/** The same in another game language (public/data/<lang>). */
+export function loadGameDataInLanguage(lang: string): Promise<void> {
+  if (!loading || loadedLang !== lang) {
+    loadedLang = lang;
     setDataSource({
       text: (path) => readFile(dataPath(path), 'utf-8'),
       binary: async (path) => {
@@ -22,7 +29,7 @@ export function loadGameDataFromDisk(): Promise<void> {
         return (await import(/* @vite-ignore */ url)).default;
       },
     });
-    loading = init('en');
+    loading = init(lang);
   }
   return loading;
 }

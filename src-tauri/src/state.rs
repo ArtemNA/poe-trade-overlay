@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use tauri_plugin_global_shortcut::Shortcut;
 
-use crate::constants::{DEFAULT_GAME_TITLE, ENV_GAME_TITLE, ENV_KEEP_POPUP};
+use crate::constants::{DEFAULT_GAME_TITLE, DEFAULT_TRADE_HOST, ENV_GAME_TITLE, ENV_KEEP_POPUP};
 use crate::hotkeys::Binding;
 use crate::platform::RawHwnd;
 use crate::popup::Placement;
@@ -25,6 +25,8 @@ pub struct AppState {
     /// Guards against a second price check while the clipboard is still being polled.
     busy: AtomicBool,
     placement: Mutex<Option<Placement>>,
+    /// Trade site of the game language, where the built-in browser opens.
+    trade_host: Mutex<String>,
     /// See `ENV_KEEP_POPUP`.
     pub keep_popup_on_blur: bool,
 }
@@ -43,12 +45,20 @@ impl Default for AppState {
             popup_centred: AtomicBool::new(true),
             busy: AtomicBool::new(false),
             placement: Mutex::new(None),
+            trade_host: Mutex::new(DEFAULT_TRADE_HOST.into()),
             keep_popup_on_blur: std::env::var(ENV_KEEP_POPUP).is_ok_and(|v| v == "1"),
         }
     }
 }
 
 impl AppState {
+    pub fn trade_host(&self) -> String {
+        self.trade_host.lock().unwrap().clone()
+    }
+    pub fn set_trade_host(&self, host: String) {
+        *self.trade_host.lock().unwrap() = host;
+    }
+
     pub fn game_title(&self) -> String {
         self.game_title.lock().unwrap().clone()
     }

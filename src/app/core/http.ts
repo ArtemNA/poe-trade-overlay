@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
-import { CLOUDFLARE_CHECK_ERROR, POE_BROWSER_HOST, USER_AGENT } from '../constants';
+import { CLOUDFLARE_CHECK_ERROR, POE_OFFICIAL_HOSTS, USER_AGENT } from '../constants';
 import { settings } from './settings';
 
 type Fetch = typeof globalThis.fetch;
@@ -59,7 +59,7 @@ export function restrictedSeconds(headers: Headers): number {
 
 /** fetch for PoE and related sites, always with our User-Agent (or the browser's, see `browserFetch`). */
 export async function poeFetch(url: string, init: RequestInit = {}): Promise<Response> {
-  const official = new URL(url).hostname === POE_BROWSER_HOST;
+  const official = POE_OFFICIAL_HOSTS.includes(new URL(url).hostname);
   if (official && now() < restrictedUntil) {
     // Not even a request: it would only make the restriction longer.
     throw new Error(`pathofexile.com limits requests: retry in ${Math.ceil((restrictedUntil - now()) / 1000)} s`);

@@ -175,6 +175,16 @@ fn show_toast(app: AppHandle) {
     toast::show_when_ready(&app);
 }
 
+/// The trade site of the game language (www. or ru.pathofexile.com) for the built-in browser.
+#[tauri::command]
+fn set_trade_host(app: AppHandle, host: String) -> Result<(), String> {
+    if !constants::BROWSER_HOSTS.contains(&host.as_str()) {
+        return Err(format!("not a trade site: {host}"));
+    }
+    app.state::<AppState>().set_trade_host(host);
+    Ok(())
+}
+
 /// Tray menu labels in the interface language.
 #[tauri::command]
 fn set_tray_labels(app: AppHandle, labels: tray::TrayLabels) -> Result<(), String> {
@@ -235,6 +245,7 @@ pub fn run() {
             set_host_config,
             show_toast,
             set_tray_labels,
+            set_trade_host,
             is_portable,
             open_settings,
             browser_fetch,

@@ -7,6 +7,11 @@ import { LEAGUES_REFRESH_AFTER, PERMANENT_HC_LEAGUES, POE_REALM } from '../const
 import { poeFetch } from './http';
 import { settings, updateSettings } from './settings';
 
+/** The league list of the game language's site (www. or ru.pathofexile.com). */
+export function leaguesUrl(): string {
+  return `https://${poeWebApi()}/api/leagues?type=main&realm=${POE_REALM}`;
+}
+
 export interface ApiLeague {
   id: string;
   event?: boolean;
@@ -71,7 +76,7 @@ export class Leagues {
     this.isLoading.set(true);
     this.error.set(null);
     try {
-      const response = await poeFetch(`https://${poeWebApi()}/api/leagues?type=main&realm=${POE_REALM}`);
+      const response = await poeFetch(leaguesUrl());
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${JSON.stringify(Object.fromEntries(response.headers))}`);
       }

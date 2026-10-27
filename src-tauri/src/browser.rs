@@ -15,9 +15,10 @@ use tauri::webview::PageLoadEvent;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use crate::platform;
+use crate::state::AppState;
 
 use crate::constants::{
-    BROWSER_HEIGHT_LOGICAL, BROWSER_HOME, BROWSER_HOST, BROWSER_LOAD_TIMEOUT,
+    BROWSER_HEIGHT_LOGICAL, BROWSER_HOME_PATH, BROWSER_HOSTS, BROWSER_LOAD_TIMEOUT,
     BROWSER_LOG_URL_CHARS, BROWSER_POLL_DELAY, BROWSER_REPLIES_GLOBAL, BROWSER_REQUEST_TIMEOUT,
     BROWSER_WIDTH_LOGICAL, BROWSER_WINDOW as LABEL,
 };
@@ -48,11 +49,23 @@ enum PageResult {
 static LOADED: AtomicBool = AtomicBool::new(false);
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
+/// The trade page on `host` (www. or ru.pathofexile.com).
+fn home(host: &str) -> Result<tauri::Url, String> {
+    format!("https://{host}{BROWSER_HOME_PATH}")
+        .parse()
+        .map_err(|e| format!("{e}"))
+}
+
+/// Host of the page the browser shows now.
+fn page_host(window: &WebviewWindow) -> Option<String> {
+    window.url().ok()?.host_str().map(str::to_string)
+}
+
 fn window(app: &AppHandle) -> Result<WebviewWindow, String> {
     if let Some(window) = app.get_webview_window(LABEL) {
         return Ok(window);
     }
-    let url = BROWSER_HOME.parse().map_err(|e| format!("{e}"))?;
+    let url = home(&app.state::<AppState>().trade_host())?;
     let window = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::External(url))
         .title("pathofexile.com — Price of Exile")
         .inner_size(BROWSER_WIDTH_LOGICAL, BROWSER_HEIGHT_LOGICAL)
@@ -66,7 +79,7 @@ fn window(app: &AppHandle) -> Result<WebviewWindow, String> {
 }
 
 /// The request as a script for the page; the result lands in `window[global][id]`.
-fn fetch_script(id: u64, request: &BrowserRequest) -> String {
+fn fetch_script(id: u64, request: &BrowserRequest, host: &str) -> String {
     format!(
         r#"(() => {{
   const replies = (window[{global}] ??= {{}});
@@ -79,7 +92,7 @@ fn fetch_script(id: u64, request: &BrowserRequest) -> String {
   return true;
 }})()"#,
         global = json(BROWSER_REPLIES_GLOBAL),
-        host = json(BROWSER_HOST),
+        host = json(host),
         url = json(&request.url),
         method = json(&request.method),
         headers = json(&request.headers),
@@ -120,7 +133,17 @@ fn json<T: serde::Serialize + ?Sized>(value: &T) -> String {
 
 /// Runs `request` inside the browser page. Blocks: call from a worker thread.
 pub fn fetch(app: &AppHandle, request: BrowserRequest) -> Result<BrowserResponse, String> {
+    let host = tauri::Url::parse(&request.url)
+        .ok()
+        .and_then(|url| url.host_str().map(str::to_string))
+        .filter(|host| BROWSER_HOSTS.contains(&host.as_str()))
+        .ok_or("the built-in browser makes requests only for pathofexile.com")?;
     let window = window(app)?;
+    // The request goes out from a page on its own host (cookies, Cloudflare clearance).
+    if page_host(&window).as_deref() != Some(host.as_str()) {
+        LOADED.store(false, Ordering::SeqCst);
+        window.navigate(home(&host)?).map_err(|e| e.to_string())?;
+    }
     let started = Instant::now();
     while !LOADED.load(Ordering::SeqCst) {
         if started.elapsed() > BROWSER_LOAD_TIMEOUT {
@@ -130,7 +153,7 @@ pub fn fetch(app: &AppHandle, request: BrowserRequest) -> Result<BrowserResponse
     }
 
     let id = NEXT_ID.fetch_add(1, Ordering::SeqCst);
-    if eval_value(&window, fetch_script(id, &request))? != "true" {
+    if eval_value(&window, fetch_script(id, &request, &host))? != "true" {
         return Err("the built-in browser did not start the request".into());
     }
     while started.elapsed() < BROWSER_REQUEST_TIMEOUT {
@@ -176,6 +199,12 @@ pub fn open(app: &AppHandle, url: Option<&str>) -> Result<(), String> {
     if let Some(url) = url {
         let url = url.parse().map_err(|e| format!("{e}"))?;
         window.navigate(url).map_err(|e| e.to_string())?;
+    } else {
+        // The game language changed since: go to its trade site.
+        let host = app.state::<AppState>().trade_host();
+        if page_host(&window).as_deref() != Some(host.as_str()) {
+            window.navigate(home(&host)?).map_err(|e| e.to_string())?;
+        }
     }
     window.show().map_err(|e| e.to_string())?;
     window.unminimize().map_err(|e| e.to_string())?;
@@ -196,6 +225,7 @@ mod tests {
                 headers: vec![("Content-Type".into(), "application/json".into())],
                 body: Some(r#"{"query":"it's \"quoted\""}"#.into()),
             },
+            "www.pathofexile.com",
         );
         assert!(script.contains("replies[7] = reply"));
         assert!(

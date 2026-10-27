@@ -4,7 +4,19 @@ import { appLogDir, join } from '@tauri-apps/api/path';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { revealItemInDir } from '@tauri-apps/plugin-opener';
-import { DEFAULT_CURRENCY_OPTIONS, HotkeyAction, PopupPosition, SEARCH_STAT_RANGE_MAX, STASH_SEARCH_MAX_LENGTH, UI_LANGS, UiLang } from '../constants';
+import { poeWebApi } from '@/web/Config';
+import {
+  DEFAULT_CURRENCY_OPTIONS,
+  GAME_LANGS,
+  HotkeyAction,
+  Lang,
+  POE_INTL_WEB_API,
+  PopupPosition,
+  SEARCH_STAT_RANGE_MAX,
+  STASH_SEARCH_MAX_LENGTH,
+  UI_LANGS,
+  UiLang,
+} from '../constants';
 import { TrPipe } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { type ChatCommand, isFirstStart, type PriceCheckSettings, settings, type StashSearchGroup, updateSettings } from '../core/settings';
@@ -62,6 +74,10 @@ export class SettingsWindow {
   ];
   protected readonly stashTextMax = STASH_SEARCH_MAX_LENGTH;
   protected readonly uiLangs = UI_LANGS;
+  protected readonly gameLangs = GAME_LANGS;
+  protected readonly intlSite = POE_INTL_WEB_API;
+  /** The trade site the price check uses with these settings. */
+  protected readonly tradeSite = computed(() => (settings(), poeWebApi()));
   /** The chat placeholder for the last whisperer (an `@` cannot stand in template text). */
   protected readonly lastTarget = '@last';
   protected readonly section = signal<Section>('general');
@@ -138,6 +154,15 @@ export class SettingsWindow {
 
   protected setUiLanguage(uiLanguage: UiLang): void {
     updateSettings({ uiLanguage });
+  }
+
+  /** The language the game copies items in: its data and its trade site (ru.pathofexile.com). */
+  protected setGameLanguage(language: Lang): void {
+    updateSettings({ language });
+  }
+
+  protected setUseIntlSite(useIntlSite: boolean): void {
+    updateSettings({ useIntlSite });
   }
 
   protected setStartMessage(startMessage: boolean): void {

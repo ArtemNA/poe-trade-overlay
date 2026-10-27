@@ -5,6 +5,7 @@ import { PopupWindow } from './popup-window/popup-window';
 import { ToastWindow } from './toast-window/toast-window';
 import { interfaceLanguage, loadUiLanguage, tr } from './core/i18n';
 import { host } from './host';
+import { poeWebApi } from '@/web/Config';
 import { settings } from './core/settings';
 
 /** Both Tauri windows load the same app; the window label picks the view. */
@@ -38,6 +39,10 @@ export class App {
       effect(() => {
         interfaceLanguage();
         void host.setTrayLabels({ settings: tr('Settings'), browser: tr('Built-in browser'), quit: tr('Quit') });
+      });
+      effect(() => {
+        settings();
+        void host.setTradeHost(poeWebApi());
       });
     }
   }

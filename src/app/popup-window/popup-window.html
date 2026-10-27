@@ -84,7 +84,9 @@
     }
   } @else {
     <div class="flex flex-1 items-center justify-center p-6 text-center">
-      @if (error(); as message) {
+      @if (languageMismatch(); as lang) {
+        <p class="text-warn">{{ 'The game copied this item in {0}, but the game language in the settings is {1}. Change it in Settings → General → Game language.' | tr: lang.copied : lang.chosen }}</p>
+      } @else if (error(); as message) {
         <p class="text-bad">{{ 'Cannot read this item: {0}' | tr: message }}</p>
       } @else {
         <p class="text-muted">{{ 'Hover an item in the game and press the price check or item check hotkey.' | tr }}</p>

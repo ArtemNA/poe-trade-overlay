@@ -19,16 +19,21 @@ const browserSource: DataSource = {
   clientStrings: async (path) => (await import(/* @vite-ignore */ dataUrl(path))).default,
 };
 
-let loading: Promise<void> | undefined;
+let loading: { lang: Lang; done: Promise<void> } | undefined;
 
 /** Set once the game data is in: views that look items up (currency icons) wait for it. */
 export const gameDataLoaded = signal(false);
 
-/** Loads items, stats and client strings once; parsing items requires it. */
+/**
+ * Loads items, stats and client strings of the game language; parsing items requires it. Once per
+ * language: another language (changed in the settings) loads that one's data instead.
+ */
 export function loadGameData(lang: Lang = DEFAULT_LANG): Promise<void> {
-  if (!loading) {
+  if (loading?.lang !== lang) {
     setDataSource(browserSource);
-    loading = init(lang).then(() => gameDataLoaded.set(true));
+    gameDataLoaded.set(false);
+    const done = init(lang).then(() => gameDataLoaded.set(true));
+    loading = { lang, done };
   }
-  return loading;
+  return loading.done;
 }

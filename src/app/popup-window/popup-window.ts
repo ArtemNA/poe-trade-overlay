@@ -10,7 +10,7 @@ import { loadGameData } from '../game-data';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { CheckTarget, host, ItemActionEvent, ItemTextEvent } from '../host';
 import { craftOfExileUrl, poedbUrl, stashSearchText, wikiUrl } from '../core/item-links';
-import { ITEM_CHECK_WIDTH, MAP_CHECK_WIDTH, STASH_PANEL_WIDTH } from '../constants';
+import { GAME_LANGS, ITEM_CHECK_WIDTH, type Lang, MAP_CHECK_WIDTH, STASH_PANEL_WIDTH } from '../constants';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { isMapLike } from '../map-check/map-check';
 import { MapCheckPanel } from '../map-check/map-check-panel';
@@ -36,6 +36,8 @@ export class PopupWindow {
   protected readonly parsed = signal<ParsedItem | null>(null);
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
+  /** The item is in another game language than the settings: their labels. */
+  protected readonly languageMismatch = signal<{ copied: string; chosen: string } | null>(null);
   /** Uniques an unidentified unique can be, while the user has not picked one (price check only). */
   protected readonly variants = signal<BaseType[]>([]);
   protected readonly menu = signal<'league' | 'divine' | null>(null);
@@ -64,9 +66,21 @@ export class PopupWindow {
 
   constructor() {
     // Load game data and UI strings while the popup is still hidden, so the first hotkey is fast.
-    const dataReady = Promise.all([loadGameData(), loadI18n()]).catch((e) => {
-      this.error.set(String(e));
-      throw e;
+    // The game language's data: loaded again when it changes in the settings (another language).
+    const i18nReady = loadI18n();
+    const load = (lang: Lang) => {
+      const ready = Promise.all([loadGameData(lang), i18nReady]).catch((e) => {
+        this.error.set(String(e));
+        throw e;
+      });
+      ready.catch(() => {});
+      return ready;
+    };
+    let dataLang = settings().language;
+    let dataReady = load(dataLang);
+    effect(() => {
+      const lang = settings().language;
+      if (lang !== dataLang) [dataLang, dataReady] = [lang, load(lang)];
     });
     void this.leagues.load();
     effect(() => trackCurrencyRates(settings().leagueId));
@@ -75,6 +89,7 @@ export class PopupWindow {
       host.popupLostKeyboard(); // a new check: the popup was hidden or never had it
       this.menu.set(null);
       this.error.set(null);
+      this.languageMismatch.set(null);
       this.target.set(payload.target);
       void this.leagues.refreshIfOld();
       if (payload.target === 'stash-search') {
@@ -102,6 +117,10 @@ export class PopupWindow {
         this.parsed.set(null);
         this.item.set(null);
         this.error.set(result.error);
+        // Copied in another language than the settings say: tell which one to pick.
+        const copiedIn = GAME_LANGS.find((lang) => payload.text.startsWith(lang.itemClass));
+        const chosen = GAME_LANGS.find((lang) => lang.id === settings().language);
+        this.languageMismatch.set(copiedIn && chosen && copiedIn.id !== chosen.id ? { copied: copiedIn.label, chosen: chosen.label } : null);
       }
       // Fit even when the height did not change: the host has just shown the window at the default size.
       afterNextRender(() => this.fit(), { injector: this.injector });

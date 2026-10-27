@@ -10,9 +10,17 @@ export const APP_VERSION = '0.1.0';
 export const APP_CONTACT = 'https://github.com/ArtemNA';
 export const USER_AGENT = `${APP_NAME}/${APP_VERSION} (+${APP_CONTACT})`;
 
-/** Game data language. Only EN is shipped; add a folder in public/data and extend the maps below. */
-export type Lang = 'en';
+/**
+ * Game data language: the language the game copies items in (public/data/<id>, from APT) and the
+ * trade site that goes with it. Apart from the interface language below.
+ */
+export type Lang = 'en' | 'ru';
 export const DEFAULT_LANG: Lang = 'en';
+/** `itemClass`: first line of an item the game copies in that language (as in client_strings.js). */
+export const GAME_LANGS: ReadonlyArray<{ id: Lang; label: string; itemClass: string }> = [
+  { id: 'en', label: 'English', itemClass: 'Item Class: ' },
+  { id: 'ru', label: 'Русский', itemClass: 'Класс предмета: ' },
+];
 
 /**
  * Interface language, apart from the game data language above: only the overlay's own texts
@@ -34,6 +42,7 @@ export const DATA_PATH = 'data';
 /** Official site per game language (APT `poeWebApi`). Also used when "force English site" is on. */
 export const POE_WEB_API: Record<Lang, string> = {
   en: 'www.pathofexile.com',
+  ru: 'ru.pathofexile.com',
 };
 export const POE_INTL_WEB_API = 'www.pathofexile.com';
 export const POE_REALM = 'pc';
@@ -63,8 +72,8 @@ export const PRICE_CHECK_DEFAULTS = {
   showSeller: false as false | 'account' | 'ign',
 };
 
-/** Host whose requests the built-in browser can make (FINDINGS F-45). */
-export const POE_BROWSER_HOST = 'www.pathofexile.com';
+/** pathofexile.com hosts: rate limits, Cloudflare checks and the built-in browser apply to them (F-45, F-60). */
+export const POE_OFFICIAL_HOSTS: readonly string[] = ['www.pathofexile.com', 'ru.pathofexile.com'];
 /** Error text when pathofexile.com answers with a Cloudflare check instead of data; the UI offers the browser. */
 export const CLOUDFLARE_CHECK_ERROR = 'pathofexile.com asks to confirm you are human (Cloudflare)';
 
@@ -194,7 +203,7 @@ export const POE_NINJA_NAMESPACES: ReadonlyArray<{ ns: string; url: string; type
 export const POE_WIKI_SITE = 'https://www.poewiki.net/wiki';
 export const POEDB_SITE = 'https://poedb.tw';
 /** PoEDB language segment per game language. */
-export const POEDB_LANGS: Record<Lang, string> = { en: 'us' };
+export const POEDB_LANGS: Record<Lang, string> = { en: 'us', ru: 'ru' };
 export const CRAFT_OF_EXILE_SITE = 'https://craftofexile.com';
 
 /** APT shows chaos prices from this share of the divine rate up as divines (≈ 1 div in ±6 %). */

@@ -3,6 +3,29 @@
 A Path of Exile price check overlay for Windows: trade listings, poe.ninja prices, item and map check,
 stash search presets and chat commands. Downloads: [Releases](https://github.com/ArtemNA/price-of-exile/releases/latest).
 
+## Screenshots
+
+A rare item: the base, item level and corrupted switches in the header, mods grouped with their tiers,
+trade listings with currency icons and the poe.ninja price with its 7 day trend.
+
+![Price check of a rare item](docs/readme/price-check-rare.png)
+
+Fragments, currency and cards: related items with poe.ninja prices right next to the price, and bulk offers.
+
+![The Maven's Writ: related items and bulk offers](docs/readme/related-items-bulk.png)
+
+A unique: links and corruption decide the price; the set it belongs to is shown alongside.
+
+![Tabula Rasa with related items](docs/readme/unique-related.png)
+
+Bulk exchange with the market ratio from poe.ninja.
+
+![Divine Orb bulk offers](docs/readme/bulk-currency.png)
+
+The message in the screen corner when the overlay starts:
+
+![Start message](docs/readme/start-message.png)
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
 
 ## Running the app in development

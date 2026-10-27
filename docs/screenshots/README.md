@@ -78,7 +78,9 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `17-popup-opposite-cursor-right.png` | Fake game 3200×1340, "Opposite the cursor", cursor on the right (inventory): the popup ends where the inventory panel starts (~800 px from the right edge) |
 | `17-popup-opposite-cursor-left.png` | The same with the cursor on the left (stash): the popup starts right after the stash panel |
 | `18-settings-ukrainian.png` | Settings, General, interface language Ukrainian: the new "Interface language" switch |
-| `18-price-check-ukrainian.png` | The price check in Ukrainian; item, base and mod texts stay as the game copies them |
+| `18-price-check-ukrainian.png` | The price check in Ukrainian; item, base and mod texts stay as the game copies them, game terms (Corrupted, Fractured, Shaper…) in English |
+| `18-settings-russian.png` | Settings, General in Russian |
+| `18-price-check-russian.png` | The price check in Russian (game terms as in the official Russian localisation of PoE) |
 | `16-price-check-related-unfolded.png` | Farrul's Fur (a unique with mods): related open by default, the set with poe.ninja prices, the item itself marked (taken before the heading got its fold button ▾) |
 | `16-price-check-related-folded.png` | The same folded into one line "Related · 4" with icons |
 | `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |

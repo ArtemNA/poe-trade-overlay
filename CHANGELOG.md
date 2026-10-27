@@ -4,7 +4,7 @@ Each release takes its "What's new" from the section of its tag.
 
 ## Unreleased
 
-- Interface languages: English and Ukrainian (Settings → General → Interface language). Only the overlay's own texts change; item names and mods stay as the game copies them.
+- Interface languages: English, Ukrainian and Russian (Settings → General → Interface language). Only the overlay's own texts change; item names and mods stay as the game copies them.
 - "Opposite the cursor" puts the popup right next to the game's inventory or stash panel the item is in, as APT does, instead of at the far edge of the game.
 
 ## v0.1.7

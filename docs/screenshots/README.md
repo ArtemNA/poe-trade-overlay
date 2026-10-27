@@ -57,5 +57,8 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `07-browser-window.png` | Built-in browser (pathofexile.com/trade): the trade page now asks to sign in |
 | `07-price-check-through-browser.png` | Price check with "Use the built-in browser" on: search and listings fetched inside the browser page |
 | `07-browser-over-game.png` | The browser opened by its hotkey over the fake game |
+| `08-unidentified-unique-picker.png` | Unidentified unique Simple Robe: which of its four uniques |
+| `08-unidentified-unique-picked.png` | After picking Tabula Rasa: the price check for it, Unidentified filter on |
+| `08-unidentified-unique-single.png` | Occultist's Vestment: its only unique (Shavronne's Wrappings) picked without asking |
 
 Not captured yet: the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

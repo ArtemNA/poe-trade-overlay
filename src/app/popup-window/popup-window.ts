@@ -16,12 +16,15 @@ import { MapCheckPanel } from '../map-check/map-check-panel';
 import { StashPanel } from '../stash-search/stash-panel';
 import { formatChaos } from '../price-check/listing-summary';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
+import { identifiedVariants, identifyAs, needsIdentification } from '../price-check/unidentified';
+import { UnidentifiedPicker } from '../price-check/unidentified-picker';
+import type { BaseType } from '@/assets/data';
 import { ItemView, toItemView } from './item-view';
 
 /** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -32,6 +35,8 @@ export class PopupWindow {
   protected readonly parsed = signal<ParsedItem | null>(null);
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
+  /** Uniques an unidentified unique can be, while the user has not picked one (price check only). */
+  protected readonly variants = signal<BaseType[]>([]);
   protected readonly menu = signal<'league' | 'divine' | null>(null);
   protected readonly settings = settings;
   protected readonly leagues = inject(Leagues);
@@ -78,9 +83,17 @@ export class PopupWindow {
         return;
       }
       const result = parseClipboard(payload.text);
+      this.variants.set([]);
       if (result.isOk()) {
-        this.parsed.set(result.value);
-        this.item.set(toItemView(result.value));
+        let item = result.value;
+        if (payload.target === 'price-check' && needsIdentification(item)) {
+          const variants = identifiedVariants(item);
+          // One possible unique: no need to ask (APT does the same).
+          if (variants.length === 1) item = identifyAs(item, variants[0]);
+          else this.variants.set(variants);
+        }
+        this.parsed.set(item);
+        this.item.set(toItemView(item));
       } else {
         this.parsed.set(null);
         this.item.set(null);
@@ -160,6 +173,13 @@ export class PopupWindow {
     if (!date) return '';
     const minutes = Math.round((Date.now() - date.getTime()) / 60000);
     return minutes < 1 ? 'just now' : `${minutes} min ago`;
+  }
+
+  protected identify(unique: BaseType): void {
+    const item = identifyAs(this.parsed()!, unique);
+    this.variants.set([]);
+    this.parsed.set(item);
+    this.item.set(toItemView(item));
   }
 
   protected close(): void {

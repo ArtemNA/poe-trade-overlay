@@ -36,6 +36,7 @@ Used parts:
   and `stash-search/stash-search-editor.vue`.
 - `src-tauri/src/browser.rs`, the browser parts of `src/app/core/http.ts`: the idea of `main/src/proxy.ts`
   (requests with the browser's session) and `price-check/trade/TradeLinks.vue`; own implementation.
+- `src/app/price-check/unidentified*.ts`: port of `price-check/unidentified-resolver/UnidentifiedResolver.vue`.
 - `public/images/maven-witness.png`: APT image (from Path of Exile game art, which belongs to Grinding Gear Games).
 - `scripts/make-data-indexes.mjs`: port of `renderer/src/assets/make-index-files.mjs`.
 - `public/data/en/app_i18n.json`: APT UI strings.

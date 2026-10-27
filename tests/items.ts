@@ -180,3 +180,19 @@ Item Level: 79
 --------
 Travel to this Map by using it in a personal Map Device. Maps can only be used once.
 `;
+
+export const UNIDENTIFIED_UNIQUE_ROBE = `Item Class: Body Armours
+Rarity: Unique
+Simple Robe
+--------
+Energy Shield: 11
+--------
+Requirements:
+Level: 3
+--------
+Sockets: B-B-B-B-B-B
+--------
+Item Level: 68
+--------
+Unidentified
+`;

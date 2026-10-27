@@ -76,7 +76,11 @@
         </div>
       </div>
     } @else {
-      <app-price-check [item]="parsedItem" [view]="item()!" />
+      @if (variants().length) {
+        <app-unidentified-picker [baseName]="parsedItem.info.name" [variants]="variants()" (picked)="identify($event)" />
+      } @else {
+        <app-price-check [item]="parsedItem" [view]="item()!" />
+      }
     }
   } @else {
     <div class="flex flex-1 items-center justify-center p-6 text-center">

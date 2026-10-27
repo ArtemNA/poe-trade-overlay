@@ -1,12 +1,19 @@
 use std::sync::Mutex;
+
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
+use tauri_plugin_global_shortcut::Shortcut;
 
 use crate::constants::{DEFAULT_GAME_TITLE, ENV_GAME_TITLE, ENV_KEEP_POPUP};
+use crate::hotkeys::HotkeyAction;
 use crate::platform::RawHwnd;
 use crate::popup::Placement;
 
 pub struct AppState {
     game_title: Mutex<String>,
+    /// Set from `ENV_GAME_TITLE`: the settings do not change the title then.
+    game_title_fixed: bool,
+    /// Hotkeys from the settings and what they do.
+    hotkeys: Mutex<Vec<(Shortcut, HotkeyAction)>>,
     /// Foreground game window, 0 when the game is not active.
     game_hwnd: AtomicIsize,
     popup_hwnd: AtomicIsize,
@@ -22,10 +29,11 @@ pub struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
-        let game_title =
-            std::env::var(ENV_GAME_TITLE).unwrap_or_else(|_| DEFAULT_GAME_TITLE.into());
+        let env_title = std::env::var(ENV_GAME_TITLE).ok();
         Self {
-            game_title: Mutex::new(game_title),
+            game_title_fixed: env_title.is_some(),
+            game_title: Mutex::new(env_title.unwrap_or_else(|| DEFAULT_GAME_TITLE.into())),
+            hotkeys: Mutex::new(Vec::new()),
             game_hwnd: AtomicIsize::new(0),
             popup_hwnd: AtomicIsize::new(0),
             popup_visible: AtomicBool::new(false),
@@ -41,8 +49,22 @@ impl AppState {
     pub fn game_title(&self) -> String {
         self.game_title.lock().unwrap().clone()
     }
+    /// Ignored when the title comes from `ENV_GAME_TITLE`.
     pub fn set_game_title(&self, title: String) {
-        *self.game_title.lock().unwrap() = title;
+        if !self.game_title_fixed {
+            *self.game_title.lock().unwrap() = title;
+        }
+    }
+
+    pub fn hotkeys(&self) -> Vec<(Shortcut, HotkeyAction)> {
+        self.hotkeys.lock().unwrap().clone()
+    }
+    /// Returns the previous list.
+    pub fn replace_hotkeys(
+        &self,
+        list: Vec<(Shortcut, HotkeyAction)>,
+    ) -> Vec<(Shortcut, HotkeyAction)> {
+        std::mem::replace(&mut *self.hotkeys.lock().unwrap(), list)
     }
     pub fn is_game_window(&self, title: &str) -> bool {
         *self.game_title.lock().unwrap() == title

@@ -2,15 +2,18 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
 
-## Development server
-
-To start a local development server, run:
+## Running the app in development
 
 ```bash
-ng serve
+npm run dev
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+This is `tauri dev` with `src-tauri/tauri.dev.conf.json`: the dev build runs under the identifier
+`com.artemna.poe-trade-overlay.dev`, so its settings file, WebView data and logs are separate from an
+installed release. A debug build started with the release identifier (plain `tauri dev`) refuses to start.
+
+Testing without the game: run `scripts/fake-game.ps1` and start the app with `POE_GAME_TITLE="PoE Fake Game"`
+(and `POE_KEEP_POPUP=1` for screenshots); see the comments in `scripts/`.
 
 ## Code scaffolding
 

@@ -1,0 +1,5 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "PoE Trade Overlay Dev",
+  "identifier": "com.artemna.poe-trade-overlay.dev"
+}

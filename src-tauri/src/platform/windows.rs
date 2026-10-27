@@ -178,6 +178,9 @@ pub fn cursor_pos() -> Point {
 
 pub mod vk {
     pub const CONTROL: u16 = 0x11;
+    pub const MENU: u16 = 0x12; // Alt
+    pub const SHIFT: u16 = 0x10;
+    pub const LWIN: u16 = 0x5B;
     pub const RETURN: u16 = 0x0D;
     pub const C: u16 = 0x43;
     pub const F: u16 = 0x46;

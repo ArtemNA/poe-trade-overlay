@@ -4,12 +4,15 @@
 # game really is the active window.
 #
 #   powershell -NoProfile -File scripts/press-hotkey.ps1 [-CursorX 1500 -CursorY 400] [-Key ItemCheck|Escape|Click]
+#   powershell -NoProfile -File scripts/press-hotkey.ps1 -Key Custom -Vk 0x51 -Modifier 0x12   (any key: Alt+Q)
 
 param(
   [string]$Title = 'PoE Fake Game',
   [int]$CursorX = 1500,
   [int]$CursorY = 400,
-  [ValidateSet('PriceCheck', 'ItemCheck', 'Escape', 'Click')] [string]$Key = 'PriceCheck'
+  [ValidateSet('PriceCheck', 'ItemCheck', 'Escape', 'Click', 'Custom')] [string]$Key = 'PriceCheck',
+  [int]$Vk = 0,
+  [int]$Modifier = 0
 )
 
 Add-Type @'
@@ -44,6 +47,7 @@ switch ($Key) {
   'Escape' { [Drive]::Tap(0x1B, 0) }
   'Click' { [Drive]::Click() }
   'ItemCheck' { [Drive]::Tap(0x44, 0x12) }
+  'Custom' { [Drive]::Tap([byte]$Vk, [byte]$Modifier) }
   default { [Drive]::Tap(0x44, 0x11) }
 }
 "pressed $Key in '$Title'"

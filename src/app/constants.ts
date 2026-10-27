@@ -47,6 +47,15 @@ export const PRICE_CHECK_DEFAULTS = {
   showSeller: false as false | 'account' | 'ign',
 };
 
+/** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
+export const SEARCH_STAT_RANGE_MAX = 50;
+/** Buyout currency filter choices in the settings; values are trade API price options. */
+export const DEFAULT_CURRENCY_OPTIONS: Array<{ value: string | null; label: string }> = [
+  { value: null, label: 'Any currency' },
+  { value: 'chaos', label: 'Chaos Orb' },
+  { value: 'divine', label: 'Divine Orb' },
+];
+
 /** Trade listings (APT `TradeListing.vue`). */
 export const TRADE_LISTING = {
   /** Rows shown in the popup. */
@@ -158,8 +167,36 @@ export const CURRENCY_COLORS: Record<string, string> = {
 };
 export const CURRENCY_COLOR_OTHER = '#8f887c';
 
-/** localStorage key for user settings; shared by the main and popup windows. */
-export const SETTINGS_STORAGE_KEY = 'poe-trade-overlay.settings';
+/** localStorage key of the settings before stage 13; read once to move them into the store. */
+export const LEGACY_SETTINGS_STORAGE_KEY = 'poe-trade-overlay.settings';
+/** Settings file of `tauri-plugin-store`, in the app config folder. */
+export const SETTINGS_FILE = 'settings.json';
+/** Key of the whole settings object inside the store file. */
+export const SETTINGS_STORE_KEY = 'settings';
+/** Current settings format; `upgradeSettings` brings older files up to it. */
+export const SETTINGS_VERSION = 1;
+/** Event the window that changed the settings sends to the other windows. */
+export const SETTINGS_CHANGED_EVENT = 'settings-changed';
+
+/** Exact title of the game window (APT `windowTitle`). */
+export const DEFAULT_GAME_TITLE = 'Path of Exile';
+
+/** What a hotkey does: open a check of the hovered item, or act on it without the popup. */
+export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search'] as const;
+export type HotkeyAction = (typeof HOTKEY_ACTIONS)[number];
+
+/** Hotkeys in `tauri-plugin-global-shortcut` format (modifiers + `KeyboardEvent.code`); null = none. */
+export const DEFAULT_HOTKEYS: Record<HotkeyAction, string | null> = {
+  /** APT default. */
+  'price-check': 'Ctrl+KeyD',
+  /** APT has none by default; Alt+D since stage 9. */
+  'item-check': 'Alt+KeyD',
+  /** APT `wikiKey`, `poedbKey`, `craftOfExileKey`, `stashSearchKey`: none by default. */
+  wiki: null,
+  poedb: null,
+  'craft-of-exile': null,
+  'stash-search': null,
+};
 
 /** Popup widths the item check asks for (logical pixels); the height follows the content. */
 export const ITEM_CHECK_WIDTH = 380;

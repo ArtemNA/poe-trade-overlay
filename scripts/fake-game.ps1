@@ -5,7 +5,7 @@
 # it to check another item without restarting.
 #
 #   powershell -STA -File scripts/fake-game.ps1 [-ItemFile <path>] [-X <left>] [-Y <top>]
-#   then run the app with POE_GAME_TITLE="PoE Fake Game" (see src-tauri/src/constants.rs).
+#   then run the app with POE_GAME_TITLE="PoE Fake Game" and `npm run dev` (see src-tauri/src/constants.rs).
 
 param(
   [string]$ItemFile = (Join-Path $PSScriptRoot 'fake-game-item.txt'),

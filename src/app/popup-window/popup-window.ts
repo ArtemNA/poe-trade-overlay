@@ -6,7 +6,9 @@ import { loadI18n } from '../core/i18n';
 import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
-import { CheckTarget, host, ItemTextEvent } from '../host';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { CheckTarget, host, ItemActionEvent, ItemTextEvent } from '../host';
+import { craftOfExileUrl, poedbUrl, stashSearchText, wikiUrl } from '../core/item-links';
 import { ITEM_CHECK_WIDTH, MAP_CHECK_WIDTH } from '../constants';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
 import { isMapLike } from '../map-check/map-check';
@@ -76,6 +78,27 @@ export class PopupWindow {
       // Fit even when the height did not change: the host has just shown the window at the default size.
       afterNextRender(() => this.fit(), { injector: this.injector });
     });
+    // Link and stash search hotkeys: act on the item, the popup stays as it is.
+    const unlistenAction = listen<ItemActionEvent>('item-action', async ({ payload }) => {
+      try {
+        await dataReady;
+      } catch {
+        return;
+      }
+      const result = parseClipboard(payload.text);
+      if (result.isErr()) return;
+      const item = result.value;
+      switch (payload.action) {
+        case 'wiki':
+          return openUrl(wikiUrl(item));
+        case 'poedb':
+          return openUrl(poedbUrl(item));
+        case 'craft-of-exile':
+          return openUrl(craftOfExileUrl(item));
+        case 'stash-search':
+          return host.stashSearch(stashSearchText(item)).catch(() => undefined);
+      }
+    });
     // Later changes of the content (marks, the stash error) resize the window too.
     const resizes = new ResizeObserver(() => this.fit());
     effect(() => {
@@ -86,6 +109,7 @@ export class PopupWindow {
     inject(DestroyRef).onDestroy(() => {
       resizes.disconnect();
       void unlisten.then((fn) => fn());
+      void unlistenAction.then((fn) => fn());
     });
   }
 

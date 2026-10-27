@@ -35,5 +35,15 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `10-settings-map-mods.png` | Main window, Map check tab: all map mods, marks show on hover |
 | `10-settings-only-marked.png` | "Only marked" in profile I |
 | `10-settings-search-marked.png` | Search "monster life", a mark set in the editor |
+| `13-settings-general.png` | Settings, General: game title (with the dev POE_GAME_TITLE override note), league, account |
+| `13-settings-hotkeys.png` | Settings, Hotkeys: defaults |
+| `13-settings-hotkey-recording.png` | A hotkey field waiting for keys |
+| `13-settings-hotkey-conflict.png` | The same hotkey for two actions: both marked "Used twice" |
+| `13-settings-price-check.png` | Settings, Price check |
+| `13-settings-map-check.png` | Settings, Map check: the mark editor |
+| `13-settings-log.png` | Settings, Log |
+| `13-item-check-rebound-hotkey.png` | Item check opened by a re-bound hotkey (Alt+Q) |
+| `13-stash-search-hotkey-fake-game.png` | Find in stash hotkey: item name typed into the fake game, no popup (whole game window) |
+| `13-price-check-exact-range.png` | Price check with the stat range set to 0 %: filters at the exact rolls |
 
 Not captured yet: the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

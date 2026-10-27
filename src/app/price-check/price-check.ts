@@ -5,7 +5,6 @@ import { ItemCategory, ItemRarity, type ParsedItem } from '@/parser';
 import { createPresets } from '../../lib/apt/web/price-check/filters/create-presets';
 import type { FilterPreset } from '../../lib/apt/web/price-check/filters/interfaces';
 import { CATEGORY_TO_TRADE_ID } from '../../lib/apt/web/price-check/trade/pathofexile-trade';
-import { PRICE_CHECK_DEFAULTS } from '../constants';
 import { settings } from '../core/settings';
 
 export interface Presets {
@@ -26,20 +25,21 @@ export function createItemPresets(item: ParsedItem, leagueId: string, previous?:
     previous &&
     item.info.namespace === previous.item.info.namespace &&
     item.info.refName === previous.item.info.refName;
+  const options = settings().priceCheck;
   return createPresets(item, {
     league: leagueId,
-    merchantOnly: PRICE_CHECK_DEFAULTS.merchantOnly,
-    collapseListings: PRICE_CHECK_DEFAULTS.collapseListings,
-    activateStockFilter: PRICE_CHECK_DEFAULTS.activateStockFilter,
-    searchStatRange: PRICE_CHECK_DEFAULTS.searchStatRange,
+    merchantOnly: options.merchantOnly,
+    collapseListings: options.collapseListings,
+    activateStockFilter: options.activateStockFilter,
+    searchStatRange: options.searchStatRange,
     useEn: settings().useIntlSite,
-    currency: sameItem ? activePreset(previous.presets).filters.trade.currency : PRICE_CHECK_DEFAULTS.defaultCurrency,
+    currency: sameItem ? activePreset(previous.presets).filters.trade.currency : options.defaultCurrency,
   });
 }
 
 /** Items whose price rarely depends on filter tweaks are searched right away. */
 export function shouldSearchImmediately(item: ParsedItem, presets: Presets): boolean {
-  if (!PRICE_CHECK_DEFAULTS.smartInitialSearch) return false;
+  if (!settings().priceCheck.smartInitialSearch) return false;
   return Boolean(
     item.rarity === ItemRarity.Unique ||
       presets.active === 'filters.preset_bulk' ||

@@ -1,17 +1,17 @@
 import { Component } from '@angular/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { MainWindow } from './main-window/main-window';
+import { SettingsWindow } from './settings/settings-window';
 import { PopupWindow } from './popup-window/popup-window';
 
 /** Both Tauri windows load the same app; the window label picks the view. */
 @Component({
   selector: 'app-root',
-  imports: [MainWindow, PopupWindow],
+  imports: [SettingsWindow, PopupWindow],
   template: `
     @if (label === 'popup') {
       <app-popup-window />
     } @else {
-      <app-main-window />
+      <app-settings-window />
     }
   `,
 })

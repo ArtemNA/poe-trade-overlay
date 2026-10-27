@@ -14,14 +14,17 @@ export interface Config {
 }
 
 /** Per-widget settings APT reads via `AppConfig('<widget type>')`. */
-const WIDGETS: Record<string, object> = {
-  'price-check': { ...PRICE_CHECK_DEFAULTS, apiLatencySeconds: API_LATENCY_SECONDS },
-};
+function widget(type: string): object | undefined {
+  if (type === 'price-check') {
+    return { ...PRICE_CHECK_DEFAULTS, ...settings().priceCheck, apiLatencySeconds: API_LATENCY_SECONDS };
+  }
+  return undefined;
+}
 
 export function AppConfig(): Config;
 export function AppConfig<T>(type: string): T | undefined;
 export function AppConfig(type?: string) {
-  if (type) return WIDGETS[type];
+  if (type) return widget(type);
   const { leagueId, language, useIntlSite, accountName } = settings();
   return { leagueId, language, realm: 'pc-ggg', useIntlSite, accountName } satisfies Config;
 }

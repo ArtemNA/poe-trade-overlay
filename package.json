@@ -10,7 +10,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "pretest": "npm run data:index",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -27,6 +28,7 @@
     "@tauri-apps/api": "^2.12.4",
     "@tauri-apps/plugin-http": "^2.8.3",
     "@tauri-apps/plugin-opener": "^2.7.2",
+    "@tauri-apps/plugin-store": "^2.5.0",
     "dot-prop": "^9.0.0",
     "luxon": "^3.7.2",
     "neverthrow": "^8.2.0",

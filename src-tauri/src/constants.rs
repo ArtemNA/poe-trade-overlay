@@ -3,15 +3,18 @@
 
 use std::time::Duration;
 
-use tauri_plugin_global_shortcut::{Code, Modifiers};
-
-/// Exact title of the game window. Override with the `ENV_GAME_TITLE` variable.
+/// Exact title of the game window until the settings arrive (`set_host_config`).
+/// Override with the `ENV_GAME_TITLE` variable, which then wins over the settings.
 pub const DEFAULT_GAME_TITLE: &str = "Path of Exile";
 
 /// Dev: any window can stand in for the game (e.g. Notepad with item text).
 pub const ENV_GAME_TITLE: &str = "POE_GAME_TITLE";
 /// Dev: `=1` keeps the popup open when the game loses focus (needed for screenshots).
 pub const ENV_KEEP_POPUP: &str = "POE_KEEP_POPUP";
+
+/// Debug builds must run under the dev identifier (`npm run dev`, `tauri.dev.conf.json`), so their
+/// settings file, WebView data and log never touch those of an installed release.
+pub const DEV_IDENTIFIER_SUFFIX: &str = ".dev";
 
 /// Window labels, as declared in `tauri.conf.json`.
 pub const MAIN_WINDOW: &str = "main";
@@ -27,17 +30,6 @@ pub const ITEM_CHECK_HEIGHT_LOGICAL: f64 = 330.0;
 pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
 /// The popup's top edge sits this share of the game height below the game's top.
 pub const POPUP_TOP_RATIO: f64 = 0.1;
-
-/// Price check hotkey: Ctrl+D (APT default).
-pub const PRICE_CHECK_MODIFIERS: Modifiers = Modifiers::CONTROL;
-pub const PRICE_CHECK_KEY: Code = Code::KeyD;
-/// Virtual keys of the same hotkey, released before sending Ctrl+C. Keep in sync with the two above.
-pub const PRICE_CHECK_VKS: [u16; 2] = [0x44 /* D */, 0x11 /* Ctrl */];
-
-/// Item check hotkey: Alt+D (APT has none by default; settings come in stage 13).
-pub const ITEM_CHECK_MODIFIERS: Modifiers = Modifiers::ALT;
-pub const ITEM_CHECK_KEY: Code = Code::KeyD;
-pub const ITEM_CHECK_VKS: [u16; 2] = [0x44 /* D */, 0x12 /* Alt */];
 
 /// The clipboard is put back this long after a stash search pasted into the game (APT `RESTORE_AFTER`).
 pub const CLIPBOARD_RESTORE_AFTER: Duration = Duration::from_millis(120);

@@ -28,6 +28,9 @@ Used parts:
 - `src/lib/apt/web/map-check/*`: APT `renderer/src/web/map-check/common.ts` and `prepare-map-stats.ts`, unchanged;
   `src/app/map-check/*`: port of `MapCheck.vue`, `MapStatButton.vue`, `settings-maps.vue`,
   `SettingsMatcherEntry.vue`, `ui/ItemModifierText.vue` and `isMapLike` of `item-check/WidgetItemCheck.vue`.
+- `src/app/settings/*`, `src/app/core/settings.ts`: port of `settings/SettingsWindow.vue`, `settings/HotkeyInput.vue`,
+  `price-check/settings-price-check.vue` and the versioned config of `web/Config.ts` (`upgradeConfig`);
+  `src-tauri/src/hotkeys.rs`: hotkeys from the settings, as `main/src/shortcuts/Shortcuts.ts`.
 - `public/images/maven-witness.png`: APT image (from Path of Exile game art, which belongs to Grinding Gear Games).
 - `scripts/make-data-indexes.mjs`: port of `renderer/src/assets/make-index-files.mjs`.
 - `public/data/en/app_i18n.json`: APT UI strings.

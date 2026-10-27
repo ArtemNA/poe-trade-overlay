@@ -1,21 +1,49 @@
 //! Global hotkeys. Like APT, they are registered only while the game is the foreground
-//! window, so RegisterHotKey never steals keys from other applications.
+//! window, so RegisterHotKey never steals keys from other applications. Which keys do what
+//! comes from the settings (`set_hotkeys`), as APT `Shortcuts.updateActions` gets it from the config.
 
+use std::collections::HashMap;
+use std::str::FromStr;
 use std::time::Instant;
 
 use tauri::plugin::TauriPlugin;
 use tauri::{AppHandle, Emitter, Manager, Wry};
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-use crate::constants::{
-    ITEM_CHECK_KEY, ITEM_CHECK_MODIFIERS, ITEM_CHECK_VKS, POPUP_WINDOW, PRICE_CHECK_KEY,
-    PRICE_CHECK_MODIFIERS, PRICE_CHECK_VKS,
-};
+use crate::constants::POPUP_WINDOW;
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
 use crate::{clipboard, log_to_ui, popup};
 
-/// What a hotkey copies the hovered item for (APT `copy-item` targets).
+/// What a hotkey does with the hovered item.
+/// Declaration order is the priority when two actions share a hotkey.
+#[derive(
+    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, serde::Serialize, serde::Deserialize,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum HotkeyAction {
+    PriceCheck,
+    ItemCheck,
+    /// Open the item on poewiki.net, PoEDB or Craft of Exile, or type it into the stash
+    /// search, without showing the popup (APT `wikiKey` and the like).
+    Wiki,
+    Poedb,
+    CraftOfExile,
+    StashSearch,
+}
+
+impl HotkeyAction {
+    /// The popup the action shows, if any.
+    fn target(self) -> Option<CheckTarget> {
+        match self {
+            HotkeyAction::PriceCheck => Some(CheckTarget::PriceCheck),
+            HotkeyAction::ItemCheck => Some(CheckTarget::ItemCheck),
+            _ => None,
+        }
+    }
+}
+
+/// Which popup a check opens (APT `copy-item` targets).
 #[derive(Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CheckTarget {
@@ -23,31 +51,50 @@ pub enum CheckTarget {
     ItemCheck,
 }
 
-impl CheckTarget {
-    const ALL: [CheckTarget; 2] = [CheckTarget::PriceCheck, CheckTarget::ItemCheck];
-
-    fn shortcut(self) -> Shortcut {
-        match self {
-            CheckTarget::PriceCheck => Shortcut::new(Some(PRICE_CHECK_MODIFIERS), PRICE_CHECK_KEY),
-            CheckTarget::ItemCheck => Shortcut::new(Some(ITEM_CHECK_MODIFIERS), ITEM_CHECK_KEY),
-        }
+/// Virtual key of the hotkey's main key, when it is one we can name (letters, digits, F-keys, numpad).
+fn code_vk(code: Code) -> Option<u16> {
+    let name = code.to_string();
+    let suffix = |prefix: &str| name.strip_prefix(prefix).map(str::to_owned);
+    if let Some(letter) = suffix("Key").filter(|s| s.len() == 1) {
+        return Some(letter.as_bytes()[0] as u16);
     }
-
-    fn hotkey_vks(self) -> &'static [u16] {
-        match self {
-            CheckTarget::PriceCheck => &PRICE_CHECK_VKS,
-            CheckTarget::ItemCheck => &ITEM_CHECK_VKS,
-        }
+    if let Some(digit) = suffix("Digit").and_then(|s| s.parse::<u16>().ok()) {
+        return Some(0x30 + digit);
     }
+    if let Some(digit) = suffix("Numpad").and_then(|s| s.parse::<u16>().ok()) {
+        return Some(0x60 + digit);
+    }
+    if let Some(n) = suffix("F").and_then(|s| s.parse::<u16>().ok()) {
+        return (1..=24).contains(&n).then_some(0x6F + n);
+    }
+    None
 }
 
-/// Release the keys of the hotkey first (otherwise the game sees e.g. Ctrl+D+C),
-/// then press Ctrl+C. Mirrors APT `Shortcuts.register` + `pressKeysToCopyItemText`.
-fn copy_sequence(target: CheckTarget) -> Vec<KeyAction> {
-    target
-        .hotkey_vks()
-        .iter()
-        .map(|&key| KeyAction::Up(key))
+/// Keys of the hotkey that the user may still hold: released before we press our own,
+/// otherwise the game sees e.g. Ctrl+D+C (APT `Shortcuts.register`).
+fn held_keys(shortcut: &Shortcut) -> Vec<u16> {
+    let modifiers = [
+        (Modifiers::CONTROL, vk::CONTROL),
+        (Modifiers::ALT, vk::MENU),
+        (Modifiers::SHIFT, vk::SHIFT),
+        (Modifiers::SUPER, vk::LWIN),
+    ];
+    code_vk(shortcut.key)
+        .into_iter()
+        .chain(
+            modifiers
+                .into_iter()
+                .filter(|(modifier, _)| shortcut.mods.contains(*modifier))
+                .map(|(_, key)| key),
+        )
+        .collect()
+}
+
+/// Release the hotkey, then press Ctrl+C (APT `pressKeysToCopyItemText`).
+fn copy_sequence(shortcut: &Shortcut) -> Vec<KeyAction> {
+    held_keys(shortcut)
+        .into_iter()
+        .map(KeyAction::Up)
         .chain([
             KeyAction::Down(vk::CONTROL),
             KeyAction::Down(vk::C),
@@ -67,19 +114,28 @@ struct ItemTextPayload {
     elapsed_ms: u128,
 }
 
+/// A hotkey that acts on the item without the popup; the popup page does the work.
+#[derive(Clone, serde::Serialize)]
+struct ItemActionPayload {
+    action: HotkeyAction,
+    text: String,
+}
+
 pub fn plugin() -> TauriPlugin<Wry> {
     tauri_plugin_global_shortcut::Builder::new()
         .with_handler(|app, shortcut, event| {
             if event.state() != ShortcutState::Pressed {
                 return;
             }
-            if let Some(target) = CheckTarget::ALL
+            let found = app
+                .state::<AppState>()
+                .hotkeys()
                 .into_iter()
-                .find(|t| t.shortcut() == *shortcut)
-            {
+                .find(|(s, _)| s == shortcut);
+            if let Some((shortcut, action)) = found {
                 let app = app.clone();
                 // Clipboard polling sleeps, keep it off the event loop.
-                std::thread::spawn(move || check_item(&app, target));
+                std::thread::spawn(move || check_item(&app, &shortcut, action));
             }
         })
         .build()
@@ -106,12 +162,49 @@ fn set_registered(app: &AppHandle, shortcut: Shortcut, enabled: bool) {
 }
 
 pub fn set_game_hotkeys(app: &AppHandle, enabled: bool) {
-    for target in CheckTarget::ALL {
-        set_registered(app, target.shortcut(), enabled);
+    for (shortcut, _) in app.state::<AppState>().hotkeys() {
+        set_registered(app, shortcut, enabled);
     }
 }
 
-fn check_item(app: &AppHandle, target: CheckTarget) {
+/// Parses the hotkeys from the settings. Returns the usable ones and a message for each
+/// that does not parse. A hotkey set for two actions works for the first one only; the
+/// settings page marks such pairs itself.
+pub fn parse_hotkeys(
+    config: &HashMap<HotkeyAction, Option<String>>,
+) -> (Vec<(Shortcut, HotkeyAction)>, Vec<String>) {
+    let mut list: Vec<(Shortcut, HotkeyAction)> = Vec::new();
+    let mut errors = Vec::new();
+    let mut entries: Vec<_> = config
+        .iter()
+        .filter_map(|(action, text)| Some((*action, text.as_deref()?)))
+        .collect();
+    entries.sort_by_key(|(action, _)| *action);
+    for (action, text) in entries {
+        match Shortcut::from_str(text) {
+            Err(e) => errors.push(format!("{text}: {e}")),
+            Ok(shortcut) if list.iter().any(|(s, _)| *s == shortcut) => {}
+            Ok(shortcut) => list.push((shortcut, action)),
+        }
+    }
+    (list, errors)
+}
+
+/// New hotkeys from the settings: unregister the old ones, register the new ones if the game is active.
+pub fn set_hotkeys(app: &AppHandle, config: &HashMap<HotkeyAction, Option<String>>) -> Vec<String> {
+    let (list, errors) = parse_hotkeys(config);
+    let state = app.state::<AppState>();
+    let game_active = state.game_hwnd().is_some();
+    for (shortcut, _) in state.replace_hotkeys(list.clone()) {
+        set_registered(app, shortcut, false);
+    }
+    for (shortcut, _) in list {
+        set_registered(app, shortcut, game_active);
+    }
+    errors
+}
+
+fn check_item(app: &AppHandle, shortcut: &Shortcut, action: HotkeyAction) {
     let state = app.state::<AppState>();
     let Some(game) = state.game_hwnd() else {
         return;
@@ -122,7 +215,7 @@ fn check_item(app: &AppHandle, target: CheckTarget) {
 
     let cursor = platform::cursor_pos();
     let started = Instant::now();
-    let result = clipboard::read_item_text(|| platform::send_keys(&copy_sequence(target)));
+    let result = clipboard::read_item_text(|| platform::send_keys(&copy_sequence(shortcut)));
     let elapsed_ms = started.elapsed().as_millis();
     state.end_check();
 
@@ -133,12 +226,20 @@ fn check_item(app: &AppHandle, target: CheckTarget) {
             return;
         }
     };
+    log_to_ui(app, format!("Item text read in {elapsed_ms} ms"));
+
+    let Some(target) = action.target() else {
+        let _ = app.emit_to(
+            POPUP_WINDOW,
+            "item-action",
+            ItemActionPayload { action, text },
+        );
+        return;
+    };
     let Some(game_rect) = platform::client_rect(game) else {
         log_to_ui(app, "Game window is gone".into());
         return;
     };
-
-    log_to_ui(app, format!("Item text read in {elapsed_ms} ms"));
     let payload = ItemTextPayload {
         target,
         text,
@@ -148,4 +249,63 @@ fn check_item(app: &AppHandle, target: CheckTarget) {
     };
     let _ = app.emit_to(POPUP_WINDOW, "item-text", payload);
     popup::show(app, game_rect, cursor, target);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(entries: &[(HotkeyAction, Option<&str>)]) -> HashMap<HotkeyAction, Option<String>> {
+        entries
+            .iter()
+            .map(|(action, text)| (*action, text.map(str::to_owned)))
+            .collect()
+    }
+
+    #[test]
+    fn parses_the_settings_format() {
+        let (list, errors) = parse_hotkeys(&config(&[
+            (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
+            (HotkeyAction::Wiki, Some("Alt+Shift+Digit1")),
+            (HotkeyAction::Poedb, None),
+        ]));
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!(list.len(), 2);
+        let wiki = list
+            .iter()
+            .find(|(_, a)| *a == HotkeyAction::Wiki)
+            .unwrap()
+            .0;
+        assert_eq!(
+            wiki,
+            Shortcut::new(Some(Modifiers::ALT | Modifiers::SHIFT), Code::Digit1)
+        );
+    }
+
+    #[test]
+    fn skips_bad_and_repeated_hotkeys() {
+        let (list, errors) = parse_hotkeys(&config(&[
+            (HotkeyAction::PriceCheck, Some("Ctrl+KeyD")),
+            (HotkeyAction::ItemCheck, Some("Ctrl+KeyD")),
+            (HotkeyAction::Wiki, Some("Ctrl+Nonsense")),
+        ]));
+        assert_eq!(
+            list,
+            vec![(
+                Shortcut::new(Some(Modifiers::CONTROL), Code::KeyD),
+                HotkeyAction::PriceCheck
+            )]
+        );
+        assert_eq!(errors.len(), 1, "{errors:?}");
+    }
+
+    #[test]
+    fn releases_every_held_key() {
+        let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyD);
+        assert_eq!(held_keys(&shortcut), vec![0x44, 0x11, 0x12]);
+        assert_eq!(code_vk(Code::Digit7), Some(0x37));
+        assert_eq!(code_vk(Code::F5), Some(0x74));
+        assert_eq!(code_vk(Code::Numpad3), Some(0x63));
+        assert_eq!(code_vk(Code::Space), None);
+    }
 }

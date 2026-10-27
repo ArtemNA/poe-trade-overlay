@@ -1,0 +1,168 @@
+<main class="flex h-full bg-panel font-sans text-[13px] text-text">
+  <nav class="flex w-48 flex-none flex-col border-r border-line bg-chrome">
+    <div class="flex items-center gap-2 border-b border-line px-4 py-3.5">
+      <svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" /></svg>
+      <span class="font-display text-[17px] leading-none text-bright">Trade Overlay</span>
+    </div>
+    <ul class="flex flex-col py-2">
+      @for (item of sections; track item.id) {
+        <li>
+          <button class="w-full border-l-2 px-4 py-2 text-left"
+            [class]="section() === item.id ? 'border-gold bg-raised text-gold-soft' : 'border-transparent text-text hover:bg-raised hover:text-bright'"
+            [attr.aria-current]="section() === item.id ? 'page' : null" (click)="section.set(item.id)">{{ item.label }}</button>
+        </li>
+      }
+    </ul>
+    <span class="flex-1"></span>
+    <div class="m-3 flex items-center gap-2 border px-2.5 py-1.5 text-[12px]"
+      [class]="gameActive() ? 'border-[#2f5a32] bg-[#14261a] text-good' : 'border-line bg-panel text-muted'">
+      <span class="size-2 rounded-full" [class]="gameActive() ? 'bg-good' : 'bg-muted'"></span>
+      {{ gameActive() ? 'Game active, hotkeys on' : 'Game not active' }}
+    </div>
+  </nav>
+
+  <section class="flex min-w-0 flex-1 flex-col">
+    <header class="border-b border-line px-6 pt-4 pb-3">
+      @for (item of sections; track item.id) {
+        @if (item.id === section()) {
+          <h1 class="font-display text-[22px] leading-tight text-bright">{{ item.label }}</h1>
+        }
+      }
+    </header>
+
+    <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-4">
+      @switch (section()) {
+        @case ('general') {
+          <div class="flex max-w-xl flex-col gap-5">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-bright">Game window title</span>
+              <input #title class="h-8 border border-line-strong bg-well px-2 text-bright outline-none focus:border-gold"
+                [value]="settings().gameTitle" (keydown.enter)="setGameTitle(title.value)" (blur)="setGameTitle(title.value)" />
+              <span class="text-[12px] text-muted">Hotkeys work only while the window with exactly this title is in front.</span>
+              @if (hostGameTitle(); as title) {
+                @if (title !== settings().gameTitle) {
+                  <span class="bg-[#2a1f0e] px-2 py-1 text-[12px] text-warn">The POE_GAME_TITLE variable overrides it: the overlay looks for "{{ title }}".</span>
+                }
+              }
+            </label>
+
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">League</span>
+              <div class="flex gap-2">
+                <select class="h-8 flex-1 border border-line-strong bg-well px-1.5 text-bright outline-none focus:border-gold"
+                  aria-label="League" [disabled]="leagues.isLoading() || !leagues.list().length" (change)="leagues.select($any($event.target).value)">
+                  @for (league of leagues.list(); track league.id) {
+                    <option [value]="league.id" [selected]="league.id === leagues.selectedId()">{{ league.id }}</option>
+                  }
+                </select>
+                <button class="h-8 border border-line-strong bg-raised px-3 hover:border-gold disabled:opacity-50"
+                  [disabled]="leagues.isLoading()" (click)="loadLeagues()">{{ leagues.isLoading() ? 'Loading…' : 'Reload' }}</button>
+              </div>
+              @if (leagues.error(); as error) {
+                <span class="bg-[#3a1a14] px-2 py-1 text-bad">Failed to load leagues: {{ error }}</span>
+              }
+            </div>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-bright">Account name</span>
+              <input #account class="h-8 border border-line-strong bg-well px-2 text-bright outline-none focus:border-gold"
+                placeholder="Name#1234" [value]="settings().accountName" (blur)="setAccountName(account.value)" (keydown.enter)="setAccountName(account.value)" />
+              <span class="text-[12px] text-muted">Your own listings are marked in the price check.</span>
+            </label>
+          </div>
+        }
+
+        @case ('hotkeys') {
+          <div class="flex max-w-2xl flex-col">
+            <p class="mb-3 text-muted">Click a field and press the keys. Backspace removes the hotkey, Esc keeps the old one.</p>
+            @for (row of hotkeyRows; track row.action) {
+              <div class="flex items-center gap-4 border-b border-line py-2.5">
+                <div class="flex min-w-0 flex-1 flex-col">
+                  <span class="text-bright">{{ row.label }}</span>
+                  <span class="text-[12px] text-muted">{{ row.hint }}</span>
+                </div>
+                @if (conflicts().has(row.action)) {
+                  <span class="text-[12px] text-bad">Used twice</span>
+                }
+                <app-hotkey-input [value]="settings().hotkeys[row.action]" [label]="row.label" [invalid]="conflicts().has(row.action)"
+                  (changed)="setHotkey(row.action, $event)" />
+              </div>
+            }
+            @for (error of hotkeyErrors(); track error) {
+              <p class="mt-2 bg-[#3a1a14] px-2 py-1 text-bad">{{ error }}</p>
+            }
+          </div>
+        }
+
+        @case ('price-check') {
+          <div class="flex max-w-xl flex-col gap-5">
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">Stat filter range</span>
+              <div class="flex items-center gap-2">
+                <span class="text-muted">±</span>
+                <input #range class="h-8 w-16 border border-line-strong bg-well px-2 text-center text-bright tabular-nums outline-none focus:border-gold"
+                  inputmode="numeric" aria-label="Stat filter range, percent" [value]="settings().priceCheck.searchStatRange"
+                  (blur)="setStatRange(range.value); range.value = '' + settings().priceCheck.searchStatRange"
+                  (keydown.enter)="setStatRange(range.value)" />
+                <span class="text-muted">% of each roll; 0 searches the exact value (0–{{ statRangeMax }})</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <span class="text-bright">Buyout currency by default</span>
+              <div class="flex gap-1">
+                @for (option of currencies; track option.value) {
+                  <button class="h-8 border px-3"
+                    [class]="settings().priceCheck.defaultCurrency === option.value ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line-strong bg-raised hover:border-gold'"
+                    [attr.aria-pressed]="settings().priceCheck.defaultCurrency === option.value"
+                    (click)="setPriceCheck({ defaultCurrency: option.value })">{{ option.label }}</button>
+                }
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              <label class="flex items-start gap-2.5">
+                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.merchantOnly"
+                  (change)="setPriceCheck({ merchantOnly: $any($event.target).checked })" />
+                <span class="flex flex-col"><span class="text-bright">Instant buyout only</span>
+                  <span class="text-[12px] text-muted">Listings in merchant tabs; turn off to include offers you have to whisper for.</span></span>
+              </label>
+              <label class="flex items-start gap-2.5">
+                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.smartInitialSearch"
+                  (change)="setPriceCheck({ smartInitialSearch: $any($event.target).checked })" />
+                <span class="flex flex-col"><span class="text-bright">Search right away</span>
+                  <span class="text-[12px] text-muted">For uniques, currency, gems and other items whose price rarely needs filter changes.</span></span>
+              </label>
+              <label class="flex items-start gap-2.5">
+                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.activateStockFilter"
+                  (change)="setPriceCheck({ activateStockFilter: $any($event.target).checked })" />
+                <span class="flex flex-col"><span class="text-bright">Always select the "Stock" filter</span>
+                  <span class="text-[12px] text-muted">For stacks: only sellers with at least as many as you hover.</span></span>
+              </label>
+              <label class="flex items-start gap-2.5">
+                <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.collapseListings === 'app'"
+                  (change)="setPriceCheck({ collapseListings: $any($event.target).checked ? 'app' : 'api' })" />
+                <span class="flex flex-col"><span class="text-bright">Show how many listings a seller has</span>
+                  <span class="text-[12px] text-muted">Asks the trade site for more results, so the rate limit is reached sooner.</span></span>
+              </label>
+            </div>
+          </div>
+        }
+
+        @case ('map-check') {
+          <app-map-mods-editor />
+        }
+
+        @case ('log') {
+          <ol class="min-h-0 flex-1 overflow-auto border border-line bg-well p-2 font-mono text-[12px]">
+            @for (line of log(); track $index) {
+              <li><span class="text-muted">{{ line.time }}</span> {{ line.text }}</li>
+            } @empty {
+              <li class="text-muted">Switch to the game window to start.</li>
+            }
+          </ol>
+        }
+      }
+    </div>
+  </section>
+</main>

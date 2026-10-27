@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import type { HotkeyAction } from './constants';
 
 /**
  * Whether the popup currently holds the keyboard. Tracked here rather than read from
@@ -28,6 +29,12 @@ export interface ItemTextEvent {
   elapsedMs: number;
 }
 
+/** Payload of the `item-action` event: a link or stash search hotkey, handled without showing the popup. */
+export interface ItemActionEvent {
+  action: Exclude<HotkeyAction, CheckTarget>;
+  text: string;
+}
+
 export interface ForegroundEvent {
   title: string;
   isGame: boolean;
@@ -40,7 +47,9 @@ export interface Status {
 
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
-  setGameTitle: (title: string) => invoke<void>('set_game_title', { title }),
+  /** Game window title and hotkeys from the settings; returns a message per unusable hotkey. */
+  setHostConfig: (gameTitle: string, hotkeys: Record<HotkeyAction, string | null>) =>
+    invoke<string[]>('set_host_config', { gameTitle, hotkeys }),
   hidePopup: () => invoke<void>('hide_popup'),
   /** The popup takes the keyboard (for typing into a field); false if Windows refused. */
   popupFocusInput: async () => (popupHasKeyboard = await invoke<boolean>('popup_focus_input')),

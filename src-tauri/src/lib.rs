@@ -6,9 +6,11 @@ mod popup;
 mod stash;
 mod state;
 
+use std::collections::HashMap;
+
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
-use constants::MAIN_WINDOW;
+use constants::{DEV_IDENTIFIER_SUFFIX, MAIN_WINDOW};
 use platform::ForegroundInfo;
 use state::AppState;
 
@@ -74,9 +76,20 @@ fn get_status(state: tauri::State<AppState>) -> Status {
     }
 }
 
+/// Settings the host needs (APT `update-host-config`): the game window title and the hotkeys.
+/// Returns a message for every hotkey that cannot be used.
 #[tauri::command]
-fn set_game_title(state: tauri::State<AppState>, title: String) {
-    state.set_game_title(title.trim().to_string());
+fn set_host_config(
+    app: AppHandle,
+    game_title: String,
+    hotkeys: HashMap<hotkeys::HotkeyAction, Option<String>>,
+) -> Vec<String> {
+    app.state::<AppState>()
+        .set_game_title(game_title.trim().to_string());
+    let errors = hotkeys::set_hotkeys(&app, &hotkeys);
+    // The title may now match (or no longer match) the window in front.
+    on_foreground(&app, platform::current_foreground());
+    errors
 }
 
 #[tauri::command]
@@ -127,6 +140,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .manage(AppState::default())
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -136,7 +150,7 @@ pub fn run() {
         .plugin(hotkeys::plugin())
         .invoke_handler(tauri::generate_handler![
             get_status,
-            set_game_title,
+            set_host_config,
             hide_popup,
             popup_focus_input,
             popup_release_focus,
@@ -144,6 +158,13 @@ pub fn run() {
             fit_popup
         ])
         .setup(|app| {
+            let identifier = &app.config().identifier;
+            if cfg!(debug_assertions) && !identifier.ends_with(DEV_IDENTIFIER_SUFFIX) {
+                return Err(format!(
+                    "debug build with the release identifier {identifier}: start it with `npm run dev`,                      so it does not use the settings of an installed release"
+                )
+                .into());
+            }
             let handle = app.handle().clone();
             popup::init(&handle)?;
 

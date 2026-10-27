@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import type { ParsedItem } from '@/parser';
+import { ItemCategory, type ParsedItem } from '@/parser';
 import type { FilterNumeric, FilterOrGroup, FilterTag, StatFilter } from '../../lib/apt/web/price-check/filters/interfaces';
 import {
   apiToSatisfySearch,
@@ -13,6 +13,7 @@ import {
   CLOUDFLARE_CHECK_ERROR,
   CURRENCY_COLOR_OTHER,
   CURRENCY_COLORS,
+  ITEM_CHIP_SHORT_LABELS,
   MODS_PRESET_ID,
   MODS_PRESET_LABEL,
   PRICE_CHECK_MAX_HEIGHT,
@@ -49,6 +50,19 @@ import {
 import { ItemFilterChip, itemFilterChips } from './item-filter-chips';
 import { formatChaos, limiterUsage, summarizeListings } from './listing-summary';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
+import { Currency } from '../shared/currency';
+import {
+  baseSwitch,
+  corruptedState,
+  type CorruptedState,
+  groupStats,
+  setCorrupted,
+  setExactBase,
+  sourceLines,
+  statCounts,
+  statLine,
+  statTier,
+} from './filter-view';
 import { NumInput } from './num-input';
 import { activePreset, createItemPresets, Presets, shouldSearchImmediately } from './price-check';
 import { GroupedResult, TradeSearch, tradeSiteUrl } from './trade-search';
@@ -74,7 +88,7 @@ const TABS = [
  */
 @Component({
   selector: 'app-price-check',
-  imports: [NgTemplateOutlet, TranslatePipe, NumInput, ItemCheckPanel],
+  imports: [NgTemplateOutlet, TranslatePipe, NumInput, ItemCheckPanel, Currency],
   templateUrl: './price-check-panel.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -110,7 +124,111 @@ export class PriceCheckPanel {
 
   protected readonly plate = computed(() => RARITY_COLORS[this.view().rarity] ?? RARITY_COLORS['Normal']);
 
+  // Header (design A+B): the item, its base and status switches, the poe.ninja answer.
+
+  /** Stackables, fragments, divination cards, gems and maps show their icon, as in APT. */
+  protected readonly itemIcon = computed(() => {
+    const item = this.item();
+    const iconic =
+      tradeTag(item) != null ||
+      [ItemCategory.DivinationCard, ItemCategory.Gem, ItemCategory.Map, ItemCategory.CapturedBeast].includes(item.category!);
+    return iconic ? item.info.icon || null : null;
+  });
+
+  protected readonly base = computed(() => {
+    const active = this.active();
+    return active ? baseSwitch(active.filters) : null;
+  });
+
+  protected readonly corrupted = computed(() => {
+    const active = this.active();
+    return active ? corruptedState(active.filters) : null;
+  });
+
+  protected readonly corruptedOptions: Array<{ value: CorruptedState; label: string }> = [
+    { value: 'any', label: 'Any' },
+    { value: 'not', label: 'Not corrupted' },
+    { value: 'only', label: 'Corrupted' },
+  ];
+
+  /** Item filters shown as chips in the header; the base, rarity and corrupted have their own controls. */
+  protected readonly headerChips = computed(() => this.chips().filter((chip) => !['base', 'rarity', 'corrupted'].includes(chip.key)));
+  protected readonly rarityChip = computed(() => this.chips().find((chip) => chip.key === 'rarity') ?? null);
+
+  protected chipLabel(chip: ItemFilterChip): string {
+    return ITEM_CHIP_SHORT_LABELS[chip.key] ?? chip.label;
+  }
+
+  /** A unique the trade site prices by name: links and corruption decide, no stat filters. */
+  protected readonly uniqueWithoutStats = computed(() => this.view().rarity === 'Unique' && !this.active()?.stats.length);
+
+  protected readonly searchedOnce = computed(() => !!(this.search.searchResult() || this.bulk.current()));
+
+  protected setBase(exact: boolean): void {
+    setExactBase(this.active()!.filters, exact);
+    this.markChanged();
+  }
+
+  protected setCorruptedState(state: CorruptedState): void {
+    setCorrupted(this.active()!.filters, state);
+    this.markChanged();
+  }
+
+  // Stat filters (design A+B): groups, tiers, hidden ones, the mods behind totals.
+
+  protected readonly showHidden = signal(false);
+  protected readonly showSources = signal(false);
+
+  protected readonly statView = computed(() => {
+    const active = this.active();
+    return active ? groupStats(active.stats) : { groups: [], hidden: [] };
+  });
+
+  protected readonly counts = computed(() => {
+    const active = this.active();
+    return active ? statCounts(active.stats) : { on: 0, all: 0 };
+  });
+
+  protected tier(filter: StatFilter): number | null {
+    return statTier(filter);
+  }
+
+  protected sources(filter: StatFilter) {
+    return this.showSources() ? sourceLines(filter) : [];
+  }
+
+  /** "1 Empty or Crafted Modifier": which affix has to be free (APT `ItemHasEmptyModifier`). */
+  protected emptyAffix(filter: StatFilter): number | null {
+    return filter.tradeId[0] === 'item.has_empty_modifier' && filter.option ? filter.option.value : null;
+  }
+
+  protected readonly emptyAffixOptions = [
+    { value: 0, label: 'Any' },
+    { value: 1, label: 'Prefix' },
+    { value: 2, label: 'Suffix' },
+  ];
+
+  protected setEmptyAffix(filter: StatFilter, value: number): void {
+    filter.option!.value = value;
+    filter.disabled = false;
+    this.markChanged();
+  }
+
+  protected hiddenReason(filter: FilterOrGroup): string {
+    const reason = filter.group ? filter.meta.hidden : filter.hidden;
+    return reason ? t(reason) : '';
+  }
+
   protected readonly summary = computed(() => summarizeListings(this.search.groupedResults(), currencyRates.rates()));
+
+  /** "30 chaos" → { amount: "30", currency: "chaos" }, for the price with its icon. */
+  protected splitPrice(price: string): { amount: string; currency: string } {
+    const at = price.lastIndexOf(' ');
+    return at < 0 ? { amount: price, currency: '' } : { amount: price.slice(0, at), currency: price.slice(at + 1) };
+  }
+
+  /** The "≈ chaos" column only when some listing is in another currency. */
+  protected readonly mixedCurrencies = computed(() => this.search.rows().some((row) => row.priceCurrency !== 'chaos'));
 
   protected readonly limits = computed(() => {
     RATE_LIMIT_RULES_REVISION();
@@ -170,6 +288,20 @@ export class PriceCheckPanel {
   protected readonly ninjaSpark = computed(() => {
     const trend = this.ninja()?.trend;
     return trend ? sparkline(trend.graph, 300, 64) : null;
+  });
+
+  /** The small trend line next to the price in the header. */
+  protected readonly headerSpark = computed(() => {
+    const trend = this.ninja()?.trend;
+    return trend ? sparkline(trend.graph, 64, 34) : null;
+  });
+
+  /** poe.ninja value as a number and a currency id for its icon ("div" → "divine"). */
+  protected readonly ninjaAmount = computed(() => {
+    const value = this.ninjaValue();
+    if (!value) return null;
+    const text = formatValue(value, value.currency === 'div');
+    return { text: text.replace(/\s*(c|div)$/, ''), currency: value.currency === 'div' ? 'divine' : 'chaos' };
   });
 
   protected readonly related = computed(() => {
@@ -402,8 +534,7 @@ export class PriceCheckPanel {
   }
 
   protected statText(filter: StatFilter): string {
-    const value = filter.roll?.value;
-    return value != null && filter.text.split('#').length === 2 ? filter.text.replace('#', String(value)) : filter.text;
+    return statLine(filter.text, filter.statRef, filter.roll?.value);
   }
 
   /** Short tag before non-explicit stats ("implicit", "crafted", …); none for item properties (APT `showTag`). */

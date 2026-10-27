@@ -2,6 +2,16 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## Unreleased
+
+- A new price check layout. A full-width header holds the item's name and base and a switch between the whole category and this base. It also holds item level and links as chips, corrupted as Any / Not corrupted / Corrupted, and the poe.ninja price with its 7 day trend.
+- Currencies, fragments, divination cards, gems and maps show their picture next to the name.
+- Stat filters are grouped (Properties, Totals, Implicit, Eldritch implicits, Explicit, Crafted) and show mod tiers (T1, T2, …).
+- "Σ Mods behind totals" shows which mods a pseudo total adds up.
+- Rarely useful filters sit under "Hidden", each with the reason it is hidden.
+- An empty modifier can be searched as Any, Prefix or Suffix. The F button is now a "Fractured" switch.
+- Prices, bulk offers and the divine rate show currency icons instead of "c" and "div".
+
 ## v0.1.4
 
 - Price check: a **Mods** tab next to Pseudo, with every mod on its own ("+70 to maximum Life", "+18 to Strength") instead of pseudo totals ("+79 total maximum Life").

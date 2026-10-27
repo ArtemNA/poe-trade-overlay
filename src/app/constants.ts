@@ -63,6 +63,33 @@ export const PRICE_CHECK_WIDTH = 960;
 export const PRICE_CHECK_MIN_HEIGHT = 590;
 export const PRICE_CHECK_MAX_HEIGHT = 900;
 
+/** Price check stat filter headings in display order, and which filter tags go under each (F-54). */
+export const STAT_GROUPS: ReadonlyArray<{ name: string; tags: readonly string[] }> = [
+  { name: 'Properties', tags: ['property'] },
+  { name: 'Totals', tags: ['pseudo'] },
+  { name: 'Enchant', tags: ['enchant'] },
+  { name: 'Implicit', tags: ['implicit', 'scourge', 'synthesised', 'foulborn', 'vestigial', 'corrupted'] },
+  { name: 'Eldritch implicits', tags: ['eldritch'] },
+  {
+    name: 'Explicit',
+    tags: ['explicit', 'fractured', 'veiled', 'explicit-shaper', 'explicit-elder', 'explicit-crusader', 'explicit-hunter', 'explicit-redeemer', 'explicit-warlord', 'explicit-delve', 'explicit-incursion'],
+  },
+  { name: 'Crafted', tags: ['crafted'] },
+];
+export const STAT_GROUP_OTHER = 'Other';
+
+/** Short labels of the item filter chips in the price check header. */
+export const ITEM_CHIP_SHORT_LABELS: Record<string, string> = {
+  itemLevel: 'iLvl',
+  linkedSockets: 'Links',
+  whiteSockets: 'White sockets',
+  gemLevel: 'Gem level',
+  mapTier: 'Tier',
+  areaLevel: 'Area level',
+  stackSize: 'Stack',
+  sentinelCharge: 'Charge',
+};
+
 /** The leagues list is loaded again on a check when it is older than this (ms). */
 export const LEAGUES_REFRESH_AFTER = 3 * 60 * 60 * 1000;
 

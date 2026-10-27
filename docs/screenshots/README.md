@@ -67,5 +67,12 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `15-price-check-pseudo.png` | Shield, Pseudo tab: "+79 total maximum Life" from life and strength |
 | `15-price-check-mods-preset.png` | The same shield, Mods tab: life (crafted) and strength on their own |
 | `15-price-check-fractured-toggle.png` | F turned on for "74% increased Chance to Block": searched as fractured |
+| `16-price-check-rare-header.png` | Redesign (A+B): the header with name, base, "Any Boots / This base", iLvl ≥, corrupted in three states, poe.ninja base price with icon and 7 day line; Pseudo tab grouped into Properties / Totals, T1 / T2 tiers |
+| `16-price-check-totals-sources-hidden.png` | "Σ Mods behind totals" open (strength adds +24 to life) and Hidden open with the reason under the filter |
+| `16-price-check-mods-tiers-fractured.png` | Mods tab: Explicit group with tiers and the "Fractured" switches |
+| `16-price-check-results-currency-icons.png` | After Search ("Search again"): listings and the summary with currency icons, "≈ chaos" column for mixed currencies |
+| `16-price-check-unique-no-stats.png` | Tabula Rasa: "Links ≥ 6" and corrupted in the header, no stat filters, prices in divine icons |
+| `16-price-check-bulk-icons.png` | Divine Orb: its icon by the name, bulk offers "300 [chaos] → 1 [divine]", "Pay with", "You have 12"; divine rate in the title bar with icons |
+| `16-price-check-divination-icon.png` | The Doctor: the card's picture by its name |
 
 Not captured yet: the tray menu and the update banner (no release to update to yet), the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

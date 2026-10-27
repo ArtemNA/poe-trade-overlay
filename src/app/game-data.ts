@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { init, setDataSource, type DataSource } from '@/assets/data';
 import { DATA_PATH, DEFAULT_LANG, Lang } from './constants';
 
@@ -20,11 +21,14 @@ const browserSource: DataSource = {
 
 let loading: Promise<void> | undefined;
 
+/** Set once the game data is in: views that look items up (currency icons) wait for it. */
+export const gameDataLoaded = signal(false);
+
 /** Loads items, stats and client strings once; parsing items requires it. */
 export function loadGameData(lang: Lang = DEFAULT_LANG): Promise<void> {
   if (!loading) {
     setDataSource(browserSource);
-    loading = init(lang);
+    loading = init(lang).then(() => gameDataLoaded.set(true));
   }
   return loading;
 }

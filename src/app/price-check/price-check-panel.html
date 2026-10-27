@@ -1,47 +1,100 @@
-<div class="flex min-h-0 flex-1">
-  <!-- Filters -->
-  <div class="flex w-[420px] flex-col border-r border-line">
-    <div class="flex flex-col items-center border-y px-2.5 pt-2 pb-1.5" [style.background]="plate().plate" [style.border-color]="plate().rule">
-      <span class="font-display text-lg leading-tight font-medium" [style.color]="plate().text">{{ view().name }}</span>
+<!-- Header: the item, its base and status, the poe.ninja answer (design A+B, F-54) -->
+<header class="flex items-start gap-3.5 border-b border-bronze bg-raised px-3.5 pt-2.5 pb-2">
+  @if (itemIcon(); as icon) {
+    <img [src]="icon" alt="" class="size-12 flex-none object-contain" />
+  }
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-baseline gap-x-2.5 leading-tight">
+      <span class="font-display text-[24px] font-bold" [style.color]="plate().text">{{ view().name }}</span>
       @if (view().baseType) {
-        <span class="font-display text-[15px] leading-tight" [style.color]="plate().text">{{ view().baseType }}</span>
+        <span class="font-display text-base text-text">{{ view().baseType }}</span>
       }
     </div>
-    @if (view().itemLevel) {
-      <div class="py-1.5 text-center font-display text-[13px] text-muted">Item Level: <span class="text-bright">{{ view().itemLevel }}</span></div>
-    }
 
-    @if (ninjaValue(); as value) {
-      <button class="mx-2.5 mb-1.5 flex items-center gap-2 border border-line bg-well px-2 py-1 text-left hover:border-bronze" [class.mt-1.5]="!view().itemLevel"
-        title="poe.ninja price · click for the 7 day trend" (click)="selectTab('ninja')">
-        <span class="text-muted">poe.ninja</span>
-        @if (ninjaBaseOnly()) {
-          <span class="text-[11px] text-muted">base</span>
+    @if (active(); as preset) {
+      <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+        @if (base(); as b) {
+          <div class="flex h-6 border border-line-strong" role="group" aria-label="Base">
+            <button class="px-2 not-last:border-r not-last:border-line-strong" [class]="!b.exact ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'"
+              (click)="setBase(false)">{{ b.category }}</button>
+            <button class="px-2" [class]="b.exact ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'" [title]="'Only ' + b.base"
+              (click)="setBase(true)">This base</button>
+          </div>
         }
-        <b class="font-semibold" [class]="value.currency === 'div' ? 'text-gold-soft' : 'text-bright'">{{ price(value) }}</b>
-        <span class="flex-1"></span>
-        @if (ninja()?.trend; as trend) {
-          <span class="tabular-nums text-[11px]" [class]="trend.change > 0 ? 'text-good' : trend.change < 0 ? 'text-bad' : 'text-muted'">
-            {{ percent(trend.change) }} · 7d
+        @for (chip of headerChips(); track chip.key) {
+          <span class="flex h-6 items-center gap-1 border pl-2" [class]="chip.enabled ? 'border-bronze bg-[#2a2219] text-gold-soft' : 'border-line text-muted'"
+            [class.pr-2]="!chip.numeric">
+            <button class="whitespace-nowrap" [title]="chip.label" [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">
+              {{ chipLabel(chip) }}{{ chip.numeric ? ' ≥' : chip.enabled ? ' ✓' : '' }}
+            </button>
+            @if (chip.numeric; as numeric) {
+              <app-num-input [value]="numeric.value" [label]="chip.label + ' minimum'"
+                (valueChange)="setNumeric(numeric, 'value', $event)" (submit)="runSearch()" />
+              @if (numeric.max != null) {
+                <app-num-input [value]="numeric.max" [label]="chip.label + ' maximum'" placeholder="max"
+                  (valueChange)="setNumeric(numeric, 'max', $event)" (submit)="runSearch()" />
+              }
+            }
           </span>
         }
-      </button>
+        @if (corrupted(); as state) {
+          <div class="flex h-6 border border-line-strong" role="group" aria-label="Corrupted">
+            @for (option of corruptedOptions; track option.value) {
+              <button class="px-2 not-last:border-r not-last:border-line-strong"
+                [class]="option.value !== state ? 'text-muted hover:text-text' : option.value === 'not' ? 'bg-[#1d2a1c] text-[#8fd493]' : option.value === 'only' ? 'bg-[#2e1a17] text-bad' : 'bg-[#2a2219] text-gold-soft'"
+                [attr.aria-pressed]="option.value === state" (click)="setCorruptedState(option.value)">{{ option.label }}</button>
+            }
+          </div>
+        }
+      </div>
     }
+  </div>
 
-    @if (presets(); as all) {
-      @if (all.presets.length > 1) {
-        <div class="mx-2.5 mb-1 flex border border-line">
-          @for (preset of all.presets; track preset.id) {
-            <button
-              class="h-6 flex-1 border-line text-xs not-last:border-r"
-              [class]="preset.id === all.active ? 'bg-[#2a2218] font-medium text-gold-soft' : 'text-muted hover:text-text'"
-              (click)="selectPreset(preset.id)"
-            >
-              {{ presetLabel(preset.id) }}
-            </button>
+  @if (ninjaAmount(); as value) {
+    <button class="flex flex-none items-center gap-3 self-center text-left" title="poe.ninja price · click for the 7 day trend" (click)="selectTab('ninja')">
+      <div class="text-right">
+        <div class="flex items-center justify-end gap-1.5 font-display text-[26px] leading-none tabular-nums"
+          [class]="value.currency === 'divine' ? 'text-gold-soft' : 'text-bright'">
+          {{ value.text }} <app-currency [tag]="value.currency" [size]="24" />
+        </div>
+        <div class="mt-1 text-[11px] text-muted">
+          poe.ninja{{ ninjaBaseOnly() ? ' base' : '' }}
+          @if (ninja()?.trend; as trend) {
+            · <span class="tabular-nums" [class]="trend.change > 0 ? 'text-good' : trend.change < 0 ? 'text-bad' : ''">{{ percent(trend.change) }} 7d</span>
           }
         </div>
+      </div>
+      @if (headerSpark(); as spark) {
+        <svg viewBox="0 0 64 34" class="h-[34px] w-16 overflow-visible">
+          <path [attr.d]="spark.area" class="fill-gold/10" />
+          <path [attr.d]="spark.line" class="fill-none stroke-gold-soft" stroke-width="1.5" />
+        </svg>
       }
+    </button>
+  }
+</header>
+
+<div class="flex min-h-0 flex-1">
+  <!-- Filters -->
+  <div class="flex w-[440px] flex-col border-r border-line">
+    @if (active(); as preset) {
+      <div class="flex items-center gap-2 px-2.5 pt-2 pb-1">
+        @if (presets(); as all) {
+          @if (all.presets.length > 1) {
+            <div class="flex h-6 border border-line">
+              @for (p of all.presets; track p.id) {
+                <button class="px-2.5 text-xs not-last:border-r not-last:border-line"
+                  [class]="p.id === all.active ? 'bg-[#2a2219] font-medium text-gold-soft' : 'text-muted hover:text-text'"
+                  (click)="selectPreset(p.id)">{{ presetLabel(p.id) }}</button>
+              }
+            </div>
+          }
+        }
+        <span class="flex-1"></span>
+        @if (counts().all) {
+          <span class="text-[11px] text-muted">{{ counts().on }} of {{ counts().all }} stats · min · max</span>
+        }
+      </div>
     }
 
     @if (error(); as message) {
@@ -50,53 +103,53 @@
 
     @if (active(); as preset) {
       <div #filtersScroll class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5">
-        <!-- Stat filters -->
-        <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'stats', title: 'Stat filters', aside: 'min · max' }" />
-        @if (open().stats) {
-          @for (entry of preset.stats; track $index) {
-            @if (isGroup(entry)) {
-              <div class="flex items-center gap-2 px-1 py-1">
-                <input type="checkbox" class="size-3.5 accent-gold" [checked]="!entry.meta.disabled" (change)="toggleStat(entry.meta)" />
-                <button class="min-w-0 flex-1 truncate text-left font-display text-[13px] text-mod" (click)="toggleGroup(entry)">
-                  {{ entry.expanded ? '▾' : '▸' }} {{ entry.meta.text }}
-                </button>
-              </div>
-              @if (entry.expanded) {
-                @for (stat of entry.stats; track $index) {
-                  <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat, nested: true }" />
-                }
-              }
-            } @else {
-              <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry), nested: false }" />
+        @for (group of statView().groups; track group.name) {
+          <div class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-[11px] tracking-[.06em] text-muted uppercase">
+            {{ group.name }}
+            <span class="flex-1"></span>
+            @if (group.name === 'Totals') {
+              <button class="normal-case tracking-normal hover:text-text" [class.text-gold-soft]="showSources()" [attr.aria-pressed]="showSources()"
+                (click)="showSources.set(!showSources())">Σ Mods behind totals {{ showSources() ? '▾' : '▸' }}</button>
             }
-          } @empty {
+          </div>
+          @for (entry of group.entries; track $index) {
+            <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+          }
+        } @empty {
+          @if (uniqueWithoutStats()) {
+            <p class="px-1 py-2 text-muted">No stat filters for this unique: links and corruption, above, decide the price.</p>
+          } @else if (!statView().hidden.length) {
             <p class="px-1 py-1.5 text-muted">{{ 'filters.empty' | t }}</p>
           }
         }
 
-        <!-- Item -->
-        @if (chips().length) {
-          <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'item', title: 'Item', aside: '' }" />
-          @if (open().item) {
-            @for (chip of chips(); track chip.key) {
-              <label class="flex items-center gap-2 px-1 py-1">
-                <input type="checkbox" class="size-3.5 accent-gold" [checked]="chip.enabled" (change)="toggleChip(chip)" />
-                <span class="min-w-0 flex-1 truncate" [class.text-muted]="!chip.enabled">{{ chip.label }}</span>
-                @if (chip.numeric; as numeric) {
-                  <app-num-input [value]="numeric.value" [label]="chip.label + ' minimum'"
-                    (valueChange)="setNumeric(numeric, 'value', $event)" (submit)="runSearch()" />
-                  @if (numeric.max != null) {
-                    <app-num-input [value]="numeric.max" [label]="chip.label + ' maximum'" placeholder="max"
-                      (valueChange)="setNumeric(numeric, 'max', $event)" (submit)="runSearch()" />
-                  }
-                }
-              </label>
+        @if (statView().hidden.length) {
+          <button class="mt-1.5 flex items-center gap-1.5 border-b border-line pt-1 pb-0.5 text-left text-[11px] tracking-[.06em] text-muted uppercase hover:text-text"
+            [attr.aria-pressed]="showHidden()" (click)="showHidden.set(!showHidden())">
+            <svg viewBox="0 0 16 16" class="size-3.5 fill-none stroke-current" stroke-width="1.3">
+              <path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8Z" /><circle cx="8" cy="8" r="2" /><path d="M2.5 13.5 13.5 2.5" />
+            </svg>
+            Hidden · {{ statView().hidden.length }}
+            <span class="flex-1"></span>
+            <span class="normal-case tracking-normal">{{ showHidden() ? '▾' : '▸' }}</span>
+          </button>
+          @if (showHidden()) {
+            @for (entry of statView().hidden; track $index) {
+              <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+              <div class="pb-1 pl-[54px] text-[11px] text-muted italic">{{ hiddenReason(entry) }}</div>
             }
           }
         }
 
-        <!-- Trade -->
-        <ng-container *ngTemplateOutlet="sectionHead; context: { key: 'trade', title: 'Trade', aside: open().trade ? '' : tradeSummary() }" />
+        <!-- Trade options -->
+        <div class="mt-2 flex items-center gap-2 border-t border-line pt-2 pb-1">
+          @if (rarityChip(); as chip) {
+            <button class="h-6 border px-2" [class]="chip.enabled ? 'border-bronze bg-[#2a2219] text-gold-soft' : 'border-line text-muted'"
+              [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">{{ chip.label }}{{ chip.enabled ? ' ✓' : '' }}</button>
+          }
+          <span class="flex-1"></span>
+          <button class="text-[11px] text-muted hover:text-text" (click)="toggleSection('trade')">{{ tradeSummary() }} {{ open().trade ? '▴' : '▾' }}</button>
+        </div>
         @if (open().trade) {
           <label class="flex items-center gap-2 px-1 py-1">
             <input type="checkbox" class="size-3.5 accent-gold" [checked]="!preset.filters.trade.offline" (change)="toggleOffline()" />
@@ -123,7 +176,7 @@
           [disabled]="isSearching()"
           (click)="runSearch()"
         >
-          {{ isSearching() ? 'Searching…' : 'Search' }}
+          {{ isSearching() ? 'Searching…' : searchedOnce() ? 'Search again' : 'Search' }}
         </button>
       </div>
     }
@@ -159,14 +212,16 @@
     } @else if (activeTab() === 'wiki') {
       <app-item-check class="pt-1" [item]="item()" [view]="view()" [compact]="true" />
     } @else {
-    <div class="flex min-h-[34px] items-baseline gap-3.5 border-b border-line bg-raised px-3 py-2">
+    <div class="flex min-h-[34px] items-center gap-3.5 border-b border-line bg-raised px-3 py-1.5">
       @if (search.searchResult(); as result) {
         <span class="text-muted">{{ result.total.toLocaleString('en') }} matched</span>
         @if (summary().cheapest; as cheapest) {
-          <span>Cheapest <b class="font-semibold text-gold-soft">{{ cheapest.price }}</b></span>
+          @let p = splitPrice(cheapest.price);
+          <span class="flex items-center gap-1">Cheapest <b class="font-semibold text-gold-soft tabular-nums">{{ p.amount }}</b> <app-currency [tag]="p.currency" /></span>
         }
         @if (summary().mostListed; as most) {
-          <span>Most listed <b class="font-semibold text-bright">{{ most }}</b></span>
+          @let p = splitPrice(most);
+          <span class="flex items-center gap-1">Most listed <b class="font-semibold text-bright tabular-nums">{{ p.amount }}</b> <app-currency [tag]="p.currency" /></span>
         }
       } @else if (search.isSearching()) {
         <span class="text-muted">Searching…</span>
@@ -187,25 +242,33 @@
     }
 
     @let rows = search.rows();
-    <div class="grid grid-cols-[minmax(0,1fr)_70px_52px_84px] gap-2 border-b border-line px-3 py-1 text-[11px] text-muted">
-      <span>Price</span><span class="text-right">≈ chaos</span><span class="text-right">{{ detailHeader(rows) }}</span><span class="text-right">Listed</span>
+    @let columns = mixedCurrencies() ? 'minmax(0,1fr) 70px 52px 84px' : 'minmax(0,1fr) 52px 84px';
+    <div class="grid gap-2 border-b border-line px-3 py-1 text-[11px] text-muted" [style.grid-template-columns]="columns">
+      <span>Price</span>
+      @if (mixedCurrencies()) {
+        <span class="text-right">≈ chaos</span>
+      }
+      <span class="text-right">{{ detailHeader(rows) }}</span><span class="text-right">Listed</span>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto">
       @for (row of rows; track row.id; let odd = $odd) {
         <div
-          class="grid grid-cols-[minmax(0,1fr)_70px_52px_84px] items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
+          class="grid items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
+          [style.grid-template-columns]="columns"
           [class.bg-white/[0.015]]="odd"
           [class.opacity-60]="row.accountStatus === 'offline'"
           [class.text-gold-soft]="row.isMine"
         >
           <span class="flex min-w-0 items-center gap-1.5 text-bright">
             <span class="size-[9px] flex-none rounded-full" [style.background]="dot(row)"></span>
-            {{ row.priceAmount }} {{ row.priceCurrency }}
+            {{ row.priceAmount }} <app-currency [tag]="row.priceCurrency" />
             @if (row.listedTimes > 1) {
               <span class="text-muted">×{{ row.listedTimes }}</span>
             }
           </span>
-          <span class="text-right" [class]="isCheapest(row) ? 'text-good' : 'text-muted'">{{ equivalent(row) }}</span>
+          @if (mixedCurrencies()) {
+            <span class="text-right" [class]="isCheapest(row) ? 'text-good' : 'text-muted'">{{ equivalent(row) }}</span>
+          }
           <span class="text-right">{{ detail(row) }}</span>
           <span class="text-right text-muted">{{ row.relativeDate }}</span>
         </div>
@@ -224,21 +287,20 @@
 
 <ng-template #bulkPane>
   <div class="flex min-h-[34px] items-center gap-3.5 whitespace-nowrap border-b border-line bg-raised px-3 py-1.5">
-    @if (bulk.haves().length > 1) {
+    @if (bulk.haves().length) {
+      <span class="text-muted">Pay with</span>
       <div class="flex border border-line">
         @for (have of bulk.haves(); track have) {
-          <button class="h-6 px-2.5 not-last:border-r not-last:border-line"
-            [class]="have === bulk.selected() ? 'bg-[#2a2218] font-medium text-gold-soft' : 'text-muted hover:text-text'"
-            (click)="selectHave(have)">Pay {{ have }}</button>
+          <button class="flex h-6 items-center px-2 not-last:border-r not-last:border-line"
+            [class]="have === bulk.selected() ? 'bg-[#2a2219]' : 'opacity-50 hover:opacity-100'"
+            [attr.aria-pressed]="have === bulk.selected()" (click)="selectHave(have)"><app-currency [tag]="have" /></button>
         }
       </div>
-    } @else if (bulk.haves().length === 1) {
-      <span class="text-muted">Pay {{ bulk.haves()[0] }}</span>
     }
     @if (bulk.current(); as found) {
       <span class="text-muted">{{ found.total.toLocaleString('en') }} offers</span>
       @if (bulkBest(); as best) {
-        <span>Best real offer <b class="font-semibold text-gold-soft">{{ amount(best.exchangeAmount / best.itemAmount) }} {{ bulk.selected() }}</b></span>
+        <span class="flex items-center gap-1">Best real offer <b class="font-semibold text-gold-soft tabular-nums">{{ amount(best.exchangeAmount / best.itemAmount) }}</b> <app-currency [tag]="bulk.selected()" /></span>
       }
     } @else if (bulk.isSearching()) {
       <span class="text-muted">Searching…</span>
@@ -247,13 +309,17 @@
     }
     <span class="flex-1"></span>
     @if (ninjaChaos(); as ninja) {
-      <span class="text-muted">poe.ninja <b class="font-semibold text-bright">{{ amount(ninja) }} c</b></span>
+      <span class="flex items-center gap-1 text-muted">poe.ninja <b class="font-semibold text-bright tabular-nums">{{ amount(ninja) }}</b> <app-currency tag="chaos" /></span>
     }
   </div>
 
   @if (youHave(); as have) {
-    <div class="border-b border-line px-3 py-1.5 text-muted">
-      {{ 'trade_result.you_have' | t }} × {{ have.amount }} → <span class="text-bright">{{ have.worth }}</span>
+    <div class="flex items-center gap-1 border-b border-line px-3 py-1.5 text-muted">
+      {{ 'trade_result.you_have' | t }} {{ have.amount }}
+      @if (itemIcon(); as icon) {
+        <img [src]="icon" alt="" class="size-4 object-contain" />
+      }
+      → <span class="text-bright">{{ have.worth }}</span>
     </div>
   }
 
@@ -275,17 +341,20 @@
     @for (line of bulkLines(); track $index; let odd = $odd) {
       @if (line.kind === 'ratio') {
         <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-y border-dashed border-bronze/60 bg-gold/[0.06] px-3 py-1 tabular-nums">
-          <span class="text-gold-soft">{{ amount(line.ratio.exchangeAmount) }} {{ bulk.selected() }} → {{ amount(line.ratio.itemAmount) }}</span>
+          <span class="flex items-center gap-1 text-gold-soft">
+            {{ amount(line.ratio.exchangeAmount) }} <app-currency [tag]="bulk.selected()" /> → {{ amount(line.ratio.itemAmount) }}
+            <ng-container *ngTemplateOutlet="bulkItem" />
+          </span>
           <span class="col-span-3 text-right text-[11px] text-muted">{{ 'trade_result.market_ratio' | t }} · poe.ninja</span>
         </div>
       } @else {
         <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-b border-[#1f1c18] px-3 py-1 tabular-nums"
           [class.bg-white/[0.015]]="odd" [class.opacity-55]="line.row.isBait || line.row.accountStatus === 'offline'" [class.text-gold-soft]="line.row.isMine">
-          <span class="flex min-w-0 items-center gap-1.5 text-bright">
-            <span class="size-[9px] flex-none rounded-full" [style.background]="bulk.selected() === 'divine' ? '#d8d8e8' : '#d6b04c'"></span>
-            {{ amount(line.row.exchangeAmount) }} {{ bulk.selected() }} → {{ amount(line.row.itemAmount) }}
+          <span class="flex min-w-0 items-center gap-1 text-bright">
+            {{ amount(line.row.exchangeAmount) }} <app-currency [tag]="bulk.selected()" /> → {{ amount(line.row.itemAmount) }}
+            <ng-container *ngTemplateOutlet="bulkItem" />
             @if (line.row.isBait) {
-              <span class="border border-[#a5553f] px-1 text-[10px] text-[#f0a08a]">bait?</span>
+              <span class="ml-1 border border-[#a5553f] px-1 text-[10px] text-[#f0a08a]">bait?</span>
             }
           </span>
           <span class="text-right">{{ line.row.stock.toLocaleString('en') }}</span>
@@ -306,6 +375,12 @@
   </div>
 </ng-template>
 
+<ng-template #bulkItem>
+  @if (itemIcon(); as icon) {
+    <img [src]="icon" alt="" class="size-4 flex-none object-contain" />
+  }
+</ng-template>
+
 <ng-template #ninjaPane>
   <div class="min-h-0 flex-1 overflow-y-auto">
     @if (ninja(); as entry) {
@@ -321,11 +396,13 @@
         <div class="flex items-center gap-5 border-b border-line px-4 py-4">
           <div class="flex-none">
             <div class="text-[11px] text-muted">{{ ninjaBaseOnly() ? 'Base item price' : 'Price' }}</div>
-            <div class="font-display text-[28px] leading-tight" [class]="ninjaValue()?.currency === 'div' ? 'text-gold-soft' : 'text-bright'">
-              {{ price(ninjaValue()) }}
-            </div>
+            @if (ninjaAmount(); as value) {
+              <div class="flex items-center gap-1.5 font-display text-[28px] leading-tight" [class]="value.currency === 'divine' ? 'text-gold-soft' : 'text-bright'">
+                {{ value.text }} <app-currency [tag]="value.currency" [size]="26" />
+              </div>
+            }
             @if (ninjaValue()?.currency === 'div') {
-              <div class="text-muted tabular-nums">= {{ amount(entry.price.chaos) }} chaos</div>
+              <div class="flex items-center gap-1 text-muted tabular-nums">= {{ amount(entry.price.chaos) }} <app-currency tag="chaos" /></div>
             }
           </div>
 
@@ -405,34 +482,71 @@
   <span>Click a field to type · ↑ ↓ or wheel to step · Enter searches · Esc or a click outside closes</span>
 </footer>
 
-<ng-template #sectionHead let-key="key" let-title="title" let-aside="aside">
-  <button class="flex w-full items-center gap-1.5 border-b border-line px-0.5 pt-2 pb-1.5 text-left font-display text-[13px] text-muted hover:text-text" (click)="toggleSection(key)">
-    <span class="w-2 text-[9px]">{{ isOpen(key) ? '▾' : '▸' }}</span>
-    {{ title }}
-    <span class="flex-1"></span>
-    <span class="font-sans text-[11px]">{{ aside }}</span>
-  </button>
+<ng-template #entryRow let-entry>
+  @if (isGroup(entry)) {
+    <div class="flex items-center gap-2 px-1 py-1">
+      <input type="checkbox" class="size-3.5 accent-gold" [checked]="!entry.meta.disabled" (change)="toggleStat(entry.meta)" />
+      <span class="w-6 flex-none"></span>
+      <button class="min-w-0 flex-1 truncate text-left font-display text-[13px] text-mod" (click)="toggleGroup(entry)">
+        {{ entry.expanded ? '▾' : '▸' }} {{ entry.meta.text }}
+      </button>
+    </div>
+    @if (entry.expanded) {
+      @for (stat of entry.stats; track $index) {
+        <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat, nested: true }" />
+      }
+    }
+  } @else {
+    <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry), nested: false }" />
+  }
 </ng-template>
 
 <ng-template #statRow let-stat let-nested="nested">
-  <label class="flex items-center gap-2 px-1 py-1" [class.pl-5]="nested" [class.bg-mod/[0.06]]="!stat.disabled">
-    <input type="checkbox" class="size-3.5 accent-gold" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
+  <label class="flex items-center gap-2 px-1 py-[3px]" [class.pl-5]="nested" [class.bg-mod/[0.06]]="!stat.disabled">
+    <input type="checkbox" class="size-3.5 flex-none accent-gold" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
+    @let level = tier(stat);
+    <span class="flex h-4 w-6 flex-none items-center justify-center text-[10px] font-bold"
+      [class]="level === 1 ? 'bg-[#c9a15a] text-[#15130f]' : level === 2 ? 'bg-[#7a5f36] text-[#f0d48a]' : level ? 'border border-line text-muted' : ''">
+      {{ level ? 'T' + level : '' }}
+    </span>
+    <span class="flex min-w-0 flex-1 items-center gap-1.5">
+      <span class="min-w-0 truncate font-display text-[13px]" [class]="stat.disabled ? 'text-mod-off' : 'text-mod'" [title]="statText(stat)">{{ statText(stat) }}</span>
+      @if (statTag(stat); as tag) {
+        <span class="flex-none border border-line-strong px-1 text-[10px] leading-[14px] text-muted">{{ tag }}</span>
+      }
+    </span>
     @if (fracturedState(stat); as fractured) {
-      <button class="flex h-4 w-4 flex-none items-center justify-center border text-[10px] leading-none"
-        [class]="fractured === 'on' ? 'border-[#a29160] bg-[#3a3220] text-[#e2d29a]' : 'border-line text-muted opacity-40 hover:opacity-100'"
+      <button class="flex h-[18px] flex-none items-center gap-1 rounded-[9px] border border-[#6a5a2e] pr-1.5 pl-0.5 text-[10px] leading-none"
+        [class]="fractured === 'on' ? 'bg-[#c4ad6e] text-[#15130f]' : 'text-muted opacity-60 hover:opacity-100'"
         [title]="fractured === 'on' ? 'Searched as a fractured mod: click to search it as a regular one' : 'Click to search it as a fractured mod'"
-        [attr.aria-pressed]="fractured === 'on'" (click)="$event.preventDefault(); toggleFractured(stat)">F</button>
+        [attr.aria-pressed]="fractured === 'on'" (click)="$event.preventDefault(); toggleFractured(stat)">
+        <span class="size-3 rounded-full" [class]="fractured === 'on' ? 'bg-[#15130f]' : 'bg-[#6a5a2e]'"></span>Fractured
+      </button>
     }
-    @if (statTag(stat); as tag) {
-      <span class="border border-line-strong px-1 text-[10px] text-muted">{{ tag }}</span>
-    }
-    <span class="min-w-0 flex-1 truncate font-display text-[13px]" [class]="stat.disabled ? 'text-mod-off' : 'text-mod'"
-      [title]="stat.hidden ? (stat.hidden | t) : statText(stat)">{{ statText(stat) }}</span>
-    @if (stat.roll; as roll) {
+    @if (emptyAffix(stat) != null) {
+      <span class="flex h-5 flex-none border border-line-strong text-[11px]" (click)="$event.preventDefault()">
+        @for (option of emptyAffixOptions; track option.value) {
+          <button class="px-1.5 not-last:border-r not-last:border-line-strong"
+            [class]="option.value === emptyAffix(stat) ? 'bg-[#2a2219] text-gold-soft' : 'text-muted hover:text-text'"
+            (click)="setEmptyAffix(stat, option.value)">{{ option.label }}</button>
+        }
+      </span>
+    } @else if (stat.roll; as roll) {
       <app-num-input [value]="rollValue(stat, 'min')" [decimals]="roll.dp" label="Minimum"
         (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
       <app-num-input [value]="rollValue(stat, 'max')" [decimals]="roll.dp" label="Maximum" placeholder="max"
         (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />
     }
   </label>
+  @for (line of sources(stat); track $index) {
+    <div class="flex items-center gap-1.5 py-px pl-[54px] text-[12px] text-muted">
+      <span class="min-w-0 truncate">{{ line.text }}</span>
+      @if (line.kind) {
+        <span class="flex-none text-[10px]">· {{ line.kind }}</span>
+      }
+      @if (line.adds != null) {
+        <span class="flex-none text-text">→ +{{ line.adds }}</span>
+      }
+    </div>
+  }
 </ng-template>

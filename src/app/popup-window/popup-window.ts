@@ -1,6 +1,7 @@
 import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, inject, Injector, signal, viewChild } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
 import { parseClipboard, type ParsedItem } from '@/parser';
+import { Currency } from '../shared/currency';
 import { currencyRates, divineFractions, trackCurrencyRates } from '../core/currency-rates';
 import { loadI18n } from '../core/i18n';
 import { Leagues } from '../core/leagues';
@@ -24,7 +25,7 @@ import { ItemView, toItemView } from './item-view';
 /** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.

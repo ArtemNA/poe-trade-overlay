@@ -28,15 +28,24 @@ export function divineFractions(divineChaos: number): Array<{ divine: number; ch
   return DIVINE_FRACTIONS.map((divine) => ({ divine, chaos: Math.round(divine * divineChaos) }));
 }
 
-const nameByTradeTag = new Map<string, string | null>();
+const byTradeTag = new Map<string, { name: string; icon: string } | null>();
+
+function currencyItem(tradeTag: string): { name: string; icon: string } | null {
+  if (!byTradeTag.has(tradeTag)) {
+    const item = ITEMS_ITERATOR(`"tradeTag":"${tradeTag}"`).next().value;
+    byTradeTag.set(tradeTag, item?.tradeTag === tradeTag ? { name: item.name, icon: item.icon } : null);
+  }
+  return byTradeTag.get(tradeTag) ?? null;
+}
 
 /** Trade site currency id ("chrome") → item name ("Chromatic Orb"), from the game data. */
 export function currencyName(tradeTag: string): string | undefined {
-  if (!nameByTradeTag.has(tradeTag)) {
-    const item = ITEMS_ITERATOR(`"tradeTag":"${tradeTag}"`).next().value;
-    nameByTradeTag.set(tradeTag, item?.tradeTag === tradeTag ? item.name : null);
-  }
-  return nameByTradeTag.get(tradeTag) ?? undefined;
+  return currencyItem(tradeTag)?.name;
+}
+
+/** Trade site currency id → the game's icon of it (APT shows currencies by their icons). */
+export function currencyIcon(tradeTag: string): string | undefined {
+  return currencyItem(tradeTag)?.icon || undefined;
 }
 
 /** Chaos value of `amount` units of a trade currency, if poe.ninja knows it. */

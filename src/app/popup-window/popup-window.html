@@ -18,9 +18,9 @@
       [disabled]="!divine()"
       (click)="toggleMenu('divine')"
     >
-      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#d8d8e8" /><circle cx="6" cy="6" r="2.2" fill="#8a8ab0" /></svg>
+      <app-currency tag="divine" />
       @if (divine(); as rate) {
-        Divine <b class="font-semibold">{{ formatChaos(rate) }} c</b>
+        = <b class="font-semibold tabular-nums">{{ formatChaos(rate) }}</b> <app-currency tag="chaos" />
       } @else {
         <span class="text-muted">Divine —</span>
       }
@@ -50,8 +50,8 @@
       <div class="flex justify-between border-b border-line px-2.5 py-1.5 text-[11px] text-muted"><span>Divine</span><span>Chaos</span></div>
       @for (row of fractions(rate); track row.divine) {
         <div class="flex justify-between border-b border-[#1f1c18] px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
-          <span class="text-bright">{{ row.divine === 1 ? '1 div' : row.divine.toFixed(1) + ' div' }}</span>
-          <span [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ row.chaos }} c</span>
+          <span class="flex items-center gap-1 text-bright">{{ row.divine === 1 ? '1' : row.divine.toFixed(1) }} <app-currency tag="divine" [size]="14" /></span>
+          <span class="flex items-center gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ row.chaos }} <app-currency tag="chaos" [size]="14" /></span>
         </div>
       }
       <div class="px-2.5 py-1.5 text-[11px] text-muted">poe.ninja · {{ settings().leagueId }} · {{ minutesAgo(ratesUpdated()) }}</div>

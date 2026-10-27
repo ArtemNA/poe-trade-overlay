@@ -57,7 +57,7 @@
 - `windows` (WinAPI): `SetWinEventHook` (foreground), `GetWindowRect`, `SendInput`, стилі вікна (`WS_EX_NOACTIVATE`).
 - `tauri-plugin-global-shortcut` (або власний `RegisterHotKey`).
 - `tauri-plugin-clipboard-manager` або `arboard`.
-- `tauri-plugin-http` — запити до pathofexile.com, poe.ninja, poeprices.info без CORS.
+- `tauri-plugin-http` — запити до pathofexile.com і poe.ninja без CORS (poeprices.info закрився, F-46).
 - `tauri-plugin-store` (конфіг), `tauri-plugin-updater`, `tauri-plugin-single-instance`, `tauri-plugin-log`, `tauri-plugin-opener` (відкривати wiki й інші сайти в системному браузері).
 
 **Правило розподілу:** у Rust іде те, що працює з ОС і рідко змінюється. У TS іде все, що змінюється разом з грою: парсер, фільтри, trade-логіка.
@@ -185,7 +185,7 @@ APT вже мультимовний за дизайном, тож достатн
 | — **MVP готовий** (етапи 0–3 + мінімальні налаштування: ліга, хоткей) | | **~95–155** |
 | **4. Bulk (F4)** | `pathofexile-bulk.ts`, TradeBulk, StackValue | 8–14 |
 | **5. poe.ninja (F5)** | `Prices.ts` на сервіс, швидка ціна, графік 7 днів (SVG), related items, DustValue | 14–22 |
-| **6. poeprices.info (F6)** | Запит, відображення, фідбек | 4–8 |
+| **6. poeprices.info (F6)** | Запит, відображення, фідбек. **Пропущено:** сервіс закрився, домен на продажу (F-46) | 4–8 |
 | **7. Вбудований браузер (F7)** | Окреме вікно pathofexile.com; **спільні cookies** WebView ↔ HTTP-клієнт (див. ризик R1); Cloudflare; хоткей «браузер ↔ гра» | 12–24 |
 | **8. Unidentified uniques (F8)** | Вибір варіанта з ITEM_DROP / даних | 2–4 |
 | **9. Item check (F9)** | Хоткей, інфо-панель, wiki / PoEDB / CoE через `opener`, «знайти в сховищі» | 6–10 |

@@ -229,6 +229,16 @@
                 <span class="flex flex-col"><span class="text-bright">Always select the "Stock" filter</span>
                   <span class="text-[12px] text-muted">For stacks: only sellers with at least as many as you hover.</span></span>
               </label>
+              <div class="flex flex-col gap-2 border border-line bg-well px-2.5 py-2">
+                <label class="flex items-start gap-2.5">
+                  <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.builtinBrowser"
+                    (change)="setPriceCheck({ builtinBrowser: $any($event.target).checked })" />
+                  <span class="flex flex-col"><span class="text-bright">Use the built-in browser</span>
+                    <span class="text-[12px] text-muted">Trade requests go through a pathofexile.com window, with your login and the Cloudflare check passed there.
+                      Logging in may slightly lower how many requests per minute you get, but allows more complex searches. Trade links open there too.</span></span>
+                </label>
+                <button class="h-7 self-start border border-line-strong bg-raised px-3 hover:border-gold" (click)="openBrowser()">Open the browser to log in</button>
+              </div>
               <label class="flex items-start gap-2.5">
                 <input type="checkbox" class="mt-0.5 accent-[#c9a15a]" [checked]="settings().priceCheck.collapseListings === 'app'"
                   (change)="setPriceCheck({ collapseListings: $any($event.target).checked ? 'app' : 'api' })" />

@@ -16,6 +16,22 @@ pub const ENV_KEEP_POPUP: &str = "POE_KEEP_POPUP";
 /// settings file, WebView data and log never touch those of an installed release.
 pub const DEV_IDENTIFIER_SUFFIX: &str = ".dev";
 
+/// Built-in browser (FINDINGS F-45): created on first use; trade requests run inside its page.
+pub const BROWSER_WINDOW: &str = "browser";
+pub const BROWSER_HOME: &str = "https://www.pathofexile.com/trade";
+/// Origin the page must be on to make trade requests with its cookies.
+pub const BROWSER_HOST: &str = "www.pathofexile.com";
+pub const BROWSER_WIDTH_LOGICAL: f64 = 1100.0;
+pub const BROWSER_HEIGHT_LOGICAL: f64 = 800.0;
+/// Global of the page where request results wait to be collected.
+pub const BROWSER_REPLIES_GLOBAL: &str = "__poeTradeOverlayReplies";
+/// Request paths in the log are cut to this length (fetch URLs carry long id lists).
+pub const BROWSER_LOG_URL_CHARS: usize = 80;
+/// How often we look for a result in the page.
+pub const BROWSER_POLL_DELAY: Duration = Duration::from_millis(25);
+pub const BROWSER_LOAD_TIMEOUT: Duration = Duration::from_secs(20);
+pub const BROWSER_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
 /// Window labels, as declared in `tauri.conf.json`.
 pub const MAIN_WINDOW: &str = "main";
 pub const POPUP_WINDOW: &str = "popup";

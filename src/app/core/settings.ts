@@ -27,6 +27,7 @@ export interface PriceCheckSettings {
   activateStockFilter: boolean;
   defaultCurrency: string | null;
   smartInitialSearch: boolean;
+  builtinBrowser: boolean;
 }
 
 /** A chat command (APT `Config.commands`): `text` is typed into the chat, `send` presses Enter. */
@@ -65,8 +66,15 @@ export interface Settings {
 }
 
 export function defaultSettings(): Settings {
-  const { searchStatRange, merchantOnly, collapseListings, activateStockFilter, defaultCurrency, smartInitialSearch } =
-    PRICE_CHECK_DEFAULTS;
+  const {
+    searchStatRange,
+    merchantOnly,
+    collapseListings,
+    activateStockFilter,
+    defaultCurrency,
+    smartInitialSearch,
+    builtinBrowser,
+  } = PRICE_CHECK_DEFAULTS;
   return {
     configVersion: SETTINGS_VERSION,
     language: DEFAULT_LANG,
@@ -77,7 +85,15 @@ export function defaultSettings(): Settings {
     hotkeys: { ...DEFAULT_HOTKEYS },
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
     stashSearch: structuredClone(DEFAULT_STASH_SEARCH),
-    priceCheck: { searchStatRange, merchantOnly, collapseListings, activateStockFilter, defaultCurrency, smartInitialSearch },
+    priceCheck: {
+      searchStatRange,
+      merchantOnly,
+      collapseListings,
+      activateStockFilter,
+      defaultCurrency,
+      smartInitialSearch,
+      builtinBrowser,
+    },
     mapCheck: DEFAULT_MAP_CHECK,
   };
 }

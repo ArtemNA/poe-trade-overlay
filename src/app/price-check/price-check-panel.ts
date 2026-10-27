@@ -9,7 +9,7 @@ import {
   RATE_LIMIT_RULES_REVISION,
   tradeTag,
 } from '../../lib/apt/web/price-check/trade/common';
-import { CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
+import { CLOUDFLARE_CHECK_ERROR, CURRENCY_COLOR_OTHER, CURRENCY_COLORS, RARITY_COLORS } from '../constants';
 import { currencyRates, toChaos } from '../core/currency-rates';
 import {
   autoCurrency,
@@ -22,7 +22,8 @@ import {
   sparkline,
 } from '../core/ninja-prices';
 import { t, TranslatePipe } from '../core/i18n';
-import { settings } from '../core/settings';
+import { settings, updateSettings } from '../core/settings';
+import { host } from '../host';
 import type { ItemView } from '../popup-window/item-view';
 import {
   bestOffer,
@@ -71,6 +72,7 @@ export class PriceCheckPanel {
   readonly item = input.required<ParsedItem>();
   readonly view = input.required<ItemView>();
 
+  protected readonly cloudflareError = CLOUDFLARE_CHECK_ERROR;
   protected readonly presets = signal<Presets | null>(null);
   protected readonly error = signal<string | null>(null);
   /** Filters changed since the last search: the user starts the next one. */
@@ -409,6 +411,14 @@ export class PriceCheckPanel {
       this.activeTab() === 'bulk'
         ? bulkSiteUrl(this.item(), active.filters, this.bulk.selected())
         : tradeSiteUrl(active.filters, active.stats, this.stale() ? undefined : this.search.searchResult()?.id);
-    void openUrl(url);
+    // With the built-in browser on, the trade site opens there, logged in (APT `TradeLinks.vue`).
+    if (settings().priceCheck.builtinBrowser) void host.browserOpen(url);
+    else void openUrl(url);
+  }
+
+  /** Cloudflare blocked the request: the built-in browser takes over the requests and shows the check. */
+  protected openBrowserForCheck(): void {
+    updateSettings({ priceCheck: { ...settings().priceCheck, builtinBrowser: true } });
+    void host.browserOpen();
   }
 }

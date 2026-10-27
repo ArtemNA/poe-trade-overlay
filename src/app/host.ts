@@ -76,6 +76,8 @@ export const host = {
   stashSearch: (text: string) => invoke<void>('stash_search', { text }),
   /** Resizes the shown popup to its content (logical pixels), keeping its side and anchor. */
   fitPopup: (width: number, height: number) => invoke<void>('fit_popup', { width, height }),
+  /** Shows the built-in browser (pathofexile.com), on `url` if given. */
+  browserOpen: (url?: string) => invoke<void>('browser_open', { url: url ?? null }),
   /** The host took the keyboard back (popup hidden, game clicked). */
   popupLostKeyboard: () => (popupHasKeyboard = false),
 };

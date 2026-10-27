@@ -176,7 +176,14 @@
     </div>
 
     @if (search.error(); as message) {
+      @if (message === cloudflareError) {
+      <div class="mx-3 my-2 flex items-center gap-3 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-2 text-warn">
+        <span class="flex-1">{{ message }}. Pass the check in the built-in browser; the overlay then searches through it.</span>
+        <button class="h-7 flex-none border border-gold bg-[#2a2218] px-2.5 text-gold-soft hover:bg-[#3a2e1e]" (click)="openBrowserForCheck()">Open browser</button>
+      </div>
+    } @else {
       <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+    }
     }
 
     @let rows = search.rows();
@@ -251,7 +258,14 @@
   }
 
   @if (searchError(); as message) {
-    <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+    @if (message === cloudflareError) {
+      <div class="mx-3 my-2 flex items-center gap-3 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-2 text-warn">
+        <span class="flex-1">{{ message }}. Pass the check in the built-in browser; the overlay then searches through it.</span>
+        <button class="h-7 flex-none border border-gold bg-[#2a2218] px-2.5 text-gold-soft hover:bg-[#3a2e1e]" (click)="openBrowserForCheck()">Open browser</button>
+      </div>
+    } @else {
+      <p class="mx-3 my-2 bg-[#3a1a14] px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
+    }
   }
 
   <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] gap-2 border-b border-line px-3 py-1 text-[11px] text-muted">

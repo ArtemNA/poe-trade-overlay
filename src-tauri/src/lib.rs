@@ -1,3 +1,4 @@
+mod browser;
 mod chat;
 mod clipboard;
 mod constants;
@@ -11,7 +12,7 @@ use std::collections::HashMap;
 
 use tauri::{AppHandle, Emitter, Manager, WindowEvent};
 
-use constants::{DEV_IDENTIFIER_SUFFIX, MAIN_WINDOW};
+use constants::{BROWSER_WINDOW, DEV_IDENTIFIER_SUFFIX, MAIN_WINDOW};
 use platform::ForegroundInfo;
 use state::AppState;
 
@@ -50,6 +51,14 @@ fn on_foreground(app: &AppHandle, info: ForegroundInfo) {
             }
         }
         // Keep the game state as is.
+        return;
+    }
+    if info.is_own_process && Some(info.hwnd) == browser::hwnd(app) {
+        // The built-in browser in front of the game: keep the game as "active" so the browser
+        // hotkey can bring the user back (hotkeys check the foreground before acting).
+        if state.popup_visible() {
+            popup::hide(app, false);
+        }
         return;
     }
 
@@ -133,6 +142,23 @@ fn fit_popup(app: AppHandle, width: f64, height: f64) {
     popup::fit(&app, width, height);
 }
 
+/// A trade request through the built-in browser's page (its cookies, Cloudflare clearance).
+#[tauri::command]
+async fn browser_fetch(
+    app: AppHandle,
+    request: browser::BrowserRequest,
+) -> Result<browser::BrowserResponse, String> {
+    tauri::async_runtime::spawn_blocking(move || browser::fetch(&app, request))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+/// Shows the built-in browser, on `url` if given.
+#[tauri::command]
+async fn browser_open(app: AppHandle, url: Option<String>) -> Result<(), String> {
+    browser::open(&app, url.as_deref())
+}
+
 /// "Find in stash": hide the popup and type `text` into the game's stash search.
 #[tauri::command]
 fn stash_search(app: AppHandle, text: String) -> Result<(), String> {
@@ -165,6 +191,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_status,
             set_host_config,
+            browser_fetch,
+            browser_open,
             hide_popup,
             popup_focus_input,
             popup_release_focus,
@@ -192,6 +220,13 @@ pub fn run() {
             if window.label() == MAIN_WINDOW && matches!(event, WindowEvent::CloseRequested { .. })
             {
                 window.app_handle().exit(0);
+            }
+            // Closing the built-in browser only hides it: its page keeps serving trade requests.
+            if window.label() == BROWSER_WINDOW {
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
             }
         })
         .run(tauri::generate_context!())

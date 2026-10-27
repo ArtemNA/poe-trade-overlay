@@ -14,7 +14,7 @@ use crate::chat::{self, ChatCommand};
 use crate::constants::POPUP_WINDOW;
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
-use crate::{clipboard, log_to_ui, popup, stash};
+use crate::{browser, clipboard, log_to_ui, popup, stash};
 
 /// What a hotkey does with the hovered item.
 /// Declaration order is the priority when two actions share a hotkey.
@@ -33,6 +33,8 @@ pub enum HotkeyAction {
     StashSearch,
     /// The stash search panel with the presets; copies nothing.
     StashPanel,
+    /// Show the built-in browser, or hide it and go back to the game; copies nothing.
+    Browser,
 }
 
 impl HotkeyAction {
@@ -163,10 +165,25 @@ pub fn plugin() -> TauriPlugin<Wry> {
                 .into_iter()
                 .find(|(s, _)| s == shortcut);
             if let Some((shortcut, binding)) = found {
+                // While the built-in browser is in front only its own hotkey acts: the others
+                // would copy from or type into the page.
+                let state = app.state::<AppState>();
+                let game_in_front = state
+                    .game_hwnd()
+                    .is_some_and(|game| platform::current_foreground().hwnd == game);
+                if !game_in_front && !matches!(binding, Binding::Item(HotkeyAction::Browser)) {
+                    return;
+                }
                 let app = app.clone();
                 // Clipboard polling and typing sleep, keep them off the event loop.
                 std::thread::spawn(move || match binding {
                     Binding::Item(HotkeyAction::StashPanel) => open_stash_panel(&app),
+                    Binding::Item(HotkeyAction::Browser) => {
+                        let game = app.state::<AppState>().game_hwnd();
+                        if let Err(e) = browser::toggle(&app, game) {
+                            log_to_ui(&app, format!("Built-in browser: {e}"));
+                        }
+                    }
                     Binding::Item(action) => check_item(&app, &shortcut, action),
                     Binding::Chat(command) => chat_command(&app, &shortcut, &command),
                     Binding::Stash(text) => preset_search(&app, &shortcut, &text),

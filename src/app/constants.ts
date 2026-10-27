@@ -44,8 +44,15 @@ export const PRICE_CHECK_DEFAULTS = {
   defaultCurrency: null as string | null,
   /** Search immediately when the hotkey is pressed, for items where filters rarely need edits. */
   smartInitialSearch: true,
+  /** Trade requests through the built-in browser's page, with its login and Cloudflare clearance (APT `builtinBrowser`). */
+  builtinBrowser: false,
   showSeller: false as false | 'account' | 'ign',
 };
+
+/** Host whose requests the built-in browser can make (FINDINGS F-45). */
+export const POE_BROWSER_HOST = 'www.pathofexile.com';
+/** Error text when pathofexile.com answers with a Cloudflare check instead of data; the UI offers the browser. */
+export const CLOUDFLARE_CHECK_ERROR = 'pathofexile.com asks to confirm you are human (Cloudflare)';
 
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;
@@ -196,7 +203,7 @@ export const DEFAULT_POPUP_POSITION: PopupPosition = 'center';
 export const DEFAULT_GAME_TITLE = 'Path of Exile';
 
 /** What a hotkey does: open a check of the hovered item, or act on it without the popup. */
-export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search', 'stash-panel'] as const;
+export const HOTKEY_ACTIONS = ['price-check', 'item-check', 'wiki', 'poedb', 'craft-of-exile', 'stash-search', 'stash-panel', 'browser'] as const;
 export type HotkeyAction = (typeof HOTKEY_ACTIONS)[number];
 
 /** Hotkeys in `tauri-plugin-global-shortcut` format (modifiers + `KeyboardEvent.code`); null = none. */
@@ -212,6 +219,8 @@ export const DEFAULT_HOTKEYS: Record<HotkeyAction, string | null> = {
   'stash-search': null,
   /** The stash search presets; APT shows them in its overlay mode (Shift+Space) instead. */
   'stash-panel': 'Alt+KeyF',
+  /** The built-in browser ↔ the game; none by default. */
+  browser: null,
 };
 
 /**

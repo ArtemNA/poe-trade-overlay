@@ -35,6 +35,7 @@ const HOTKEYS: Array<{ action: HotkeyAction; label: string; hint: string }> = [
   { action: 'craft-of-exile', label: 'Open in Craft of Exile', hint: 'The item in the crafting simulator' },
   { action: 'stash-search', label: 'Find in stash', hint: 'Types the item name into the stash search' },
   { action: 'stash-panel', label: 'Stash search presets', hint: 'Buttons with your stash searches, between the stash and the inventory' },
+  { action: 'browser', label: 'Built-in browser', hint: 'Shows pathofexile.com; pressed again in the browser, back to the game' },
 ];
 
 /** The main window: settings (APT `SettingsWindow.vue`) and the host log. Pushes the host's part of the settings. */
@@ -166,6 +167,10 @@ export class SettingsWindow {
 
   protected removeGroup(groupId: number): void {
     updateSettings({ stashSearch: settings().stashSearch.filter((group) => group.id !== groupId) });
+  }
+
+  protected openBrowser(): void {
+    void host.browserOpen();
   }
 
   protected setPriceCheck(patch: Partial<PriceCheckSettings>): void {

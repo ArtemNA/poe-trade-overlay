@@ -54,5 +54,8 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `11-settings-stash-search.png` | Settings, Stash search: groups and presets |
 | `11-stash-preset-hotkey-fake-game.png` | A preset's own hotkey (Alt+1): searched right away, no popup |
 | `11-stash-panel-named-hotkey.png` | The panel with a named preset and its hotkey; "Hotkeys" toggle of the group |
+| `07-browser-window.png` | Built-in browser (pathofexile.com/trade): the trade page now asks to sign in |
+| `07-price-check-through-browser.png` | Price check with "Use the built-in browser" on: search and listings fetched inside the browser page |
+| `07-browser-over-game.png` | The browser opened by its hotkey over the fake game |
 
-Not captured yet: the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.
+Not captured yet: the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

@@ -74,5 +74,6 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `16-price-check-unique-no-stats.png` | Tabula Rasa: "Links ≥ 6" and corrupted in the header, no stat filters, prices in divine icons |
 | `16-price-check-bulk-icons.png` | Divine Orb: its icon by the name, bulk offers "300 [chaos] → 1 [divine]", "Pay with", "You have 12"; divine rate in the title bar with icons |
 | `16-price-check-divination-icon.png` | The Doctor: the card's picture by its name |
+| `16-price-check-related-items.png` | The Maven's Writ: Related and "Drops · turns into" in the left column with poe.ninja prices, no need to open the poe.ninja tab |
 
 Not captured yet: the tray menu and the update banner (no release to update to yet), the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

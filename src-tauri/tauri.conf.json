@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Price of Exile",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "identifier": "com.artemna.poe-trade-overlay",
   "build": {
     "frontendDist": "../dist/price-of-exile/browser",

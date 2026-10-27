@@ -313,8 +313,17 @@ export class PriceCheckPanel {
     return formatValue(value, fraction);
   }
 
-  protected relatedPrice(chaos: number | undefined): string {
-    return chaos == null ? '—' : formatValue(autoCurrency(chaos, currencyRates.divine()), true);
+  /** The set the item belongs to, shown next to the filters whenever there is one (as APT does). */
+  protected readonly relatedGroup = computed(() => {
+    const group = this.related();
+    return group && !('error' in group) && group.related.length ? group : null;
+  });
+
+  /** A related item's price as an amount and a currency id for its icon. */
+  protected relatedPrice(chaos: number | undefined): { text: string; currency: string } | null {
+    if (chaos == null) return null;
+    const value = autoCurrency(chaos, currencyRates.divine());
+    return { text: formatValue(value, true).replace(/\s*(c|div)$/, ''), currency: value.currency === 'div' ? 'divine' : 'chaos' };
   }
 
   protected percent(value: number): string {

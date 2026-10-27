@@ -11,7 +11,7 @@ use tauri::{AppHandle, Emitter, Manager, Wry};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use crate::chat::{self, ChatCommand};
-use crate::constants::POPUP_WINDOW;
+use crate::constants::{MAIN_WINDOW, POPUP_WINDOW};
 use crate::platform::{self, KeyAction, Point, Rect, vk};
 use crate::state::AppState;
 use crate::{browser, clipboard, log_to_ui, popup, stash};
@@ -165,6 +165,7 @@ pub fn plugin() -> TauriPlugin<Wry> {
                 .into_iter()
                 .find(|(s, _)| s == shortcut);
             if let Some((shortcut, binding)) = found {
+                warn_if_exclusive_fullscreen(app);
                 // While the built-in browser is in front only its own hotkey acts: the others
                 // would copy from or type into the page.
                 let state = app.state::<AppState>();
@@ -275,6 +276,19 @@ pub fn set_hotkeys(
         set_registered(app, shortcut, game_active);
     }
     errors
+}
+
+/// Exclusive fullscreen hides the overlay behind the game (APT warns the same way): say so in the
+/// log and on the settings window.
+fn warn_if_exclusive_fullscreen(app: &AppHandle) {
+    let fullscreen = platform::exclusive_fullscreen();
+    let _ = app.emit_to(MAIN_WINDOW, "exclusive-fullscreen", fullscreen);
+    if fullscreen {
+        log_to_ui(
+            app,
+            "The game runs in exclusive fullscreen: the overlay cannot show over it. Switch the game to Windowed Fullscreen.".into(),
+        );
+    }
 }
 
 fn chat_command(app: &AppHandle, shortcut: &Shortcut, command: &ChatCommand) {

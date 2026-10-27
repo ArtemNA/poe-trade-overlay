@@ -3,9 +3,9 @@
 use tauri::{AppHandle, Manager};
 
 use crate::constants::{
-    FOCUS_RETRY_DELAY, ITEM_CHECK_HEIGHT_LOGICAL, ITEM_CHECK_WIDTH_LOGICAL, POPUP_HEIGHT_LOGICAL,
-    POPUP_MARGIN_LOGICAL, POPUP_TOP_RATIO, POPUP_WIDTH_LOGICAL, POPUP_WINDOW as LABEL,
-    STASH_PANEL_HEIGHT_LOGICAL, STASH_PANEL_WIDTH_LOGICAL,
+    DPI_REPOSITION_DELAY, FOCUS_RETRY_DELAY, ITEM_CHECK_HEIGHT_LOGICAL, ITEM_CHECK_WIDTH_LOGICAL,
+    POPUP_HEIGHT_LOGICAL, POPUP_MARGIN_LOGICAL, POPUP_TOP_RATIO, POPUP_WIDTH_LOGICAL,
+    POPUP_WINDOW as LABEL, STASH_PANEL_HEIGHT_LOGICAL, STASH_PANEL_WIDTH_LOGICAL,
 };
 use crate::hotkeys::CheckTarget;
 use crate::platform::{self, Point, Rect};
@@ -26,6 +26,21 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
         log::info!("[focus] Esc pressed");
         let inner = handle.clone();
         let _ = handle.run_on_main_thread(move || hide(&inner, true));
+    });
+
+    let handle = app.clone();
+    platform::watch_moves(move || {
+        // The game moved or changed size under the popup: it would hang in the wrong place.
+        let state = handle.state::<AppState>();
+        let Some(placement) = state.placement() else {
+            return;
+        };
+        let now = state.game_hwnd().and_then(platform::client_rect);
+        if state.popup_visible() && now.is_some_and(|rect| rect != placement.game) {
+            log::info!("[focus] game window moved, hiding the popup");
+            let inner = handle.clone();
+            let _ = handle.run_on_main_thread(move || hide(&inner, true));
+        }
     });
 
     let handle = app.clone();
@@ -246,19 +261,40 @@ mod tests {
     }
 }
 
+/// Scale of the game's monitor (the popup may still be on another one), FINDINGS F-51.
+fn game_scale(state: &AppState) -> f64 {
+    state.game_hwnd().map_or(1.0, platform::monitor_scale)
+}
+
+/// Places the popup; if it comes from a monitor with another scale, again once Windows has
+/// resized it for the new one.
+fn place(window: &tauri::WebviewWindow, hwnd: platform::RawHwnd, rect: Rect, scale: f64) {
+    let moved_scale = window
+        .scale_factor()
+        .is_ok_and(|old| (old - scale).abs() > f64::EPSILON);
+    platform::show_no_activate(hwnd, rect);
+    if moved_scale {
+        std::thread::spawn(move || {
+            std::thread::sleep(DPI_REPOSITION_DELAY);
+            platform::show_no_activate(hwnd, rect);
+        });
+    }
+}
+
 pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
     let Some(window) = app.get_webview_window(LABEL) else {
         return;
     };
-    let scale = window.scale_factor().unwrap_or(1.0);
     let state = app.state::<AppState>();
+    let scale = game_scale(&state);
     let placement = Placement {
         game,
         cursor,
         target,
     };
     state.set_placement(placement);
-    platform::show_no_activate(
+    place(
+        &window,
         state.popup_hwnd(),
         geometry(
             game,
@@ -268,10 +304,12 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
             default_size(target),
             state.popup_centred(),
         ),
+        scale,
     );
     state.set_popup_visible(true);
     platform::set_escape_enabled(true);
     platform::set_click_watch_enabled(true);
+    platform::set_move_watch(state.game_hwnd());
 }
 
 /// The page measured its content (the map check grows with the mods): resize the shown popup to it,
@@ -292,8 +330,9 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
     if !state.popup_visible() {
         return;
     }
-    let scale = window.scale_factor().unwrap_or(1.0);
-    platform::show_no_activate(
+    let scale = game_scale(&state);
+    place(
+        &window,
         state.popup_hwnd(),
         geometry(
             game,
@@ -303,6 +342,7 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
             (width, height),
             state.popup_centred(),
         ),
+        scale,
     );
 }
 
@@ -321,6 +361,7 @@ pub fn hide(app: &AppHandle, return_focus: bool) {
     log::info!("[focus] hide popup (return focus: {return_focus})");
     platform::set_escape_enabled(false);
     platform::set_click_watch_enabled(false);
+    platform::set_move_watch(None);
     // Hide first, then hand focus back: focusing the game while the popup still shows a
     // focused text field let the Windows text input host grab the foreground instead.
     platform::hide(state.popup_hwnd());

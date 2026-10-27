@@ -7,6 +7,10 @@ Each release takes its "What's new" from the section of its tag.
 - Price check: a **Mods** tab next to Pseudo, with every mod on its own ("+70 to maximum Life", "+18 to Strength") instead of pseudo totals ("+79 total maximum Life").
 - Price check: an **F** button on mods that also exist as fractured: search the mod as fractured, or as a regular one.
 - The price check window is wider (960 px, so mod texts fit) and as tall as its filters need, up to 900 px: items with many mods no longer scroll.
+- After pathofexile.com answers "too many requests", the overlay sends it nothing until the time it named is over, instead of making the restriction longer.
+- The popup takes the scale of the game's monitor (matters with monitors at different scales) and hides when the game window moves or changes size under it.
+- A warning in the settings when the game runs in exclusive fullscreen, where no overlay can show: switch the game to Windowed Fullscreen.
+- The league list is reloaded every few hours, so an ended league is replaced without a restart.
 
 ## v0.1.3
 

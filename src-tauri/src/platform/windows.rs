@@ -1,17 +1,19 @@
 //! All WinAPI calls live here, so other modules stay platform-agnostic.
 
 use std::sync::OnceLock;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicU32, Ordering};
 
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
-use windows::Win32::Graphics::Gdi::ClientToScreen;
+use windows::Win32::Graphics::Gdi::{ClientToScreen, MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook};
+use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
     KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, MapVirtualKeyW, SendInput, VIRTUAL_KEY, VK_ESCAPE,
 };
+use windows::Win32::UI::Shell::{QUNS_RUNNING_D3D_FULL_SCREEN, SHQueryUserNotificationState};
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, CallNextHookEx, DispatchMessageW, EVENT_SYSTEM_FOREGROUND, GWL_EXSTYLE,
     GetClientRect, GetCursorPos, GetForegroundWindow, GetMessageW, GetWindowLongPtrW,
@@ -36,7 +38,7 @@ fn run_message_loop() {
 /// Raw window handle that can be sent between threads.
 pub type RawHwnd = isize;
 
-#[derive(Debug, Clone, Copy, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct Rect {
     pub x: i32,
     pub y: i32,
@@ -116,6 +118,61 @@ pub fn watch_foreground(cb: impl Fn(ForegroundInfo) + Send + Sync + 'static) {
         };
         run_message_loop();
     });
+}
+
+static MOVE_CB: OnceLock<Box<dyn Fn() + Send + Sync>> = OnceLock::new();
+/// Window whose moves and resizes are reported (0: none).
+static MOVE_WATCHED: AtomicIsize = AtomicIsize::new(0);
+const EVENT_OBJECT_LOCATIONCHANGE: u32 = 0x800B;
+
+unsafe extern "system" fn on_location_change(
+    _hook: HWINEVENTHOOK,
+    _event: u32,
+    window: HWND,
+    id_object: i32,
+    id_child: i32,
+    _thread: u32,
+    _time: u32,
+) {
+    // Fires for every moving thing (the cursor too): only the watched window itself counts.
+    let watched = MOVE_WATCHED.load(Ordering::SeqCst);
+    if watched == 0 || id_object != 0 || id_child != 0 || window.0 as RawHwnd != watched {
+        return;
+    }
+    if let Some(cb) = MOVE_CB.get() {
+        cb();
+    }
+}
+
+/// Calls `cb` when the window set with `set_move_watch` moves or changes size. `cb` must return quickly.
+pub fn watch_moves(cb: impl Fn() + Send + Sync + 'static) {
+    if MOVE_CB.set(Box::new(cb)).is_err() {
+        return;
+    }
+    std::thread::spawn(|| {
+        let _hook = unsafe {
+            SetWinEventHook(
+                EVENT_OBJECT_LOCATIONCHANGE,
+                EVENT_OBJECT_LOCATIONCHANGE,
+                None,
+                Some(on_location_change),
+                0,
+                0,
+                WINEVENT_OUTOFCONTEXT,
+            )
+        };
+        run_message_loop();
+    });
+}
+
+pub fn set_move_watch(raw: Option<RawHwnd>) {
+    MOVE_WATCHED.store(raw.unwrap_or(0), Ordering::SeqCst);
+}
+
+/// A Direct3D game in exclusive fullscreen: nothing can be drawn over it, the overlay included.
+pub fn exclusive_fullscreen() -> bool {
+    unsafe { SHQueryUserNotificationState() }
+        .is_ok_and(|state| state == QUNS_RUNNING_D3D_FULL_SCREEN)
 }
 
 static ESCAPE_CB: OnceLock<Box<dyn Fn() + Send + Sync>> = OnceLock::new();
@@ -221,6 +278,20 @@ pub fn window_rect(raw: RawHwnd) -> Option<Rect> {
         width: rc.right - rc.left,
         height: rc.bottom - rc.top,
     })
+}
+
+/// Display scale of the monitor a window is on (1.0 = 96 DPI). Read from the monitor, not the
+/// window: a DPI-unaware game would always report 96.
+pub fn monitor_scale(raw: RawHwnd) -> f64 {
+    unsafe {
+        let monitor = MonitorFromWindow(hwnd(raw), MONITOR_DEFAULTTONEAREST);
+        let (mut x, mut y) = (0u32, 0u32);
+        if GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &mut x, &mut y).is_ok() && x > 0 {
+            x as f64 / 96.0
+        } else {
+            1.0
+        }
+    }
 }
 
 /// Client area of a window in screen coordinates (physical pixels).

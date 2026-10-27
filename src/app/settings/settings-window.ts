@@ -63,6 +63,8 @@ export class SettingsWindow {
   protected readonly settings = settings;
   protected readonly leagues = inject(Leagues);
   protected readonly gameActive = signal(false);
+  /** The game ran in exclusive fullscreen at the last hotkey: the overlay cannot show over it. */
+  protected readonly exclusiveFullscreen = signal(false);
   /** The title the host really looks for; differs from the setting when `POE_GAME_TITLE` is set (dev). */
   protected readonly hostGameTitle = signal<string | null>(null);
   protected readonly log = signal<LogLine[]>([]);
@@ -119,6 +121,7 @@ export class SettingsWindow {
         this.append(`Foreground: "${payload.title}"${payload.isGame ? ' → game' : ''}`);
       }),
       listen<string>('log', ({ payload }) => this.append(payload)),
+      listen<boolean>('exclusive-fullscreen', ({ payload }) => this.exclusiveFullscreen.set(payload)),
     ];
     inject(DestroyRef).onDestroy(() => unlisteners.forEach((p) => p.then((unlisten) => unlisten())));
   }

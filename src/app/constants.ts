@@ -63,6 +63,9 @@ export const PRICE_CHECK_WIDTH = 960;
 export const PRICE_CHECK_MIN_HEIGHT = 590;
 export const PRICE_CHECK_MAX_HEIGHT = 900;
 
+/** The leagues list is loaded again on a check when it is older than this (ms). */
+export const LEAGUES_REFRESH_AFTER = 3 * 60 * 60 * 1000;
+
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;
 /** Buyout currency filter choices in the settings; values are trade API price options. */

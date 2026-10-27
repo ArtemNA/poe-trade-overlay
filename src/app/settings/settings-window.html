@@ -23,6 +23,12 @@
         </button>
       </div>
     }
+    @if (exclusiveFullscreen()) {
+      <div class="mx-3 mt-3 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-2 text-[12px] leading-snug text-warn">
+        The game runs in exclusive fullscreen, so the overlay cannot show over it. In the game's options set Display mode to
+        <span class="text-bright">Windowed Fullscreen</span>.
+      </div>
+    }
     <div class="m-3 flex items-center gap-2 border px-2.5 py-1.5 text-[12px]"
       [class]="gameActive() ? 'border-[#2f5a32] bg-[#14261a] text-good' : 'border-line bg-panel text-muted'">
       <span class="size-2 rounded-full" [class]="gameActive() ? 'bg-good' : 'bg-muted'"></span>

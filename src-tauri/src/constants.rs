@@ -56,6 +56,9 @@ pub const ITEM_CHECK_HEIGHT_LOGICAL: f64 = 330.0;
 /// between the stash and the inventory.
 pub const STASH_PANEL_WIDTH_LOGICAL: f64 = 360.0;
 pub const STASH_PANEL_HEIGHT_LOGICAL: f64 = 300.0;
+/// After the popup moved to a monitor with another scale, Windows resizes it for that scale:
+/// set its place once more after this delay.
+pub const DPI_REPOSITION_DELAY: Duration = Duration::from_millis(80);
 /// Gap between the popup and the game window edge, logical pixels.
 pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
 /// The popup's top edge sits this share of the game height below the game's top.

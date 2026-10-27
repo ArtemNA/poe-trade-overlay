@@ -73,6 +73,7 @@ export class PopupWindow {
       this.menu.set(null);
       this.error.set(null);
       this.target.set(payload.target);
+      void this.leagues.refreshIfOld();
       if (payload.target === 'stash-search') {
         afterNextRender(() => this.fit(), { injector: this.injector });
         return;

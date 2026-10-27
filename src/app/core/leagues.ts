@@ -3,7 +3,7 @@
 
 import { computed, Injectable, signal } from '@angular/core';
 import { poeWebApi } from '@/web/Config';
-import { PERMANENT_HC_LEAGUES, POE_REALM } from '../constants';
+import { LEAGUES_REFRESH_AFTER, PERMANENT_HC_LEAGUES, POE_REALM } from '../constants';
 import { poeFetch } from './http';
 import { settings, updateSettings } from './settings';
 
@@ -55,8 +55,19 @@ export class Leagues {
   readonly list = signal<League[]>([]);
 
   readonly selectedId = computed(() => (this.list().length ? settings().leagueId : undefined));
+  private loadedAt = 0;
 
-  async load(): Promise<void> {
+  /**
+   * The app may sit in the tray for weeks: on a check, reload the list if it is old, so an
+   * ended league gets replaced (one request per LEAGUES_REFRESH_AFTER at most).
+   */
+  async refreshIfOld(now = Date.now()): Promise<void> {
+    if (this.isLoading() || now - this.loadedAt < LEAGUES_REFRESH_AFTER) return;
+    await this.load(now);
+  }
+
+  async load(now = Date.now()): Promise<void> {
+    this.loadedAt = now;
     this.isLoading.set(true);
     this.error.set(null);
     try {

@@ -65,4 +65,18 @@ describe('Leagues.load', () => {
     expect(leagues.error()).toMatch(/^HTTP 503/);
     expect(leagues.list()).toEqual([]);
   });
+
+  it('reloads the list on a check only when it is old', async () => {
+    let calls = 0;
+    setHttpFetch(async () => {
+      calls += 1;
+      return Response.json([{ id: 'Standard', rules: [] }, { id: 'Keepers', rules: [] }]);
+    });
+    const leagues = new Leagues();
+    await leagues.load(0);
+    await leagues.refreshIfOld(60 * 60 * 1000);
+    expect(calls).toBe(1);
+    await leagues.refreshIfOld(3 * 60 * 60 * 1000);
+    expect(calls).toBe(2);
+  });
 });

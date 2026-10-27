@@ -123,4 +123,15 @@ describe('TradeSearch', () => {
     expect(search.error()).toBe('Invalid query');
     expect(search.isSearching()).toBe(false);
   });
+
+  it('ends with a message on a network error, not a stuck "Searching"', async () => {
+    setHttpFetch(async () => {
+      throw new TypeError('error sending request');
+    });
+    const { filters, stats } = activePreset(createItemPresets(parse(items.GEM_ARC), 'Allflame'));
+    const search = new TradeSearch();
+    await search.search(filters, stats);
+    expect(search.error()).toContain('error sending request');
+    expect(search.isSearching()).toBe(false);
+  });
 });

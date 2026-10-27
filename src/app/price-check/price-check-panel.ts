@@ -111,11 +111,18 @@ export class PriceCheckPanel {
   private readonly revision = signal(0);
   private previous?: { item: ParsedItem; presets: Presets };
 
-  protected readonly active = computed(() => {
-    this.revision();
-    const presets = this.presets();
-    return presets ? activePreset(presets) : null;
-  });
+  /**
+   * The same preset object after an edit, so it never counts as equal: everything read from it
+   * (corrupted, base, chips, stat groups) has to be read again on each `revision`.
+   */
+  protected readonly active = computed(
+    () => {
+      this.revision();
+      const presets = this.presets();
+      return presets ? activePreset(presets) : null;
+    },
+    { equal: () => false },
+  );
 
   protected readonly chips = computed(() => {
     const active = this.active();

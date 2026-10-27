@@ -77,5 +77,6 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `16-price-check-related-items.png` | The Maven's Writ: Related and "Drops · turns into" in the left column with poe.ninja prices, no need to open the poe.ninja tab |
 | `16-price-check-related-unfolded.png` | Farrul's Fur (a unique with mods): related open by default, the set with poe.ninja prices, the item itself marked (taken before the heading got its fold button ▾) |
 | `16-price-check-related-folded.png` | The same folded into one line "Related · 4" with icons |
+| `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |
 
 Not captured yet: the tray menu and the update banner (no release to update to yet), the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

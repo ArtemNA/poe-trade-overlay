@@ -2,6 +2,10 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## Unreleased
+
+- Fix: Corrupted / Not corrupted, the base switch, the iLvl and links chips, "Not unique", the stat count and the trade options summary change at once on a click, not only after switching between Pseudo and Mods.
+
 ## v0.1.6
 
 - Related items of an item with mods (uniques such as Farrul's Fur) can be folded into one line, "Related · 4", by a click on their heading.

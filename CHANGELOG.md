@@ -2,6 +2,11 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## v0.1.3
+
+- The repository is now [ArtemNA/price-of-exile](https://github.com/ArtemNA/price-of-exile): updates and release links use the new address (the old one still redirects).
+- The program file is now `price-of-exile.exe`.
+
 ## v0.1.2
 
 - New name: **Price of Exile**. After the update, Windows may still list the old "PoE Trade Overlay" in installed apps: uninstall that entry and leave "Delete the application data" unchecked, so the settings stay.

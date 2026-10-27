@@ -1,7 +1,7 @@
 # Price of Exile
 
 A Path of Exile price check overlay for Windows: trade listings, poe.ninja prices, item and map check,
-stash search presets and chat commands. Downloads: [Releases](https://github.com/ArtemNA/poe-trade-overlay/releases/latest).
+stash search presets and chat commands. Downloads: [Releases](https://github.com/ArtemNA/price-of-exile/releases/latest).
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
 

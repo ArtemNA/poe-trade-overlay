@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "poe-trade-overlay": {
+    "price-of-exile": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:class": {
@@ -87,10 +87,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "poe-trade-overlay:build:production"
+              "buildTarget": "price-of-exile:build:production"
             },
             "development": {
-              "buildTarget": "poe-trade-overlay:build:development"
+              "buildTarget": "price-of-exile:build:development"
             }
           },
           "defaultConfiguration": "development"

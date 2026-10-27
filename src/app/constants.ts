@@ -175,6 +175,7 @@ export const CURRENCY_COLORS: Record<string, string> = {
 export const CURRENCY_COLOR_OTHER = '#8f887c';
 
 /** localStorage key of the settings before stage 13; read once to move them into the store. */
+// The old name stays: it is where stages 2–10 kept the settings.
 export const LEGACY_SETTINGS_STORAGE_KEY = 'poe-trade-overlay.settings';
 /** Settings file of `tauri-plugin-store`, in the app config folder. */
 export const SETTINGS_FILE = 'settings.json';
@@ -204,7 +205,7 @@ export const MAIN_WINDOW_LABEL = 'main';
 export const TOAST_WINDOW_LABEL = 'toast';
 
 /** Where the portable build sends the user for a new version. */
-export const RELEASES_URL = 'https://github.com/ArtemNA/poe-trade-overlay/releases/latest';
+export const RELEASES_URL = 'https://github.com/ArtemNA/price-of-exile/releases/latest';
 
 /** Identifier suffix of dev builds (`tauri.dev.conf.json`), see `src-tauri/src/constants.rs`. */
 export const DEV_IDENTIFIER_SUFFIX = '.dev';

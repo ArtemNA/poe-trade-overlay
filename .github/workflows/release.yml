@@ -44,7 +44,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
-          releaseBody: Release notes follow in a moment.
+          releaseBody: What is new is on the release page.
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
@@ -64,7 +64,7 @@ jobs:
           $setup = $setupFile.Name -replace ' ', '.'
           # Portable: the bare exe; without the installer's uninstaller next to it the app does not update itself.
           $portable = "${base}_${version}_x64-portable.exe"
-          Copy-Item src-tauri/target/release/poe-trade-overlay.exe $portable
+          Copy-Item src-tauri/target/release/price-of-exile.exe $portable
 
           function Size($file) {
             [string]::Format([cultureinfo]::InvariantCulture, "{0:0.0} MB", (Get-Item $file).Length / 1MB)

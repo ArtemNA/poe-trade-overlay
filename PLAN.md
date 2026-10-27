@@ -91,7 +91,7 @@
 ### 2.3 Структура проєкту
 
 ```
-poe-trade-overlay/
+price-of-exile/
 ├─ src-tauri/                 # Rust
 │  ├─ src/
 │  │  ├─ main.rs

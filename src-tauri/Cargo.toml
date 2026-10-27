@@ -1,6 +1,6 @@
 [package]
 name = "poe-trade-overlay"
-version = "0.1.0"
+version = "0.1.1"
 description = "Path of Exile price check overlay"
 authors = ["ArtemNA"]
 license = ""

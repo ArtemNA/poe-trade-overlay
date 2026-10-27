@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "tauri": "tauri",
     "data:index": "node scripts/make-data-indexes.mjs",
     "prestart": "npm run data:index",
     "start": "ng serve",

@@ -71,6 +71,10 @@ pub const STASH_PANEL_HEIGHT_LOGICAL: f64 = 300.0;
 pub const DPI_REPOSITION_DELAY: Duration = Duration::from_millis(80);
 /// Gap between the popup and the game window edge, logical pixels.
 pub const POPUP_MARGIN_LOGICAL: f64 = 24.0;
+/// Width of the game's own side panels (stash on the left, inventory on the right) as a share
+/// of the game height: 986 px at 1600 px tall, as APT measures it. "Opposite the cursor" puts the
+/// popup right next to the panel the item is in, not at the far edge of the game.
+pub const POE_PANEL_WIDTH_RATIO: f64 = 986.0 / 1600.0;
 /// The popup's top edge sits this share of the game height below the game's top.
 pub const POPUP_TOP_RATIO: f64 = 0.1;
 

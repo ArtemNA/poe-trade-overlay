@@ -2,6 +2,10 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## Unreleased
+
+- "Opposite the cursor" puts the popup right next to the game's inventory or stash panel the item is in, as APT does, instead of at the far edge of the game.
+
 ## v0.1.7
 
 - Fix: the start message in the screen corner did not show in installed builds.

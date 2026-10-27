@@ -4,8 +4,9 @@ use tauri::{AppHandle, Manager};
 
 use crate::constants::{
     DPI_REPOSITION_DELAY, FOCUS_RETRY_DELAY, ITEM_CHECK_HEIGHT_LOGICAL, ITEM_CHECK_WIDTH_LOGICAL,
-    POPUP_HEIGHT_LOGICAL, POPUP_MARGIN_LOGICAL, POPUP_TOP_RATIO, POPUP_WIDTH_LOGICAL,
-    POPUP_WINDOW as LABEL, STASH_PANEL_HEIGHT_LOGICAL, STASH_PANEL_WIDTH_LOGICAL,
+    POE_PANEL_WIDTH_RATIO, POPUP_HEIGHT_LOGICAL, POPUP_MARGIN_LOGICAL, POPUP_TOP_RATIO,
+    POPUP_WIDTH_LOGICAL, POPUP_WINDOW as LABEL, STASH_PANEL_HEIGHT_LOGICAL,
+    STASH_PANEL_WIDTH_LOGICAL,
 };
 use crate::hotkeys::CheckTarget;
 use crate::platform::{self, Point, Rect};
@@ -75,8 +76,9 @@ fn clicked_outside_in_game(state: &AppState, point: Point) -> bool {
         && !inside(platform::window_rect(state.popup_hwnd()))
 }
 
-/// Horizontally the popup is centred on the game (the default), or, like APT, sits in the half
-/// opposite to the cursor (item in the inventory on the right → popup on the left). The stash
+/// Horizontally the popup is centred on the game (the default), or, like APT, sits next to the
+/// game's side panel the item is in (inventory on the right → popup just left of it, stash on the
+/// left → just right of it), within the game. The stash
 /// search panel is always centred: the stash and the inventory are both open then. Vertically
 /// the price check hangs from near the top, the smaller ones are centred (APT anchors them at 50 %).
 /// `size` is in logical pixels: the target's default, or what the page asked for (`fit`).
@@ -97,10 +99,15 @@ pub fn geometry(
     let cursor_on_right = cursor.x > game.x + game.width / 2;
     let x = if centred || target == CheckTarget::StashSearch {
         game.x + (game.width - width) / 2
-    } else if cursor_on_right {
-        game.x + margin
     } else {
-        game.x + game.width - margin - width
+        let panel = (game.height as f64 * POE_PANEL_WIDTH_RATIO).round() as i32;
+        let (min, max) = (game.x + margin, game.x + game.width - margin - width);
+        let x = if cursor_on_right {
+            game.x + game.width - panel - width
+        } else {
+            game.x + panel
+        };
+        x.min(max).max(min)
     };
     let top = match target {
         CheckTarget::PriceCheck => (game.height as f64 * POPUP_TOP_RATIO).round() as i32,
@@ -144,9 +151,10 @@ mod tests {
             default_size(CheckTarget::PriceCheck),
             false,
         );
+        // Just left of the inventory: 1080 * 986 / 1600 = 666 px wide.
         assert_eq!(
             (left.x, left.y, left.width, left.height),
-            (24, 108, 960, 590)
+            (1920 - 666 - 960, 108, 960, 590)
         );
         let right = geometry(
             GAME,
@@ -156,7 +164,8 @@ mod tests {
             default_size(CheckTarget::PriceCheck),
             false,
         );
-        assert_eq!(right.x, 1920 - 24 - 960);
+        // Just right of the stash.
+        assert_eq!(right.x, 666);
     }
 
     #[test]
@@ -202,7 +211,7 @@ mod tests {
         );
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
-            (24, (1080 - 330) / 2, 380, 330)
+            (1920 - 666 - 380, (1080 - 330) / 2, 380, 330)
         );
     }
 
@@ -247,7 +256,7 @@ mod tests {
         );
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
-            (1920 - 24 - 440, 240, 440, 600)
+            (666, 240, 440, 600)
         );
         let tall = geometry(
             GAME,

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, inject, Injector, signal, viewChild } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
 import { parseClipboard, type ParsedItem } from '@/parser';
 import { currencyRates, divineFractions, trackCurrencyRates } from '../core/currency-rates';
@@ -7,15 +7,18 @@ import { Leagues } from '../core/leagues';
 import { settings } from '../core/settings';
 import { loadGameData } from '../game-data';
 import { CheckTarget, host, ItemTextEvent } from '../host';
+import { ITEM_CHECK_WIDTH, MAP_CHECK_WIDTH } from '../constants';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
+import { isMapLike } from '../map-check/map-check';
+import { MapCheckPanel } from '../map-check/map-check-panel';
 import { formatChaos } from '../price-check/listing-summary';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
 import { ItemView, toItemView } from './item-view';
 
-/** The popup: price check (title bar with league and divine rate, filters, listings) or item check. */
+/** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel],
+  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -31,6 +34,16 @@ export class PopupWindow {
   protected readonly leagues = inject(Leagues);
   protected readonly divine = currencyRates.divine;
   protected readonly ratesUpdated = currencyRates.updatedAt;
+  protected readonly mapCheck = computed(() => {
+    const item = this.parsed();
+    return this.target() === 'item-check' && item !== null && isMapLike(item);
+  });
+  protected readonly title = computed(() =>
+    this.target() === 'price-check' ? 'Price check' : this.mapCheck() ? 'Map check' : 'Item check',
+  );
+  /** Item and map check content; the window takes its height (see `fit`). */
+  private readonly fitContent = viewChild<ElementRef<HTMLElement>>('fitContent');
+  private readonly injector = inject(Injector);
 
   constructor() {
     // Load game data and UI strings while the popup is still hidden, so the first hotkey is fast.
@@ -60,8 +73,29 @@ export class PopupWindow {
         this.item.set(null);
         this.error.set(result.error);
       }
+      // Fit even when the height did not change: the host has just shown the window at the default size.
+      afterNextRender(() => this.fit(), { injector: this.injector });
     });
-    inject(DestroyRef).onDestroy(() => unlisten.then((fn) => fn()));
+    // Later changes of the content (marks, the stash error) resize the window too.
+    const resizes = new ResizeObserver(() => this.fit());
+    effect(() => {
+      resizes.disconnect();
+      const content = this.fitContent()?.nativeElement;
+      if (content) resizes.observe(content);
+    });
+    inject(DestroyRef).onDestroy(() => {
+      resizes.disconnect();
+      void unlisten.then((fn) => fn());
+    });
+  }
+
+  /** Item and map check: the window is as tall as the content; the price check keeps its size. */
+  private fit(): void {
+    const content = this.fitContent()?.nativeElement;
+    const section = content?.closest('section');
+    if (!content || !section || this.target() !== 'item-check') return;
+    const chrome = section.offsetHeight - (content.parentElement?.clientHeight ?? 0);
+    void host.fitPopup(this.mapCheck() ? MAP_CHECK_WIDTH : ITEM_CHECK_WIDTH, Math.ceil(content.offsetHeight + chrome));
   }
 
   /** A click outside the number fields ends typing: keyboard back to the game (no-op otherwise). */

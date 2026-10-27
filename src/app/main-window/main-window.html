@@ -1,11 +1,20 @@
 <main class="flex h-full flex-col gap-4 bg-zinc-900 p-5 font-sans text-sm text-zinc-200">
   <header>
-    <h1 class="text-lg font-semibold text-zinc-50">PoE Trade Overlay — stage 0</h1>
+    <h1 class="text-lg font-semibold text-zinc-50">PoE Trade Overlay</h1>
     <p class="text-zinc-400">
-      Hover an item in the game window and press <kbd class="rounded bg-zinc-700 px-1.5">Ctrl+D</kbd>.
+      Hover an item in the game window and press <kbd class="rounded bg-zinc-700 px-1.5">Ctrl+D</kbd> (price check) or <kbd class="rounded bg-zinc-700 px-1.5">Alt+D</kbd> (item and map check).
       <kbd class="rounded bg-zinc-700 px-1.5">Esc</kbd> closes the popup.
     </p>
   </header>
+
+  <nav class="flex gap-1 border-b border-zinc-800">
+    <button class="-mb-px border-b-2 px-3 py-1.5" [class]="tab() === 'general' ? 'border-amber-500 text-zinc-50' : 'border-transparent text-zinc-400 hover:text-zinc-200'" (click)="tab.set('general')">General</button>
+    <button class="-mb-px border-b-2 px-3 py-1.5" [class]="tab() === 'maps' ? 'border-amber-500 text-zinc-50' : 'border-transparent text-zinc-400 hover:text-zinc-200'" (click)="tab.set('maps')">Map check</button>
+  </nav>
+
+  @if (tab() === 'maps') {
+    <app-map-mods-editor />
+  } @else {
 
   <section class="flex items-end gap-3">
     <label class="flex flex-1 flex-col gap-1">
@@ -66,4 +75,5 @@
       }
     </ol>
   </section>
+  }
 </main>

@@ -32,12 +32,16 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
 /// Like APT: the popup sits in the half of the game window opposite to the cursor
 /// (item in the inventory on the right → popup on the left). The price check hangs from
 /// near the top, the smaller item check is centred vertically (APT anchors it at 50 %).
-pub fn geometry(game: Rect, cursor: Point, scale: f64, target: CheckTarget) -> Rect {
+/// `size` is in logical pixels: the target's default, or what the page asked for (`fit`).
+pub fn geometry(
+    game: Rect,
+    cursor: Point,
+    scale: f64,
+    target: CheckTarget,
+    size: (f64, f64),
+) -> Rect {
     let px = |logical: f64| (logical * scale).round() as i32;
-    let (logical_width, logical_height) = match target {
-        CheckTarget::PriceCheck => (POPUP_WIDTH_LOGICAL, POPUP_HEIGHT_LOGICAL),
-        CheckTarget::ItemCheck => (ITEM_CHECK_WIDTH_LOGICAL, ITEM_CHECK_HEIGHT_LOGICAL),
-    };
+    let (logical_width, logical_height) = size;
     let margin = px(POPUP_MARGIN_LOGICAL);
     let width = px(logical_width).min(game.width - 2 * margin).max(0);
     let height = px(logical_height).min(game.height - 2 * margin).max(0);
@@ -61,6 +65,13 @@ pub fn geometry(game: Rect, cursor: Point, scale: f64, target: CheckTarget) -> R
     }
 }
 
+pub fn default_size(target: CheckTarget) -> (f64, f64) {
+    match target {
+        CheckTarget::PriceCheck => (POPUP_WIDTH_LOGICAL, POPUP_HEIGHT_LOGICAL),
+        CheckTarget::ItemCheck => (ITEM_CHECK_WIDTH_LOGICAL, ITEM_CHECK_HEIGHT_LOGICAL),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -79,18 +90,31 @@ mod tests {
             Point { x: 1700, y: 300 },
             1.0,
             CheckTarget::PriceCheck,
+            default_size(CheckTarget::PriceCheck),
         );
         assert_eq!(
             (left.x, left.y, left.width, left.height),
             (24, 108, 820, 590)
         );
-        let right = geometry(GAME, Point { x: 200, y: 300 }, 1.0, CheckTarget::PriceCheck);
+        let right = geometry(
+            GAME,
+            Point { x: 200, y: 300 },
+            1.0,
+            CheckTarget::PriceCheck,
+            default_size(CheckTarget::PriceCheck),
+        );
         assert_eq!(right.x, 1920 - 24 - 820);
     }
 
     #[test]
     fn scales_with_dpi_and_fits_small_games() {
-        let scaled = geometry(GAME, Point { x: 1700, y: 0 }, 1.25, CheckTarget::PriceCheck);
+        let scaled = geometry(
+            GAME,
+            Point { x: 1700, y: 0 },
+            1.25,
+            CheckTarget::PriceCheck,
+            default_size(CheckTarget::PriceCheck),
+        );
         assert_eq!((scaled.width, scaled.height), (1025, 738));
         let small = Rect {
             x: 100,
@@ -98,7 +122,13 @@ mod tests {
             width: 800,
             height: 600,
         };
-        let fitted = geometry(small, Point { x: 700, y: 0 }, 1.0, CheckTarget::PriceCheck);
+        let fitted = geometry(
+            small,
+            Point { x: 700, y: 0 },
+            1.0,
+            CheckTarget::PriceCheck,
+            default_size(CheckTarget::PriceCheck),
+        );
         assert_eq!(
             (fitted.x, fitted.y, fitted.width, fitted.height),
             (124, 74, 752, 552)
@@ -107,11 +137,40 @@ mod tests {
 
     #[test]
     fn item_check_is_small_and_centred() {
-        let rect = geometry(GAME, Point { x: 1700, y: 300 }, 1.0, CheckTarget::ItemCheck);
+        let rect = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::ItemCheck,
+            default_size(CheckTarget::ItemCheck),
+        );
         assert_eq!(
             (rect.x, rect.y, rect.width, rect.height),
             (24, (1080 - 330) / 2, 380, 330)
         );
+    }
+
+    #[test]
+    fn fitted_map_check_stays_centred_and_inside_the_game() {
+        let rect = geometry(
+            GAME,
+            Point { x: 200, y: 300 },
+            1.0,
+            CheckTarget::ItemCheck,
+            (440.0, 600.0),
+        );
+        assert_eq!(
+            (rect.x, rect.y, rect.width, rect.height),
+            (1920 - 24 - 440, 240, 440, 600)
+        );
+        let tall = geometry(
+            GAME,
+            Point { x: 200, y: 300 },
+            1.0,
+            CheckTarget::ItemCheck,
+            (440.0, 2000.0),
+        );
+        assert_eq!((tall.y, tall.height), (24, 1080 - 48));
     }
 }
 
@@ -121,9 +180,51 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
     };
     let scale = window.scale_factor().unwrap_or(1.0);
     let state = app.state::<AppState>();
-    platform::show_no_activate(state.popup_hwnd(), geometry(game, cursor, scale, target));
+    let placement = Placement {
+        game,
+        cursor,
+        target,
+    };
+    state.set_placement(placement);
+    platform::show_no_activate(
+        state.popup_hwnd(),
+        geometry(game, cursor, scale, target, default_size(target)),
+    );
     state.set_popup_visible(true);
     platform::set_escape_enabled(true);
+}
+
+/// The page measured its content (the map check grows with the mods): resize the shown popup to it,
+/// keeping its side and anchor. Ignored once the popup is hidden.
+pub fn fit(app: &AppHandle, width: f64, height: f64) {
+    let Some(window) = app.get_webview_window(LABEL) else {
+        return;
+    };
+    let state = app.state::<AppState>();
+    let Some(Placement {
+        game,
+        cursor,
+        target,
+    }) = state.placement()
+    else {
+        return;
+    };
+    if !state.popup_visible() {
+        return;
+    }
+    let scale = window.scale_factor().unwrap_or(1.0);
+    platform::show_no_activate(
+        state.popup_hwnd(),
+        geometry(game, cursor, scale, target, (width, height)),
+    );
+}
+
+/// Where the popup was last shown, for `fit`.
+#[derive(Clone, Copy)]
+pub struct Placement {
+    pub game: Rect,
+    pub cursor: Point,
+    pub target: CheckTarget,
 }
 
 /// `return_focus`: give the keyboard back to the game if the popup had it (Esc, close button).

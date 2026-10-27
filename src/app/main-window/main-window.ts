@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { listen } from '@tauri-apps/api/event';
 import { Leagues } from '../core/leagues';
 import { ForegroundEvent, host } from '../host';
+import { MapModsEditor } from '../map-check/map-mods-editor';
 
 interface LogLine {
   time: string;
@@ -10,12 +11,14 @@ interface LogLine {
 
 const MAX_LOG_LINES = 200;
 
-/** Stage 0 debug window: which window is "the game", foreground changes and hotkey log. */
+/** Debug window: which window is "the game", foreground changes and hotkey log; map check mods. */
 @Component({
   selector: 'app-main-window',
+  imports: [MapModsEditor],
   templateUrl: './main-window.html',
 })
 export class MainWindow {
+  protected readonly tab = signal<'general' | 'maps'>('general');
   protected readonly gameTitle = signal('');
   protected readonly gameActive = signal(false);
   protected readonly log = signal<LogLine[]>([]);

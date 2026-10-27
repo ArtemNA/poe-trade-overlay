@@ -1,8 +1,8 @@
-<section [attr.aria-label]="target() === 'item-check' ? 'Item check' : 'Price check'" class="relative flex h-full flex-col border border-frame bg-panel font-sans text-xs text-text shadow-[0_0_0_1px_#000]"
+<section [attr.aria-label]="title()" class="relative flex h-full flex-col border border-frame bg-panel font-sans text-xs text-text shadow-[0_0_0_1px_#000]"
   (mousedown.capture)="pointerDown($event)">
   <header class="flex h-[34px] flex-none items-center gap-2 border-b border-line bg-chrome pr-2 pl-3">
     <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0l6 6-6 6-6-6z" fill="var(--color-gold)" /></svg>
-    <span class="font-semibold text-bright">{{ target() === 'item-check' ? 'Item check' : 'Price check' }}</span>
+    <span class="font-semibold text-bright">{{ title() }}</span>
     <span class="flex-1"></span>
 
     @if (target() === 'price-check') {
@@ -60,7 +60,15 @@
 
   @if (parsed(); as parsedItem) {
     @if (target() === 'item-check') {
-      <app-item-check [item]="parsedItem" [view]="item()!" />
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <div #fitContent class="flex flex-col">
+          @if (mapCheck()) {
+            <app-map-check [item]="parsedItem" [view]="item()!" />
+          } @else {
+            <app-item-check [item]="parsedItem" [view]="item()!" />
+          }
+        </div>
+      </div>
     } @else {
       <app-price-check [item]="parsedItem" [view]="item()!" />
     }

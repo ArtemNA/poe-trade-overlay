@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
-import { DEFAULT_LANG, Lang, SETTINGS_STORAGE_KEY } from '../constants';
+import type { MapCheckConfig } from '@/web/map-check/common';
+import { DEFAULT_LANG, DEFAULT_MAP_CHECK, Lang, SETTINGS_STORAGE_KEY } from '../constants';
 
 export interface Settings {
   leagueId?: string;
@@ -8,12 +9,15 @@ export interface Settings {
   useIntlSite: boolean;
   /** PoE account name: own listings are marked in results. */
   accountName: string;
+  /** Map check profile and marked map mods (APT `ItemCheckWidget.maps`). */
+  mapCheck: MapCheckConfig;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   language: DEFAULT_LANG,
   useIntlSite: false,
   accountName: '',
+  mapCheck: DEFAULT_MAP_CHECK,
 };
 
 // Stage 2 storage: localStorage of the webview. Replaced by tauri-plugin-store at the settings stage.

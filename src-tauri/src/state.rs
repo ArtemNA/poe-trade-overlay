@@ -3,6 +3,7 @@ use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 
 use crate::constants::{DEFAULT_GAME_TITLE, ENV_GAME_TITLE, ENV_KEEP_POPUP};
 use crate::platform::RawHwnd;
+use crate::popup::Placement;
 
 pub struct AppState {
     game_title: Mutex<String>,
@@ -14,6 +15,7 @@ pub struct AppState {
     popup_focused: AtomicBool,
     /// Guards against a second price check while the clipboard is still being polled.
     busy: AtomicBool,
+    placement: Mutex<Option<Placement>>,
     /// See `ENV_KEEP_POPUP`.
     pub keep_popup_on_blur: bool,
 }
@@ -29,6 +31,7 @@ impl Default for AppState {
             popup_visible: AtomicBool::new(false),
             popup_focused: AtomicBool::new(false),
             busy: AtomicBool::new(false),
+            placement: Mutex::new(None),
             keep_popup_on_blur: std::env::var(ENV_KEEP_POPUP).is_ok_and(|v| v == "1"),
         }
     }
@@ -71,6 +74,13 @@ impl AppState {
     }
     pub fn set_popup_focused(&self, focused: bool) {
         self.popup_focused.store(focused, Ordering::SeqCst);
+    }
+
+    pub fn placement(&self) -> Option<Placement> {
+        *self.placement.lock().unwrap()
+    }
+    pub fn set_placement(&self, placement: Placement) {
+        *self.placement.lock().unwrap() = Some(placement);
     }
 
     /// Returns false if a check is already running.

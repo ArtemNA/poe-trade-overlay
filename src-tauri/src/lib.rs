@@ -100,6 +100,12 @@ fn popup_release_focus(app: AppHandle) {
     popup::release_focus(&app, true);
 }
 
+/// The popup page asks for a size that fits its content, in logical pixels.
+#[tauri::command]
+fn fit_popup(app: AppHandle, width: f64, height: f64) {
+    popup::fit(&app, width, height);
+}
+
 /// "Find in stash": hide the popup and type `text` into the game's stash search.
 #[tauri::command]
 fn stash_search(app: AppHandle, text: String) -> Result<(), String> {
@@ -134,7 +140,8 @@ pub fn run() {
             hide_popup,
             popup_focus_input,
             popup_release_focus,
-            stash_search
+            stash_search,
+            fit_popup
         ])
         .setup(|app| {
             let handle = app.handle().clone();

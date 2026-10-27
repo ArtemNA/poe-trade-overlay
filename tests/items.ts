@@ -140,3 +140,43 @@ Adds 5(2-5) to 70(66-71) Lightning Damage
 { Suffix Modifier "of Celebration" (Tier: 3) — Attack, Speed }
 13(11-13)% increased Attack Speed
 `;
+
+export const RARE_MAP = `Item Class: Maps
+Rarity: Rare
+Chaos Jaws
+Map (Tier 16)
+--------
+Map Area: Strand
+Item Quantity: +82% (augmented)
+Item Rarity: +45% (augmented)
+Monster Pack Size: +29% (augmented)
+Quality: +20% (augmented)
+--------
+Item Level: 83
+--------
+{ Prefix Modifier "Twinned" (Tier: 1) }
+Area contains two Unique Bosses
+{ Prefix Modifier "Fecund" (Tier: 1) }
+40(35-45)% more Monster Life
+{ Prefix Modifier "Burning" (Tier: 1) }
+Monsters deal 102(90-110)% extra Physical Damage as Fire
+{ Suffix Modifier "of Exposure" (Tier: 1) }
+Players have -10(-12--9)% to all maximum Resistances
+{ Suffix Modifier "of Smothering" (Tier: 1) }
+Players have 40% less Recovery Rate of Life and Energy Shield
+{ Suffix Modifier "of Toughness" (Tier: 1) }
+Monsters take 25(20-25)% reduced Extra Damage from Critical Strikes
+--------
+Travel to this Map by using it in a personal Map Device. Maps can only be used once.
+`;
+
+export const NORMAL_MAP = `Item Class: Maps
+Rarity: Normal
+Map (Tier 11)
+--------
+Map Area: Courtyard
+--------
+Item Level: 79
+--------
+Travel to this Map by using it in a personal Map Device. Maps can only be used once.
+`;

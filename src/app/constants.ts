@@ -160,3 +160,26 @@ export const CURRENCY_COLOR_OTHER = '#8f887c';
 
 /** localStorage key for user settings; shared by the main and popup windows. */
 export const SETTINGS_STORAGE_KEY = 'poe-trade-overlay.settings';
+
+/** Popup widths the item check asks for (logical pixels); the height follows the content. */
+export const ITEM_CHECK_WIDTH = 380;
+export const MAP_CHECK_WIDTH = 440;
+
+/** Map check (APT `map-check/MapCheck.vue`): maps whose boss counts for a Maven's Invitation. */
+export const MEMORY_MAPS = ['Courtyard of Wasting', 'Chambers of Impurity', 'Theatre of Lies'];
+/** Map check profiles, shown as roman numerals; decisions are stored one character per profile. */
+export const MAP_CHECK_PROFILES = ['I', 'II', 'III'];
+/**
+ * Default map check marks (APT `WidgetItemCheck.vue initInstance`). APT also marks physical and
+ * elemental reflect, which left the game and would show the "outdated wording" banner (FINDINGS F-39):
+ * here the less recovery mod takes their place.
+ */
+export const DEFAULT_MAP_CHECK = {
+  profile: 1,
+  showNewStats: false,
+  selectedStats: [
+    { matcher: 'Players have #% to all maximum Resistances', decision: 'w--' },
+    { matcher: 'Players have #% less Recovery Rate of Life and Energy Shield', decision: 'd--' },
+    { matcher: 'Area contains two Unique Bosses', decision: 'g--' },
+  ],
+};

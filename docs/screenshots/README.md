@@ -24,5 +24,16 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `09-item-check-no-ninja-price.png` | Item check, divination card poe.ninja does not list |
 | `09-price-check-wiki-tab.png` | Price check, Wiki tab: the same links and DPS inside the price check |
 | `09-find-in-stash-fake-game.png` | The fake game after "Find in Stash": search text typed, popup hidden (whole game window, not the popup) |
+| `10-map-check-rare.png` | Map check (Alt+D on a map), rare T16: area screenshot, tier, quantity/rarity/pack size, default marks (good, warning, deadly) |
+| `10-map-check-marked-deadly.png` | After one click on "more Monster Life": marked deadly |
+| `10-map-check-profile-2.png` | Profile II: no marks |
+| `10-map-check-maven-normal.png` | Normal map without mods, Maven memory boss reminder, no screenshot in the data |
+| `10-map-check-unknown-mod.png` | Popup on the right (cursor on the left); a mod the stat data does not know |
+| `10-map-check-new-mods-icon.png` | "Show icon for new mods" on: dot on unmarked mods; long mods truncated |
+| `10-map-check-marked-seen.png` | After a click on the dot: the mod is "seen" (dimmed, no dot) |
+| `10-item-check-fitted.png` | Item check with the height fitted to its content (was a fixed 330) |
+| `10-settings-map-mods.png` | Main window, Map check tab: all map mods, marks show on hover |
+| `10-settings-only-marked.png` | "Only marked" in profile I |
+| `10-settings-search-marked.png` | Search "monster life", a mark set in the editor |
 
-Not captured yet: poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.
+Not captured yet: the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.

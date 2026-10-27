@@ -52,6 +52,8 @@ export const host = {
   },
   /** Hides the popup and types `text` into the game's stash search (Ctrl+F, paste, Enter). */
   stashSearch: (text: string) => invoke<void>('stash_search', { text }),
+  /** Resizes the shown popup to its content (logical pixels), keeping its side and anchor. */
+  fitPopup: (width: number, height: number) => invoke<void>('fit_popup', { width, height }),
   /** The host took the keyboard back (popup hidden, game clicked). */
   popupLostKeyboard: () => (popupHasKeyboard = false),
 };

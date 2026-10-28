@@ -53,6 +53,9 @@ export interface Status {
   gameActive: boolean;
 }
 
+/** The corner message: the start message, or a new version found (being installed or not). */
+export type ToastMessage = { kind: 'start' } | { kind: 'update'; version: string; installing: boolean };
+
 export const host = {
   getStatus: () => invoke<Status>('get_status'),
   /** Game window title and hotkeys from the settings; returns a message per unusable hotkey. */
@@ -77,7 +80,9 @@ export const host = {
   /** Resizes the shown popup to its content (logical pixels), keeping its side and anchor. */
   fitPopup: (width: number, height: number) => invoke<void>('fit_popup', { width, height }),
   /** The start message in the screen corner, for a few seconds. */
-  showToast: () => invoke<void>('show_toast'),
+  showToast: (message?: ToastMessage) => invoke<void>('show_toast', { message }),
+  /** What the toast should show now (the page may load after it was asked). */
+  toastMessage: () => invoke<ToastMessage>('toast_message'),
   openSettings: () => invoke<void>('open_settings'),
   /** The trade site of the game language: the built-in browser opens and makes requests there. */
   setTradeHost: (host: string) => invoke<void>('set_trade_host', { host }),

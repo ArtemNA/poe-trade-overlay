@@ -87,6 +87,9 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `19-game-language-mismatch.png` | A Russian item while the game language is English: the popup says which one to choose |
 | `19-browser-ru-site.png` | The built-in browser with the Russian game language: it opens ru.pathofexile.com (its own Cloudflare check) |
 | `19-settings-version-whats-new.png` | Settings, General, Version: "What's new ↗" opens the version's release page on GitHub ("portable": the dev build has no uninstaller next to it) |
+| `20-toast-update-found.png` | A new version found: the corner message "Version 0.2.0 is out · Click to see what is new and install it" (test version shown in dev) |
+| `20-toast-updating.png` | "Install new versions automatically" on, found at start: "Updating to 0.2.0… · The overlay restarts by itself in a few seconds" |
+| `20-settings-auto-update.png` | Settings, Version: "Install new versions automatically" (disabled with a note in the portable build, which the dev build counts as) |
 | `16-price-check-related-unfolded.png` | Farrul's Fur (a unique with mods): related open by default, the set with poe.ninja prices, the item itself marked (taken before the heading got its fold button ▾) |
 | `16-price-check-related-folded.png` | The same folded into one line "Related · 4" with icons |
 | `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |

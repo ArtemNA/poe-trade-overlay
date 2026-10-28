@@ -63,6 +63,8 @@ export interface Settings {
   gameTitle: string;
   /** A short message in the corner when the overlay starts (APT `showAttachNotification`). */
   startMessage: boolean;
+  /** Install a new version when the overlay starts (never in the middle of a session, F-62). */
+  autoUpdate: boolean;
   popupPosition: PopupPosition;
   hotkeys: Record<HotkeyAction, string | null>;
   commands: ChatCommand[];
@@ -90,6 +92,7 @@ export function defaultSettings(): Settings {
     accountName: '',
     gameTitle: DEFAULT_GAME_TITLE,
     startMessage: true,
+    autoUpdate: true,
     popupPosition: DEFAULT_POPUP_POSITION,
     hotkeys: { ...DEFAULT_HOTKEYS },
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),

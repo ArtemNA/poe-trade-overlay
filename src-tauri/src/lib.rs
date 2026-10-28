@@ -171,8 +171,17 @@ fn is_portable() -> bool {
 
 /// The start message in the screen corner.
 #[tauri::command]
-fn show_toast(app: AppHandle) {
-    toast::show_when_ready(&app);
+fn show_toast(app: AppHandle, message: Option<serde_json::Value>) {
+    toast::show_when_ready(
+        &app,
+        message.unwrap_or_else(|| serde_json::json!({ "kind": "start" })),
+    );
+}
+
+/// What the toast page shows (it may load after `show_toast` asked for it).
+#[tauri::command]
+fn toast_message() -> serde_json::Value {
+    toast::message()
 }
 
 /// The trade site of the game language (www. or ru.pathofexile.com) for the built-in browser.
@@ -244,6 +253,7 @@ pub fn run() {
             get_status,
             set_host_config,
             show_toast,
+            toast_message,
             set_tray_labels,
             set_trade_host,
             is_portable,

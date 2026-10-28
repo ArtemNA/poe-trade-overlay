@@ -2,6 +2,11 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## v0.1.10
+
+- A new version is announced in the corner of the screen (the settings window lives hidden in the tray, so its banner alone went unseen). A click opens the settings with "What's new" and the install button.
+- "Install new versions automatically" (on by default, Settings → General → Version): a new version found when the overlay starts is installed right away, with a message in the corner, and the overlay restarts by itself. Found later, while the overlay runs (it looks every 6 hours), it is only announced: the restart never comes in the middle of a game. The portable version only announces it.
+
 ## v0.1.9
 
 - Requests to pathofexile.com and poe.ninja name the app as it is now: `PriceOfExile/<version> (+https://github.com/ArtemNA/price-of-exile)`, with the version taken from the release itself (it said `PoeTradeOverlay/0.1.0` until now).

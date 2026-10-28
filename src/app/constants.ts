@@ -119,6 +119,11 @@ export const ITEM_CHIP_SHORT_LABELS: Record<string, string> = {
 /** The leagues list is loaded again on a check when it is older than this (ms). */
 export const LEAGUES_REFRESH_AFTER = 3 * 60 * 60 * 1000;
 
+/** While the overlay runs, look for a new version this often (found then: only a message, F-62). */
+export const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+/** Event from the host to the corner message page (src-tauri/src/constants.rs). */
+export const TOAST_MESSAGE_EVENT = 'toast-message';
+
 /** Upper limit of the stat filter range setting, % (APT `settings-price-check.vue`). */
 export const SEARCH_STAT_RANGE_MAX = 50;
 /** Buyout currency filter choices in the settings; values are trade API price options. */

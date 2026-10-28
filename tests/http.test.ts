@@ -59,3 +59,11 @@ describe('poe fetch', () => {
     expect(calls).toBe(3);
   });
 });
+
+describe('User-Agent', () => {
+  it('names the app, its released version and the contact', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { version } = JSON.parse(await readFile(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf-8'));
+    expect(USER_AGENT).toBe(`PriceOfExile/${version} (+https://github.com/ArtemNA/price-of-exile)`);
+  });
+});

@@ -4,10 +4,13 @@
  * Ported APT code (src/lib/apt) keeps its own constants, identical to upstream.
  */
 
-/** Identifies the app to GGG and other APIs. Keep the version in sync with tauri.conf.json. */
-export const APP_NAME = 'PoeTradeOverlay';
-export const APP_VERSION = '0.1.0';
-export const APP_CONTACT = 'https://github.com/ArtemNA';
+import tauriConfig from '../../src-tauri/tauri.conf.json';
+
+/** Identifies the app to GGG and other APIs (name, version, contact, as GGG asks of third-party tools). */
+export const APP_NAME = 'PriceOfExile';
+/** The released version, read from tauri.conf.json at build time, so it cannot fall behind. */
+export const APP_VERSION: string = tauriConfig.version;
+export const APP_CONTACT = 'https://github.com/ArtemNA/price-of-exile';
 export const USER_AGENT = `${APP_NAME}/${APP_VERSION} (+${APP_CONTACT})`;
 
 /**

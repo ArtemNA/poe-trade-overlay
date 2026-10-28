@@ -2,6 +2,10 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## v0.1.9
+
+- Requests to pathofexile.com and poe.ninja name the app as it is now: `PriceOfExile/<version> (+https://github.com/ArtemNA/price-of-exile)`, with the version taken from the release itself (it said `PoeTradeOverlay/0.1.0` until now).
+
 ## v0.1.8
 
 - Settings: "What's new" next to the version opens its release page with the list of changes; the update banner links the new version's.

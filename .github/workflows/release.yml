@@ -45,7 +45,9 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
           releaseBody: What is new is on the release page.
-          releaseDraft: false
+          # A draft until every file is up (last step): a published release is "latest" at once, and the
+          # updater's releases/latest/download/latest.json would answer 404 until latest.json is uploaded.
+          releaseDraft: true
           prerelease: false
           includeUpdaterJson: true
 
@@ -86,4 +88,4 @@ jobs:
             Replace("{{CHANGES}}", $changes) | Out-File -Encoding utf8 release-notes.md
 
           gh release upload $tag $portable SHA256SUMS.txt --clobber
-          gh release edit $tag --title "$product $tag" --notes-file release-notes.md
+          gh release edit $tag --title "$product $tag" --notes-file release-notes.md --draft=false

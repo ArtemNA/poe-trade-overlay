@@ -2,6 +2,10 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## v0.1.11
+
+- Settings: General had grown long, so it is now three sections. General keeps the languages, the game window title, the league and the account; **Overlay** has the popup position and the start message; **About** has the version, "What's new", the update check, automatic updates and the source code link.
+
 ## v0.1.10
 
 - A new version is announced in the corner of the screen (the settings window lives hidden in the tray, so its banner alone went unseen). A click opens the settings with "What's new" and the install button.

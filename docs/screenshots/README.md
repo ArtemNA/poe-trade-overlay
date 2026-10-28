@@ -90,6 +90,9 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `20-toast-update-found.png` | A new version found: the corner message "Version 0.2.0 is out · Click to see what is new and install it" (test version shown in dev) |
 | `20-toast-updating.png` | "Install new versions automatically" on, found at start: "Updating to 0.2.0… · The overlay restarts by itself in a few seconds" |
 | `20-settings-auto-update.png` | Settings, Version: "Install new versions automatically" (disabled with a note in the portable build, which the dev build counts as) |
+| `21-settings-general.png` | Settings split in three: General (languages, game window title, league, account) |
+| `21-settings-overlay.png` | Overlay: popup position, start message |
+| `21-settings-about.png` | About: version, What's new, update check, automatic updates, source code (taken before "· based on Awakened PoE Trade" was dropped from the license line) |
 | `16-price-check-related-unfolded.png` | Farrul's Fur (a unique with mods): related open by default, the set with poe.ninja prices, the item itself marked (taken before the heading got its fold button ▾) |
 | `16-price-check-related-folded.png` | The same folded into one line "Related · 4" with icons |
 | `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |

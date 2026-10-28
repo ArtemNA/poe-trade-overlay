@@ -2,8 +2,11 @@
 
 Each release takes its "What's new" from the section of its tag.
 
-## v0.1.11
+## v0.1.12
 
+0.1.11 was built but GitHub refused to publish it, so its changes come in this version.
+
+- Releases are published only once all their files are up, so "Check for updates" no longer fails with "Could not fetch a valid release JSON" while a new version is being published.
 - Settings: General had grown long, so it is now three sections. General keeps the languages, the game window title, the league and the account; **Overlay** has the popup position and the start message; **About** has the version, "What's new", the update check, automatic updates and the source code link.
 
 ## v0.1.10

@@ -16,6 +16,7 @@ import {
   ITEM_CHIP_SHORT_LABELS,
   MODS_PRESET_ID,
   MODS_PRESET_LABEL,
+  PRICE_CHECK_FULL_HEIGHT,
   PRICE_CHECK_MAX_HEIGHT,
   PRICE_CHECK_MIN_HEIGHT,
   PRICE_CHECK_WIDTH,
@@ -50,6 +51,7 @@ import {
 import { ItemFilterChip, itemFilterChips } from './item-filter-chips';
 import { formatChaos, limiterUsage, summarizeListings } from './listing-summary';
 import { ItemCheckPanel } from '../item-check/item-check-panel';
+import { themeById } from '../themes';
 import { Currency } from '../shared/currency';
 import {
   baseSwitch,
@@ -424,6 +426,16 @@ export class PriceCheckPanel {
    * so items with many mods do not scroll. Watches the filter list for any change.
    */
   private fitHeightToFilters(): void {
+    // A theme with a window as tall as the game (APT) does not fit to the filters.
+    const size = themeById(settings().theme).priceCheckSize;
+    if (size?.fullHeight) {
+      effect(() => {
+        this.item();
+        void host.fitPopup(size.width, PRICE_CHECK_FULL_HEIGHT);
+      });
+      return;
+    }
+    const width = size?.width ?? PRICE_CHECK_WIDTH;
     let frame = 0;
     let lastHeight = 0;
     const fit = () => {
@@ -439,7 +451,7 @@ export class PriceCheckPanel {
         const height = Math.min(PRICE_CHECK_MAX_HEIGHT, Math.max(PRICE_CHECK_MIN_HEIGHT, wanted));
         if (height === lastHeight) return;
         lastHeight = height;
-        void host.fitPopup(PRICE_CHECK_WIDTH, height);
+        void host.fitPopup(width, height);
       });
     };
     const observer = new MutationObserver(fit);

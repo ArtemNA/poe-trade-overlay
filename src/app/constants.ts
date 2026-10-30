@@ -88,6 +88,8 @@ export const MODS_PRESET_LABEL = 'Mods';
 export const PRICE_CHECK_WIDTH = 960;
 export const PRICE_CHECK_MIN_HEIGHT = 590;
 export const PRICE_CHECK_MAX_HEIGHT = 900;
+/** Asked by a theme whose price check is as tall as the game: the host clamps it to the game. */
+export const PRICE_CHECK_FULL_HEIGHT = 100_000;
 
 /** Price check stat filter headings in display order, and which filter tags go under each (F-54). */
 export const STAT_GROUPS: ReadonlyArray<{ name: string; tags: readonly string[] }> = [

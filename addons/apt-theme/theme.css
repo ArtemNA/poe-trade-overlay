@@ -1,0 +1,89 @@
+/*
+ * The "APT" theme: the colours and fonts of Awakened PoE Trade (its Tailwind v1 palette, read off
+ * APT 3.29 and its source, docs/screenshots/apt/STYLE_NOTES.md) over our CSS tokens
+ * (src/styles.css). Every window takes them; the price check also gets APT's layout
+ * (apt-price-check.html).
+ */
+
+@font-face {
+  font-family: 'FontinSmallCaps';
+  src: url('./fonts/Fontin-SmallCaps-Hinted.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Fontin';
+  src: url('./fonts/Fontin-Regular-Hinted.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Exo2';
+  font-weight: 600;
+  src: url('./fonts/Exo2-SemiBold.ttf') format('truetype');
+}
+
+html[data-theme='apt'] {
+  /* Fontin has no Cyrillic: those letters fall back to Alegreya SC (APT uses a commercial font). */
+  --font-sans: 'FontinSmallCaps', 'Alegreya SC', serif;
+  --font-display: 'FontinSmallCaps', 'Alegreya SC', serif;
+
+  --color-chrome: #1a202c; /* gray-900: title bars, sidebar */
+  --color-panel: #2d3748; /* gray-800: window body */
+  --color-raised: #4a5568; /* gray-700: buttons, active tab */
+  --color-well: #1a202c; /* inputs, chips */
+  --color-line: #4a5568;
+  --color-line-strong: #718096;
+  --color-frame: #1a202c;
+  --color-bronze: #718096;
+  --color-gold: #a0aec0; /* gray-500: active borders, focus */
+  --color-gold-soft: #f7fafc;
+  --color-text: #edf2f7;
+  --color-bright: #f7fafc;
+  --color-muted: #718096;
+  --color-mod: #edf2f7;
+  --color-mod-off: #718096;
+  --color-good: #48bb78;
+  --color-warn: #f6ad55;
+  --color-bad: #f56565;
+
+  --color-selected: #1a202c;
+  --color-selected-hover: #4a5568;
+  --color-error-bg: #742a2a;
+  --color-gold-hover: #cbd5e0;
+  --color-warn-bg: #7b341e;
+  --color-warn-line: #c05621;
+  --color-row-line: #4a5568;
+  --color-primary-from: #4a5568;
+  --color-primary-to: #4a5568;
+  --color-primary-text: #cbd5e0;
+  --color-ink: #1a202c;
+  --color-deadly: #c53030;
+  --color-bad-line: #c53030;
+  --color-menu: #1a202c;
+  --color-bait-text: #fbd38d;
+  --color-bait-line: #dd6b20;
+  --color-unique: #edf2f7;
+  --color-positive: #48bb78;
+  --color-positive-bg: #1a202c;
+  --color-corrupted-bg: #1a202c;
+  --color-heist: #c53030;
+  --color-deadly-bg: #c53030;
+  --color-deadly-hover: #e53e3e;
+  --color-warning-bg: #dd6b20;
+  --color-warning-hover: #ed8936;
+  --color-good-bg: #22543d;
+  --color-good-line: #2f855a;
+  --color-good-row-bg: #2f855a;
+  --color-good-row-hover: #38a169;
+  --color-tier1: #ecc94b;
+  --color-tier1-text: #1a202c;
+  --color-tier2: #2d3748;
+  --color-tier2-text: #ecc94b;
+  --color-fractured: #f6e05e;
+  --color-fractured-text: #1a202c;
+  --color-fractured-line: #b7791f;
+}
+
+/* APT rounds its buttons, fields and chips. */
+html[data-theme='apt'] button,
+html[data-theme='apt'] input,
+html[data-theme='apt'] select {
+  border-radius: 0.25rem;
+}

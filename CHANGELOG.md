@@ -2,6 +2,11 @@
 
 Each release takes its "What's new" from the section of its tag.
 
+## v0.1.13
+
+- **Themes**: Settings → Overlay → Theme. Besides ours there is **Awakened PoE Trade**: APT's colours and fonts in every window and APT's price check, laid out as APT does it (one column as tall as the game, next to the inventory or the stash, related items beside it), over Price of Exile's own price check. "Centre of the game" and "Opposite the cursor" apply to both themes.
+- [THEMING.md](THEMING.md): how to make your own theme.
+
 ## v0.1.12
 
 0.1.11 was built but GitHub refused to publish it, so its changes come in this version.

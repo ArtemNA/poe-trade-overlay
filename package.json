@@ -13,10 +13,7 @@
     "pretest": "npm run data:index",
     "test": "vitest run",
     "dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
-    "start:apt": "ng serve -c apt",
-    "build:apt": "ng build -c production,apt",
-    "build:apt-default": "ng build -c production,apt-default",
-    "dev:apt": "tauri dev --config src-tauri/tauri.dev.conf.json --config addons/apt-theme/tauri.apt.conf.json"
+    "build:apt-default": "ng build -c production,apt-default"
   },
   "private": true,
   "packageManager": "npm@11.19.0",

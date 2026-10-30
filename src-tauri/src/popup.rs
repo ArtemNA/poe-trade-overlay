@@ -94,7 +94,14 @@ pub fn geometry(
     let (logical_width, logical_height) = size;
     let margin = px(POPUP_MARGIN_LOGICAL);
     let width = px(logical_width).min(game.width - 2 * margin).max(0);
-    let height = px(logical_height).min(game.height - 2 * margin).max(0);
+    // Asked taller than the game (a theme as tall as the game, like APT): the whole game height,
+    // top to bottom, without margins.
+    let full_height = target == CheckTarget::PriceCheck && px(logical_height) >= game.height;
+    let height = if full_height {
+        game.height
+    } else {
+        px(logical_height).min(game.height - 2 * margin).max(0)
+    };
 
     let cursor_on_right = cursor.x > game.x + game.width / 2;
     let x = if centred || target == CheckTarget::StashSearch {
@@ -113,7 +120,11 @@ pub fn geometry(
         CheckTarget::PriceCheck => (game.height as f64 * POPUP_TOP_RATIO).round() as i32,
         CheckTarget::ItemCheck | CheckTarget::StashSearch => (game.height - height) / 2,
     };
-    let y = game.y + top.min(game.height - margin - height).max(margin);
+    let y = if full_height {
+        game.y
+    } else {
+        game.y + top.min(game.height - margin - height).max(margin)
+    };
     Rect {
         x,
         y,
@@ -140,6 +151,32 @@ mod tests {
         width: 1920,
         height: 1080,
     };
+
+    #[test]
+    fn full_height_takes_the_whole_game() {
+        let rect = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::PriceCheck,
+            (460.0, 100_000.0),
+            false,
+        );
+        assert_eq!((rect.y, rect.height), (0, 1080));
+    }
+
+    #[test]
+    fn centred_is_centred() {
+        let rect = geometry(
+            GAME,
+            Point { x: 1700, y: 300 },
+            1.0,
+            CheckTarget::PriceCheck,
+            (960.0, 590.0),
+            true,
+        );
+        assert_eq!(rect.x, (1920 - 960) / 2);
+    }
 
     #[test]
     fn side_of_the_popup() {

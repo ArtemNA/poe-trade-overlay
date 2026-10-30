@@ -26,6 +26,8 @@ The message in the screen corner when the overlay starts:
 
 ![Start message](docs/readme/start-message.png)
 
+Two themes ship with the app (ours and Awakened PoE Trade's look, Settings → Overlay → Theme); how to make your own: [THEMING.md](THEMING.md).
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
 
 ## Running the app in development

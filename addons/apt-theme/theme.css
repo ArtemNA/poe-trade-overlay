@@ -101,3 +101,13 @@ html[data-theme='apt'] section:has(> app-apt-price-check, > app-apt-unidentified
 html[data-theme='apt'] section:has(> app-apt-price-check, > app-apt-unidentified-picker) > header {
   display: none;
 }
+
+/* APT (Tailwind 1–3) shows a hand over everything clickable; Tailwind 4 does not by default. */
+html[data-theme='apt'] button:not(:disabled),
+html[data-theme='apt'] [role='button'],
+html[data-theme='apt'] select:not(:disabled),
+html[data-theme='apt'] input[type='checkbox']:not(:disabled),
+html[data-theme='apt'] input[type='radio']:not(:disabled),
+html[data-theme='apt'] label:has(> input[type='checkbox'], > input[type='radio']) {
+  cursor: pointer;
+}

@@ -10,5 +10,5 @@ export const APT_THEME: Theme = {
   unidentifiedPicker: AptUnidentifiedPicker,
   // APT: 28.75 rem = 460 px wide, as tall as the game, next to the game's inventory or stash panel.
   priceCheckSize: { width: 460, fullHeight: true },
-  popupPosition: 'opposite-cursor',
+  // The popup position setting applies as in our theme; "Opposite the cursor" is APT's own.
 };

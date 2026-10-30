@@ -84,8 +84,14 @@ export class AptPriceCheck extends PriceCheckPanel {
     if (event.target === event.currentTarget) void host.hidePopup();
   }
 
+  /**
+   * Opposite the cursor, related items take one side of the column (the window grows by their
+   * panel, the column stays next to the game's panel). Centred, the window grows on both sides so
+   * the column itself stays in the centre of the game, with related items on its right.
+   */
   protected override themeWindowWidth(width: number): number {
-    return this.relatedBeside() ? width + APT_RELATED_WIDTH : width;
+    if (!this.relatedBeside()) return width;
+    return this.popupSide() === 'centre' ? width + 2 * APT_RELATED_WIDTH : width + APT_RELATED_WIDTH;
   }
 
   protected readonly tableRows = TABLE_ROWS;

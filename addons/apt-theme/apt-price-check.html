@@ -3,6 +3,9 @@
      facing the screen centre, over the (transparent) rest of the window, as in APT. -->
 @if (relatedBeside() && popupSide() === 'right') {
   <ng-container *ngTemplateOutlet="related" />
+} @else if (relatedBeside() && popupSide() === 'centre') {
+  <!-- Centred: as wide as the related panel on the right, so the column is in the middle. -->
+  <div class="w-[384px] flex-none"></div>
 }
 <div class="apt-column flex min-h-0 w-[460px] flex-none flex-col">
 <apt-title-bar />

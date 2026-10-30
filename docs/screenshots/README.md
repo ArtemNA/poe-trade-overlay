@@ -132,3 +132,5 @@ shot shows the Search button. Live prices and listings differ from the APT shots
 | `apt-theme-rate-limiting-tab.png` | `apt-rate-limiting-tab.png` | "Rate limiting" tab at the bottom, opened |
 | `apt-theme-related-beside-left.png` | APT theme, The Maven's Writ, item in the inventory: related items beside the column on its left, over the transparent rest of the window (APT: `apt-price-check-fragment-related.png`) |
 | `apt-theme-related-beside-right.png` | The same with the item in the stash: the column next to the stash panel, related items on its right |
+| `apt-theme-centred.png` | APT theme, "Centre of the game": the column in the centre of the game, related items on its right |
+| `apt-theme-full-height.png` | APT theme: the price check from the top to the bottom of the game window |

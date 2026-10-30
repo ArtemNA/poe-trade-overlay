@@ -1,6 +1,0 @@
-{
-  "build": {
-    "beforeDevCommand": "npm run start:apt",
-    "beforeBuildCommand": "npm run build:apt"
-  }
-}

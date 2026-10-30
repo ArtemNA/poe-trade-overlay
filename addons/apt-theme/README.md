@@ -4,16 +4,9 @@ The look of Awakened PoE Trade for Price of Exile: APT's colours and fonts in ev
 price check layout (one column as tall as the game, next to the game's inventory or stash panel)
 over our own price check logic (`AptPriceCheck extends PriceCheckPanel`).
 
-Not part of the normal build. Build it in:
-
-| Command | Result |
-|---|---|
-| `npm run dev:apt` | dev build with the theme in Settings → Overlay → Theme |
-| `npm run build:apt` | release front end with the theme offered in the settings |
-| `npm run build:apt-default` | the same, with the theme as the default for a fresh install |
-
-(Angular configurations `apt` / `apt-default` in `angular.json`: `src/app/addons.ts` is replaced by
-`addons.ts` / `addons.default.ts` here and `theme.css` is added to the styles.)
+Built into the app (`src/app/addons.ts`, `angular.json` styles) and offered in Settings → Overlay → Theme.
+`npm run build:apt-default` builds the front end with it as the default theme for a fresh install.
+How themes work and how to make one: [THEMING.md](../../THEMING.md).
 
 Files: `theme.ts` (registration), `theme.css` (palette over our tokens, fonts, global styles),
 `apt-price-check.*` (the price check), `apt-title-bar.ts`, `apt-unidentified-picker.ts`, `apt-icon.ts`

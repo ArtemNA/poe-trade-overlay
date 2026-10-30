@@ -130,3 +130,5 @@ shot shows the Search button. Live prices and listings differ from the APT shots
 | `apt-theme-title-divine-fractions.png` | `apt-title-divine-fractions.png` | Title bar "⇄ 360" popover: 0.1–0.9 div in chaos |
 | `apt-theme-title-league-menu.png` | — | Our league menu from the league name in the title (APT has none there) |
 | `apt-theme-rate-limiting-tab.png` | `apt-rate-limiting-tab.png` | "Rate limiting" tab at the bottom, opened |
+| `apt-theme-related-beside-left.png` | APT theme, The Maven's Writ, item in the inventory: related items beside the column on its left, over the transparent rest of the window (APT: `apt-price-check-fragment-related.png`) |
+| `apt-theme-related-beside-right.png` | The same with the item in the stash: the column next to the stash panel, related items on its right |

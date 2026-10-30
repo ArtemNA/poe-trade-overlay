@@ -35,7 +35,7 @@ import {
 } from '../core/ninja-prices';
 import { t, tr, TranslatePipe, TrPipe } from '../core/i18n';
 import { settings, updateSettings } from '../core/settings';
-import { host } from '../host';
+import { host, type PopupSide } from '../host';
 import type { ItemView } from '../popup-window/item-view';
 import {
   bestOffer,
@@ -421,6 +421,14 @@ export class PriceCheckPanel {
     this.fitHeightToFilters();
   }
 
+  /** The side of the game the popup is on, for a theme laying things out beside its column. */
+  protected readonly popupSide = signal<PopupSide>('centre');
+
+  /** The window width a full-height theme needs now (APT adds its related items beside the column). */
+  protected themeWindowWidth(width: number): number {
+    return width;
+  }
+
   /**
    * The window is as tall as the filters need (within PRICE_CHECK_MIN/MAX_HEIGHT and the game),
    * so items with many mods do not scroll. Watches the filter list for any change.
@@ -431,7 +439,7 @@ export class PriceCheckPanel {
     if (size?.fullHeight) {
       effect(() => {
         this.item();
-        void host.fitPopup(size.width, PRICE_CHECK_FULL_HEIGHT);
+        void host.fitPopup(this.themeWindowWidth(size.width), PRICE_CHECK_FULL_HEIGHT).then((side) => this.popupSide.set(side));
       });
       return;
     }

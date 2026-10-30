@@ -1,4 +1,10 @@
 <!-- Awakened PoE Trade's price check (PriceCheckWindow.vue → CheckedItem.vue), top to bottom. -->
+<!-- The window is wider than the column when there are related items: they sit beside it, on the side
+     facing the screen centre, over the (transparent) rest of the window, as in APT. -->
+@if (relatedBeside() && popupSide() === 'right') {
+  <ng-container *ngTemplateOutlet="related" />
+}
+<div class="apt-column flex min-h-0 w-[460px] flex-none flex-col">
 <apt-title-bar />
 
 <div class="apt-body relative flex min-h-0 grow flex-col bg-[#2d3748]">
@@ -180,7 +186,6 @@
         </div>
       }
 
-      <ng-container *ngTemplateOutlet="related" />
     </div>
   }
 
@@ -204,12 +209,15 @@
     </div>
   }
 </div>
+</div>
+@if (relatedBeside() && popupSide() !== 'right') {
+  <ng-container *ngTemplateOutlet="related" />
+}
 
-<!-- Related items (RelatedItems.vue). In APT they sit outside the window, beside it; here at the
-     end of the column until the window can be wider than the price check. Used once: move freely. -->
+<!-- Related items (RelatedItems.vue), beside the column: the 4 px border is open on the column's side. -->
 <ng-template #related>
   @if (this.related(); as group) {
-    <div class="apt-related mt-4 self-start">
+    <div class="apt-related mt-[40px] self-start" [class.apt-related-left]="popupSide() === 'right'" [class.apt-related-right]="popupSide() !== 'right'">
       @if ('error' in group) {
         <div class="p-2">{{ group.error }}</div>
       } @else {

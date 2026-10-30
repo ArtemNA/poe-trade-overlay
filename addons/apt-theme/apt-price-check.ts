@@ -21,8 +21,12 @@ import { t, TranslatePipe, TrPipe } from '../../src/app/core/i18n';
 import { NumInput } from '../../src/app/price-check/num-input';
 import { PriceCheckPanel } from '../../src/app/price-check/price-check-panel';
 import { Currency } from '../../src/app/shared/currency';
+import { host } from '../../src/app/host';
 import { AptIcon } from './apt-icon';
 import { AptTitleBar } from './apt-title-bar';
+
+/** APT's related items panel beside the column: max-width 24 rem. */
+const APT_RELATED_WIDTH = 384;
 
 /** One part of a mod text: the rolled number is drawn in Exo 2 white (APT `ItemModifierText`). */
 export interface TextPart {
@@ -66,9 +70,24 @@ export function modTextParts(text: string, roll: number | undefined): TextPart[]
   selector: 'app-apt-price-check',
   imports: [NgTemplateOutlet, TranslatePipe, TrPipe, NumInput, Currency, AptIcon, AptTitleBar],
   templateUrl: './apt-price-check.html',
-  host: { class: 'apt-price-check relative flex min-h-0 flex-1 flex-col' },
+  host: { class: 'apt-price-check relative flex min-h-0 flex-1 flex-row', '(mousedown)': 'backdropDown($event)' },
 })
 export class AptPriceCheck extends PriceCheckPanel {
+  /** Related items stand beside the column (the window grows by their panel), as in APT. */
+  protected readonly relatedBeside = computed(() => {
+    const group = this.related();
+    return !!group && !('error' in group);
+  });
+
+  /** A click on the transparent part beside the column is a click into the game: it closes. */
+  protected backdropDown(event: MouseEvent): void {
+    if (event.target === event.currentTarget) void host.hidePopup();
+  }
+
+  protected override themeWindowWidth(width: number): number {
+    return this.relatedBeside() ? width + APT_RELATED_WIDTH : width;
+  }
+
   protected readonly tableRows = TABLE_ROWS;
   /** "Collapse": the filters fold into the "N of M, stats" chip. */
   protected readonly statsFolded = signal(false);

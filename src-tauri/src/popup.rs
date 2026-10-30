@@ -142,6 +142,27 @@ mod tests {
     };
 
     #[test]
+    fn side_of_the_popup() {
+        assert_eq!(
+            side(
+                GAME,
+                Point { x: 1700, y: 0 },
+                CheckTarget::PriceCheck,
+                false
+            ),
+            "right"
+        );
+        assert_eq!(
+            side(GAME, Point { x: 200, y: 0 }, CheckTarget::PriceCheck, false),
+            "left"
+        );
+        assert_eq!(
+            side(GAME, Point { x: 200, y: 0 }, CheckTarget::PriceCheck, true),
+            "centre"
+        );
+    }
+
+    #[test]
     fn opposite_side_of_cursor() {
         let left = geometry(
             GAME,
@@ -323,9 +344,23 @@ pub fn show(app: &AppHandle, game: Rect, cursor: Point, target: CheckTarget) {
 
 /// The page measured its content (the map check grows with the mods): resize the shown popup to it,
 /// keeping its side and anchor. Ignored once the popup is hidden.
-pub fn fit(app: &AppHandle, width: f64, height: f64) {
+/// Which side of the game the popup went to: "right" when the item is in the inventory (the popup
+/// sits just left of that panel, in the right half), "left" for the stash, or "centre".
+/// A theme whose window is wider than its price check (APT's related items beside it) needs it.
+pub fn side(game: Rect, cursor: Point, target: CheckTarget, centred: bool) -> &'static str {
+    if centred || target == CheckTarget::StashSearch {
+        "centre"
+    } else if cursor.x > game.x + game.width / 2 {
+        "right"
+    } else {
+        "left"
+    }
+}
+
+/// Fits the shown popup to `width` × `height`; returns the side it is on (see `side`).
+pub fn fit(app: &AppHandle, width: f64, height: f64) -> &'static str {
     let Some(window) = app.get_webview_window(LABEL) else {
-        return;
+        return "centre";
     };
     let state = app.state::<AppState>();
     let Some(Placement {
@@ -334,12 +369,13 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
         target,
     }) = state.placement()
     else {
-        return;
+        return "centre";
     };
     if !state.popup_visible() {
-        return;
+        return "centre";
     }
     let scale = game_scale(&state);
+    let side = side(game, cursor, target, state.popup_centred());
     place(
         &window,
         state.popup_hwnd(),
@@ -353,6 +389,7 @@ pub fn fit(app: &AppHandle, width: f64, height: f64) {
         ),
         scale,
     );
+    side
 }
 
 /// Where the popup was last shown, for `fit`.

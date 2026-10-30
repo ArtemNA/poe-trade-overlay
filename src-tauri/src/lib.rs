@@ -141,8 +141,8 @@ fn popup_release_focus(app: AppHandle) {
 
 /// The popup page asks for a size that fits its content, in logical pixels.
 #[tauri::command]
-fn fit_popup(app: AppHandle, width: f64, height: f64) {
-    popup::fit(&app, width, height);
+fn fit_popup(app: AppHandle, width: f64, height: f64) -> &'static str {
+    popup::fit(&app, width, height)
 }
 
 /// A trade request through the built-in browser's page (its cookies, Cloudflare clearance).

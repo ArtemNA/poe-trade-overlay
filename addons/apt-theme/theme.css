@@ -95,6 +95,8 @@ html[data-theme='apt'] select {
 html[data-theme='apt'] section:has(> app-apt-price-check, > app-apt-unidentified-picker) {
   border: 0;
   box-shadow: none;
+  /* Transparent beside the column: related items stand there over the game, as in APT. */
+  background: transparent;
 }
 html[data-theme='apt'] section:has(> app-apt-price-check, > app-apt-unidentified-picker) > header {
   display: none;

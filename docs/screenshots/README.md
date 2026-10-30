@@ -98,3 +98,35 @@ Names: `<stage>-<what>.png`; `*-ninja-tab.png` is the same item with the poe.nin
 | `16-price-check-header-switches-clicked.png` | Boots after clicks on Corrupted, This base, the iLvl chip, "Not unique" and Armour: everything shows at once ("3 of 6 stats") |
 
 Not captured yet: the tray menu and the update banner (no release to update to yet), the Cloudflare check message with "Open browser" (covered by tests), the outdated wording banner (covered by tests), map check with more mods than fit the game height, poe.ninja still loading, poe.ninja error, items with no poe.ninja entry at all.
+
+## APT theme (`apt-theme-*.png`, 30.10.2026)
+
+The price check of the "Awakened PoE Trade" theme (`addons/apt-theme`), built with `npm run dev:apt`
+against the fake game (3440×1440, cursor on the right, league Allflame). Each next to the APT 3.29
+screenshot it copies (`poe-trade-overlay/docs/screenshots/apt/`). Our app searches some items right
+away (uniques, gems, bulk items: setting "smart initial search"), so those show results where the APT
+shot shows the Search button. Live prices and listings differ from the APT shots (another day).
+
+| Ours | APT | What |
+|---|---|---|
+| `apt-theme-0-skeleton.png` | — | Before this layout: our price check in APT colours (the addon skeleton) |
+| `apt-theme-price-check-rare-boots.png` | `apt-price-check-rare-boots.png` | Rare boots before Search: name bar, poe.ninja line with trend, chips, stat rows with tags and tiers, unknown mods, Collapse / Hidden / Mods, Search / Trade |
+| `apt-theme-price-check-rare-boots-results.png` | `apt-price-check-rare-boots-results.png` | After Search: Matched, Merchant Only, striped Price / iLvl / Listed table |
+| `apt-theme-price-check-collapsed-results.png` | `apt-price-check-collapsed-results.png` | After Collapse: "2 of 6, stats ⌄", listings under the chips |
+| `apt-theme-price-check-mods-sources.png` | `apt-price-check-mods-sources.png` | Mods on, hovering "108 total maximum Life": the mods behind it |
+| `apt-theme-price-check-hidden-filters.png` | `apt-price-check-hidden-filters.png` | Hidden on: only the hidden filter (eye-slash) and the unknown mods |
+| `apt-theme-price-check-hidden-reason.png` | — | The same, hovering the eye: the reason (white tippy box; Mods on, so the sources show too) |
+| `apt-theme-price-check-header-switches-clicked.png` | `apt-price-check-header-switches-clicked.png` | After clicks on the category, Not Corrupted and Armour |
+| `apt-theme-price-check-shield.png` | `apt-price-check-shield.png` | Shield: Shaper chip and tag, implicit, tiers, Block |
+| `apt-theme-price-check-rare-ring-presets.png` | `apt-price-check-rare-ring-presets.png` | Pseudo / Base item tabs (our Mods preset is not offered) |
+| `apt-theme-price-check-rare-ring-base-item.png` | `apt-price-check-rare-ring-base-item.png` | The Base item tab |
+| `apt-theme-price-check-unique-results.png` | `apt-price-check-unique-results.png`, `apt-price-check-unique-related.png` | Tabula Rasa after the automatic search; disenchanting; related items at the end of the column (APT: outside the window) |
+| `apt-theme-price-check-unique-with-mods.png` | `apt-price-check-unique-with-mods.png` | Farrul's Fur: roll sliders under the stats |
+| `apt-theme-price-check-currency-bulk.png` | `apt-price-check-currency-bulk.png` | Divine Orb, bulk: exchange note, Matched with the currency button, Market Ratio row, 20 striped rows, You have / Stack |
+| `apt-theme-price-check-fragment-related.png` | `apt-price-check-fragment-related.png` | The Maven's Writ after the automatic bulk search; two-column related panel, divine prices in gold |
+| `apt-theme-price-check-divination.png` | `apt-price-check-divination.png` | The Doctor: listings with the exchange note and stash icons, related cards |
+| `apt-theme-price-check-gem.png` | `apt-price-check-gem.png` | Arc 20/20: Level / Quality chips, Level and Quality (blue) columns |
+| `apt-theme-unidentified-unique-picker.png` | `apt-unidentified-unique-picker.png` | Unidentified Simple Robe: "Which one?" and the four uniques |
+| `apt-theme-title-divine-fractions.png` | `apt-title-divine-fractions.png` | Title bar "⇄ 360" popover: 0.1–0.9 div in chaos |
+| `apt-theme-title-league-menu.png` | — | Our league menu from the league name in the title (APT has none there) |
+| `apt-theme-rate-limiting-tab.png` | `apt-rate-limiting-tab.png` | "Rate limiting" tab at the bottom, opened |

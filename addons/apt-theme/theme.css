@@ -5,6 +5,9 @@
  * (apt-price-check.html).
  */
 
+/* The price check's own styles (the APT components' look). */
+@import './apt-price-check.css';
+
 @font-face {
   font-family: 'FontinSmallCaps';
   src: url('./fonts/Fontin-SmallCaps-Hinted.ttf') format('truetype');
@@ -86,4 +89,13 @@ html[data-theme='apt'] button,
 html[data-theme='apt'] input,
 html[data-theme='apt'] select {
   border-radius: 0.25rem;
+}
+
+/* The price check brings APT's own title bar (apt-title-bar.ts) and has no window frame. */
+html[data-theme='apt'] section:has(> app-apt-price-check, > app-apt-unidentified-picker) {
+  border: 0;
+  box-shadow: none;
+}
+html[data-theme='apt'] section:has(> app-apt-price-check, > app-apt-unidentified-picker) > header {
+  display: none;
 }

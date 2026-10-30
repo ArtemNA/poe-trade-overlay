@@ -1,573 +1,646 @@
-<!-- Header: the item, its base and status, the poe.ninja answer (design A+B, F-54) -->
-<header class="flex items-start gap-3.5 border-b border-bronze bg-raised px-3.5 pt-2.5 pb-2">
-  @if (itemIcon(); as icon) {
-    <img [src]="icon" alt="" class="size-12 flex-none object-contain" />
-  }
-  <div class="min-w-0 flex-1">
-    <div class="flex flex-wrap items-baseline gap-x-2.5 leading-tight">
-      <span class="font-display text-[24px] font-bold" [style.color]="plate().text">{{ view().name }}</span>
-      @if (view().baseType) {
-        <span class="font-display text-base text-text">{{ view().baseType }}</span>
-      }
-    </div>
+<!-- Awakened PoE Trade's price check (PriceCheckWindow.vue → CheckedItem.vue), top to bottom. -->
+<apt-title-bar />
 
-    @if (active(); as preset) {
-      <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-        @if (base(); as b) {
-          <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Base' | tr">
-            <button class="px-2 not-last:border-r not-last:border-line-strong" [class]="!b.exact ? 'bg-selected text-gold-soft' : 'text-muted hover:text-text'"
-              (click)="setBase(false)">{{ b.category }}</button>
-            <button class="px-2" [class]="b.exact ? 'bg-selected text-gold-soft' : 'text-muted hover:text-text'" [title]="'Only {0}' | tr: b.base"
-              (click)="setBase(true)">{{ 'This base' | tr }}</button>
-          </div>
-        }
-        @for (chip of headerChips(); track chip.key) {
-          <span class="flex h-6 items-center gap-1 border pl-2" [class]="chip.enabled ? 'border-bronze bg-selected text-gold-soft' : 'border-line text-muted'"
-            [class.pr-2]="!chip.numeric">
-            <button class="whitespace-nowrap" [title]="chip.label" [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">
-              {{ chipLabel(chip) }}{{ chip.numeric ? ' ≥' : chip.enabled ? ' ✓' : '' }}
-            </button>
-            @if (chip.numeric; as numeric) {
-              <app-num-input [value]="numeric.value" [label]="'{0} minimum' | tr: chip.label"
-                (valueChange)="setNumeric(numeric, 'value', $event)" (submit)="runSearch()" />
-              @if (numeric.max != null) {
-                <app-num-input [value]="numeric.max" [label]="'{0} maximum' | tr: chip.label" [placeholder]="'max' | tr"
-                  (valueChange)="setNumeric(numeric, 'max', $event)" (submit)="runSearch()" />
-              }
+<div class="apt-body relative flex min-h-0 grow flex-col bg-[#2d3748]">
+  @if (error(); as message) {
+    <div class="m-4 rounded bg-[#742a2a] p-2 text-[#fed7d7]">{{ message | tr }}</div>
+  }
+
+  @if (active(); as preset) {
+    <div class="flex min-h-0 grow flex-col p-4">
+      <!-- Name bar (FilterName.vue) -->
+      <div class="apt-filter-name">
+        <button class="truncate rounded border px-2" [class]="nameExact() ? 'border-[#a0aec0]' : 'border-[#1a202c]'"
+          (click)="toggleNameAccuracy()">{{ nameLabel() }}</button>
+        @if (preset.filters.corrupted) {
+          <button class="px-2" (click)="toggleCorrupted()">
+            @if (isCorrupted()) {
+              <span class="text-[#f56565]">{{ 'item.corrupted' | t }}</span>
+            } @else {
+              <span class="text-[#718096]">{{ 'item.not_corrupted' | t }}</span>
             }
-          </span>
-        }
-        @if (corrupted(); as state) {
-          <div class="flex h-6 border border-line-strong" role="group" [attr.aria-label]="'Corrupted' | tr">
-            @for (option of corruptedOptions; track option.value) {
-              <button class="px-2 not-last:border-r not-last:border-line-strong"
-                [class]="option.value !== state ? 'text-muted hover:text-text' : option.value === 'not' ? 'bg-positive-bg text-positive' : option.value === 'only' ? 'bg-corrupted-bg text-bad' : 'bg-selected text-gold-soft'"
-                [attr.aria-pressed]="option.value === state" (click)="setCorruptedState(option.value)">{{ option.label | tr }}</button>
-            }
-          </div>
+          </button>
         }
       </div>
-    }
-  </div>
 
-  @if (ninjaAmount(); as value) {
-    <button class="flex flex-none items-center gap-3 self-center text-left" [title]="'poe.ninja price · click for the 7 day trend' | tr" (click)="selectTab('ninja')">
-      <div class="text-right">
-        <div class="flex items-center justify-end gap-1.5 font-display text-[26px] leading-none tabular-nums"
-          [class]="value.currency === 'divine' ? 'text-gold-soft' : 'text-bright'">
-          {{ value.text }} <app-currency [tag]="value.currency" [size]="24" />
-        </div>
-        <div class="mt-1 text-[11px] text-muted">
-          poe.ninja{{ ninjaBaseOnly() ? ' ' + ('base' | tr) : '' }}
-          @if (ninja()?.trend; as trend) {
-            · <span class="tabular-nums" [class]="trend.change > 0 ? 'text-good' : trend.change < 0 ? 'text-bad' : ''">{{ percent(trend.change) }} {{ '7d' | tr }}</span>
+      <!-- poe.ninja line (PriceTrend.vue) -->
+      @if (ninjaQuick(); as price) {
+        <div class="flex items-center pb-4" style="min-height: 3rem">
+          <ng-container *ngTemplateOutlet="quickPrice; context: { price, img: item().info.icon, base: ninjaBaseOnly(), size: itemImgSize(), icon: true }" />
+          @if (trendView(); as trend) {
+            <div class="apt-trend-btn" (click)="openNinja()">
+              <div class="text-center">
+                <div class="leading-tight">
+                  @if (trend.forecast === 'down') {
+                    <apt-icon name="angle-double-down" class="pr-1 text-[#e53e3e]" />
+                  } @else if (trend.forecast === 'up') {
+                    <apt-icon name="angle-double-up" class="pr-1 text-[#48bb78]" />
+                  } @else {
+                    <span class="apt-sans pr-1 leading-none text-[#718096]">±</span>
+                  }
+                  <span>{{ trend.text }}</span>
+                </div>
+                <div class="text-xs leading-none text-[#a0aec0]">{{ 'trade_result.graph_7d' | t }}</div>
+              </div>
+              <svg viewBox="0 0 48 32" class="h-8 w-12 overflow-visible" preserveAspectRatio="none">
+                <path [attr.d]="trend.path.area" fill="#4a5568" />
+                <path [attr.d]="trend.path.line" fill="none" stroke="#a0aec0" stroke-width="1" />
+              </svg>
+            </div>
           }
         </div>
-      </div>
-      @if (headerSpark(); as spark) {
-        <svg viewBox="0 0 64 34" class="h-[34px] w-16 overflow-visible">
-          <path [attr.d]="spark.area" class="fill-gold/10" />
-          <path [attr.d]="spark.line" class="fill-none stroke-gold-soft" stroke-width="1.5" />
-        </svg>
+      } @else if (ninjaUnknown()) {
+        <div class="flex items-center pb-4" style="min-height: 3rem">
+          <ng-container *ngTemplateOutlet="quickPrice; context: { price: null, img: item().info.icon, base: false, size: itemImgSize(), icon: false }" />
+        </div>
       }
-    </button>
-  }
-</header>
 
-<div class="flex min-h-0 flex-1">
-  <!-- Filters -->
-  <div class="flex w-[440px] flex-col border-r border-line">
-    @if (active(); as preset) {
-      <div class="flex items-center gap-2 px-2.5 pt-2 pb-1">
-        @if (presets(); as all) {
-          @if (all.presets.length > 1) {
-            <div class="flex h-6 border border-line">
-              @for (p of all.presets; track p.id) {
-                <button class="px-2.5 text-xs not-last:border-r not-last:border-line"
-                  [class]="p.id === all.active ? 'bg-selected font-medium text-gold-soft' : 'text-muted hover:text-text'"
-                  (click)="selectPreset(p.id)">{{ presetLabel(p.id) }}</button>
+      <!-- Chips (FiltersBlock.vue) -->
+      <div class="flex flex-wrap items-center gap-2 pb-3">
+        @for (chip of aptChips(); track chip.key) {
+          @if (chip.kind === 'numeric') {
+            <div class="apt-chip pr-1" [class.apt-chip-active]="!chip.filter.disabled">
+              <button class="pl-2" (click)="toggleNumeric(chip.filter)">{{ chip.name }}</button>
+              <app-num-input class="apt-chip-input" [style.width]="chipInputWidth(chip.filter.value)" [value]="chip.filter.value" [label]="chip.name"
+                (valueChange)="setNumeric(chip.filter, 'value', $event)" (submit)="runSearch()" />
+              @if ('max' in chip.filter) {
+                <span>–</span>
+                <app-num-input class="apt-chip-input" [style.width]="chipInputWidth(chip.filter.max)" [value]="chip.filter.max" [label]="chip.name" placeholder="…"
+                  (valueChange)="setNumeric(chip.filter, 'max', $event)" (submit)="runSearch()" />
+              }
+            </div>
+          } @else {
+            <button class="apt-chip flex items-center pr-2 pl-1" [class.apt-chip-active]="chip.active" (click)="clickChip(chip)">
+              @if (chip.img) {
+                <span class="size-5" [class]="chip.img"></span>
+              }
+              <span class="pl-1">{{ chip.text }}</span>
+              @if (chip.collapse !== undefined && chip.key === 'stats' && statsFolded()) {
+                <apt-icon name="chevron-down" class="pl-2 text-xs text-[#cbd5e0]" />
+              }
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Stat filters -->
+      @if (!statsFolded() && hasStats()) {
+        <div class="mb-4" [class]="aptPresets().length > 1 ? 'mt-1' : 'mt-4'">
+          @if (aptPresets().length > 1) {
+            <div class="flex">
+              <div class="w-5 border-b border-[#4a5568]"></div>
+              <div class="flex divide-x divide-[#4a5568] overflow-hidden rounded-t border-x border-t border-[#4a5568]">
+                @for (p of aptPresets(); track p.id) {
+                  <button class="apt-preset-btn" [class.apt-preset-active]="p.id === presets()!.active" (click)="selectPreset(p.id)">{{ p.id | t }}</button>
+                }
+              </div>
+              <div class="flex-1 border-b border-[#4a5568]"></div>
+            </div>
+          }
+          @for (entry of aptStats(); track $index) {
+            @if (isGroup(entry)) {
+              <ng-container *ngTemplateOutlet="statRow; context: { $implicit: entry.meta }" />
+              @for (stat of entry.stats; track $index) {
+                <div class="pl-5"><ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat }" /></div>
+              }
+            } @else {
+              <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry) }" />
+            }
+          }
+          @if (!aptStats().length && !unknownMods().length) {
+            <div class="border-b border-[#4a5568] py-2">{{ 'filters.empty' | t }}</div>
+          }
+          @for (mod of unknownMods(); track $index) {
+            <div class="flex flex-col border-b border-[#4a5568] py-2">
+              <div class="flex h-[20px] items-baseline pb-1">
+                <apt-icon name="warning" class="w-5 shrink-0 text-[#f6ad55]" />
+                <div class="apt-search-text relative mr-1 flex min-w-0" style="line-height: 1rem">
+                  <span class="truncate"><ng-container *ngTemplateOutlet="modText; context: { $implicit: parts(mod.text) }" /></span>
+                  <span class="apt-search-text-full cursor-default whitespace-pre-wrap"><ng-container *ngTemplateOutlet="modText; context: { $implicit: parts(mod.text) }" /></span>
+                </div>
+              </div>
+              <div class="ml-5 text-xs leading-none">
+                <span class="text-[#718096]">{{ mod.type | t }} &mdash; </span>
+                <span class="text-[#f6ad55]">{{ 'Not recognized modifier' | tr }}</span>
+              </div>
+            </div>
+          }
+          <div class="flex gap-x-4">
+            <button class="w-40 rounded-b bg-[#4a5568] px-2 py-1 leading-none text-[#cbd5e0]" (click)="statsFolded.set(true)">
+              {{ 'filters.collapse' | t }} <apt-icon name="chevron-up" class="pl-1 text-xs text-[#718096]" />
+            </button>
+            @if (anyHidden()) {
+              <ng-container *ngTemplateOutlet="toggle; context: { on: showHidden(), label: 'filters.hidden_toggle', flip: showHidden, cls: 'pt-2' }" />
+            }
+            <ng-container *ngTemplateOutlet="toggle; context: { on: showSources(), label: 'filters.mods_toggle', flip: showSources, cls: 'ml-auto pt-2' }" />
+          </div>
+        </div>
+      }
+
+      <!-- Results (TradeListing.vue / TradeBulk.vue), or Search / Trade before searching -->
+      @if (showResults()) {
+        @if (activeTab() === 'bulk') {
+          <ng-container *ngTemplateOutlet="bulkResults" />
+        } @else {
+          <ng-container *ngTemplateOutlet="tradeResults" />
+        }
+      } @else {
+        <div class="flex items-center justify-between">
+          <div class="flex w-40">
+            <button class="apt-btn" style="min-width: 5rem" (click)="runSearch()">{{ 'Search' | tr }}</button>
+          </div>
+          @if (activeTab() !== 'bulk') {
+            <ng-container *ngTemplateOutlet="tradeLinks" />
+          }
+        </div>
+      }
+
+      <!-- Stack value (StackValue.vue); uniques: the disenchanting value -->
+      @if (stackValue(); as value) {
+        <div class="mt-2 rounded border border-dashed border-[#718096] p-2">
+          <div class="flex leading-none text-[#cbd5e0]">
+            <div class="w-1/2">
+              {{ 'trade_result.you_have' | t }} <span class="apt-sans">×</span> {{ value.have.amount }}
+              <apt-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ value.have.price }}
+            </div>
+            @if (value.stack; as stack) {
+              <div class="w-1/2 pl-2">
+                {{ 'trade_result.stack' | t }} <span class="apt-sans">×</span> {{ stack.amount }}
+                <apt-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ stack.price }}
+              </div>
+            }
+          </div>
+        </div>
+      } @else if (item().dustEquivalent; as dust) {
+        <div class="mt-2 rounded border border-dashed border-[#718096] p-2">
+          <div class="flex items-center leading-none text-[#cbd5e0]">
+            {{ 'item.disenchanting' | t }} <apt-icon name="arrow-right" class="px-1 text-xs text-[#718096]" /> {{ dust.toLocaleString('en') }}
+            <span class="apt-sans">&nbsp;×&nbsp;</span><span class="apt-dust" [title]="'Thaumaturgic Dust'"></span>
+          </div>
+        </div>
+      }
+
+      <ng-container *ngTemplateOutlet="related" />
+    </div>
+  }
+
+  <!-- Rate limiting tab (RateLimiterState.vue): in APT outside the window, at its bottom edge -->
+  <button class="apt-rate-tab" [class.apt-rate-limited]="isLimited()" (click)="showRateLimits.set(!showRateLimits())">Rate limiting</button>
+  @if (showRateLimits()) {
+    <div class="apt-sans absolute bottom-0 left-0 z-20 mb-8 border-4 border-[#1a202c] bg-[#2d3748] p-4 text-[#cbd5e0]">
+      @for (limit of rateLimits(); track limit.policy) {
+        <div [class.text-[#fc8181]]="limit.hasQueue">Policy: {{ limit.policy }}</div>
+        <div>
+          @for (rule of limit.rules; track $index) {
+            <div>
+              <span>{{ rule.active }} / {{ rule.max }} over {{ rule.window }}s</span>
+              @if (rule.queue) {
+                <span class="pl-1">(queue: {{ rule.queue }})</span>
               }
             </div>
           }
-        }
-        <span class="flex-1"></span>
-        @if (counts().all) {
-          <span class="text-[11px] text-muted">{{ '{0} of {1} stats · min · max' | tr: counts().on : counts().all }}</span>
-        }
-      </div>
-    }
-
-    @if (error(); as message) {
-      <p class="mx-2.5 my-1 bg-error-bg px-2 py-1.5 text-bad">{{ message | tr }}</p>
-    }
-
-    @if (active(); as preset) {
-      <div #filtersScroll class="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5">
-        @for (group of statView().groups; track group.name) {
-          <div class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-[11px] tracking-[.06em] text-muted uppercase">
-            {{ group.name | tr }}
-            <span class="flex-1"></span>
-            @if (group.name === 'Totals') {
-              <button class="normal-case tracking-normal hover:text-text" [class.text-gold-soft]="showSources()" [attr.aria-pressed]="showSources()"
-                (click)="showSources.set(!showSources())">{{ 'Σ Mods behind totals' | tr }} {{ showSources() ? '▾' : '▸' }}</button>
-            }
-          </div>
-          @for (entry of group.entries; track $index) {
-            <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
-          }
-        } @empty {
-          @if (uniqueWithoutStats()) {
-            <p class="px-1 py-2 text-muted">{{ 'No stat filters for this unique: links and corruption, above, decide the price.' | tr }}</p>
-          } @else if (!statView().hidden.length && !relatedGroup()) {
-            <p class="px-1 py-1.5 text-muted">{{ 'filters.empty' | t }}</p>
-          }
-        }
-
-        @if (statView().hidden.length) {
-          <button class="mt-1.5 flex items-center gap-1.5 border-b border-line pt-1 pb-0.5 text-left text-[11px] tracking-[.06em] text-muted uppercase hover:text-text"
-            [attr.aria-pressed]="showHidden()" (click)="showHidden.set(!showHidden())">
-            <svg viewBox="0 0 16 16" class="size-3.5 fill-none stroke-current" stroke-width="1.3">
-              <path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8Z" /><circle cx="8" cy="8" r="2" /><path d="M2.5 13.5 13.5 2.5" />
-            </svg>
-            {{ 'Hidden · {0}' | tr: statView().hidden.length }}
-            <span class="flex-1"></span>
-            <span class="normal-case tracking-normal">{{ showHidden() ? '▾' : '▸' }}</span>
-          </button>
-          @if (showHidden()) {
-            @for (entry of statView().hidden; track $index) {
-              <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
-              <div class="pb-1 pl-[54px] text-[11px] text-muted italic">{{ hiddenReason(entry) }}</div>
-            }
-          }
-        }
-
-        @if (relatedGroup() && relatedFolded()) {
-          <button class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-left text-[11px] tracking-[.06em] text-muted uppercase hover:text-text"
-            (click)="relatedOpen.set(true)">
-            {{ 'Related · {0}' | tr: relatedCount() }}
-            @for (entry of relatedGroup()!.related.slice(0, 6); track entry.name) {
-              <img [src]="entry.icon" alt="" class="size-4 object-contain" loading="lazy" />
-            }
-            <span class="flex-1"></span>
-            <span class="normal-case tracking-normal">poe.ninja ▸</span>
-          </button>
-        } @else if (relatedGroup(); as group) {
-          <ng-container *ngTemplateOutlet="relatedList; context: { title: 'Related', entries: group.related, fold: relatedFoldable() }" />
-          @if (group.items.length) {
-            <ng-container *ngTemplateOutlet="relatedList; context: { title: 'Drops · turns into', entries: group.items }" />
-          }
-        } @else if (related(); as group) {
-          @if ('error' in group) {
-            <p class="px-1 py-1.5 text-[11px] text-bad">{{ group.error }}</p>
-          }
-        }
-
-        <!-- Trade options -->
-        <div class="mt-2 flex items-center gap-2 border-t border-line pt-2 pb-1">
-          @if (rarityChip(); as chip) {
-            <button class="h-6 border px-2" [class]="chip.enabled ? 'border-bronze bg-selected text-gold-soft' : 'border-line text-muted'"
-              [attr.aria-pressed]="chip.enabled" (click)="toggleChip(chip)">{{ chip.label }}{{ chip.enabled ? ' ✓' : '' }}</button>
-          }
-          <span class="flex-1"></span>
-          <button class="text-[11px] text-muted hover:text-text" (click)="toggleSection('trade')">{{ tradeSummary() }} {{ open().trade ? '▴' : '▾' }}</button>
-        </div>
-        @if (open().trade) {
-          <label class="flex items-center gap-2 px-1 py-1">
-            <input type="checkbox" class="size-3.5 accent-gold" [checked]="!preset.filters.trade.offline" (change)="toggleOffline()" />
-            <span>{{ 'Online sellers only' | tr }}</span>
-          </label>
-          @if (activeTab() === 'bulk') {
-            <label class="flex items-center gap-2 px-1 py-1" [title]="'Offers far below the poe.ninja price are almost always bait' | tr">
-              <input type="checkbox" class="size-3.5 accent-gold" [checked]="hideBait()" (change)="toggleHideBait()" />
-              <span>{{ 'Hide offers far below poe.ninja' | tr }}</span>
-            </label>
-          } @else {
-            <label class="flex items-center gap-2 px-1 py-1">
-              <input type="checkbox" class="size-3.5 accent-gold" [checked]="preset.filters.trade.merchantOnly" (change)="toggleMerchantOnly()" />
-              <span>{{ 'Instant buyout only' | tr }}</span>
-            </label>
-          }
-        }
-      </div>
-
-      <div class="p-2.5">
-        <button
-          class="h-8 w-full border text-[13px] font-semibold disabled:cursor-default"
-          [class]="stale() ? 'border-gold bg-linear-to-b from-primary-from to-primary-to text-primary-text' : 'border-line-strong bg-raised text-text hover:border-gold'"
-          [disabled]="isSearching()"
-          (click)="runSearch()"
-        >
-          {{ (isSearching() ? 'Searching…' : searchedOnce() ? 'Search again' : 'Search') | tr }}
-        </button>
-      </div>
-    }
-  </div>
-
-  <!-- Results -->
-  <div class="flex min-w-0 flex-1 flex-col">
-    <nav class="flex items-end gap-0.5 border-b border-line px-2.5 pt-1.5">
-      @for (tab of tabs; track tab.id) {
-        <button
-          class="-mb-px border px-3 py-1.5"
-          [class]="tab.id === activeTab() ? 'border-line border-b-raised bg-raised font-medium text-bright'
-            : tabReady(tab.id) ? 'border-transparent text-muted hover:text-text' : 'border-transparent text-muted/50'"
-          [disabled]="!tabReady(tab.id)"
-          [title]="tabReady(tab.id) ? '' : ((tab.id === 'bulk' ? 'Not exchangeable in bulk' : 'Coming in a later stage') | tr)"
-          (click)="selectTab(tab.id)"
-        >
-          {{ tab.label | tr }}
-        </button>
-      }
-      <span class="flex-1"></span>
-      @if (activeTab() === 'trade' || activeTab() === 'bulk') {
-        <button class="px-1 py-1.5 text-gold hover:text-gold-hover" (click)="openTradeSite()">{{ 'Open on trade site ↗' | tr }}</button>
-      } @else if (activeTab() === 'ninja' && ninja()?.url) {
-        <button class="px-1 py-1.5 text-gold hover:text-gold-hover" (click)="openTradeSite()">{{ 'Open on poe.ninja ↗' | tr }}</button>
-      }
-    </nav>
-
-    @if (activeTab() === 'bulk') {
-      <ng-container *ngTemplateOutlet="bulkPane" />
-    } @else if (activeTab() === 'ninja') {
-      <ng-container *ngTemplateOutlet="ninjaPane" />
-    } @else if (activeTab() === 'wiki') {
-      <app-item-check class="pt-1" [item]="item()" [view]="view()" [compact]="true" />
-    } @else {
-    <div class="flex min-h-[34px] items-center gap-3.5 border-b border-line bg-raised px-3 py-1.5">
-      @if (search.searchResult(); as result) {
-        <span class="text-muted">{{ '{0} matched' | tr: result.total.toLocaleString('en') }}</span>
-        @if (summary().cheapest; as cheapest) {
-          @let p = splitPrice(cheapest.price);
-          <span class="flex items-center gap-1">{{ 'Cheapest' | tr }} <b class="font-semibold text-gold-soft tabular-nums">{{ p.amount }}</b> <app-currency [tag]="p.currency" /></span>
-        }
-        @if (summary().mostListed; as most) {
-          @let p = splitPrice(most);
-          <span class="flex items-center gap-1">{{ 'Most listed' | tr }} <b class="font-semibold text-bright tabular-nums">{{ p.amount }}</b> <app-currency [tag]="p.currency" /></span>
-        }
-      } @else if (search.isSearching()) {
-        <span class="text-muted">{{ 'Searching…' | tr }}</span>
-      } @else if (stale()) {
-        <span class="text-muted">{{ 'Adjust filters, then Search' | tr }}</span>
-      }
-    </div>
-
-    @if (search.error(); as message) {
-      @if (message === cloudflareError) {
-      <div class="mx-3 my-2 flex items-center gap-3 border border-warn-line bg-warn-bg px-2.5 py-2 text-warn">
-        <span class="flex-1">{{ '{0}. Pass the check in the built-in browser; the overlay then searches through it.' | tr: (message | tr) }}</span>
-        <button class="h-7 flex-none border border-gold bg-selected px-2.5 text-gold-soft hover:bg-selected-hover" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
-      </div>
-    } @else {
-      <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
-    }
-    }
-
-    @let rows = search.rows();
-    @let columns = mixedCurrencies() ? 'minmax(0,1fr) 70px 52px 84px' : 'minmax(0,1fr) 52px 84px';
-    <div class="grid gap-2 border-b border-line px-3 py-1 text-[11px] text-muted" [style.grid-template-columns]="columns">
-      <span>{{ 'Price' | tr }}</span>
-      @if (mixedCurrencies()) {
-        <span class="text-right">≈ chaos</span>
-      }
-      <span class="text-right">{{ detailHeader(rows) }}</span><span class="text-right">{{ 'Listed' | tr }}</span>
-    </div>
-    <div class="min-h-0 flex-1 overflow-y-auto">
-      @for (row of rows; track row.id; let odd = $odd) {
-        <div
-          class="grid items-center gap-2 border-b border-row-line px-3 py-1 tabular-nums"
-          [style.grid-template-columns]="columns"
-          [class.bg-white/[0.015]]="odd"
-          [class.opacity-60]="row.accountStatus === 'offline'"
-          [class.text-gold-soft]="row.isMine"
-        >
-          <span class="flex min-w-0 items-center gap-1.5 text-bright">
-            <span class="size-[9px] flex-none rounded-full" [style.background]="dot(row)"></span>
-            {{ row.priceAmount }} <app-currency [tag]="row.priceCurrency" />
-            @if (row.listedTimes > 1) {
-              <span class="text-muted">×{{ row.listedTimes }}</span>
-            }
-          </span>
-          @if (mixedCurrencies()) {
-            <span class="text-right" [class]="isCheapest(row) ? 'text-good' : 'text-muted'">{{ equivalent(row) }}</span>
-          }
-          <span class="text-right">{{ detail(row) }}</span>
-          <span class="text-right text-muted">{{ row.relativeDate }}</span>
         </div>
       }
     </div>
-    <div class="border-t border-line px-3 py-1.5 text-[11px] text-muted">
-      @if (search.searchResult(); as result) {
-        {{ 'Showing {0} of {1} · cheapest first' | tr: rows.length : result.total.toLocaleString('en') }}
-      } @else {
-        &nbsp;
-      }
-    </div>
-    }
-  </div>
+  }
 </div>
 
-<ng-template #bulkPane>
-  <div class="flex min-h-[34px] items-center gap-3.5 overflow-hidden whitespace-nowrap border-b border-line bg-raised px-3 py-1.5">
-    @if (bulk.haves().length) {
-      <span class="text-muted">{{ 'Pay with' | tr }}</span>
-      <div class="flex border border-line">
-        @for (have of bulk.haves(); track have) {
-          <button class="flex h-6 items-center px-2 not-last:border-r not-last:border-line"
-            [class]="have === bulk.selected() ? 'bg-selected' : 'opacity-50 hover:opacity-100'"
-            [attr.aria-pressed]="have === bulk.selected()" (click)="selectHave(have)"><app-currency [tag]="have" /></button>
-        }
-      </div>
-    }
-    @if (bulk.current(); as found) {
-      <span class="text-muted">{{ '{0} offers' | tr: found.total.toLocaleString('en') }}</span>
-      @if (bulkBest(); as best) {
-        <span class="flex items-center gap-1">{{ 'Best real offer' | tr }} <b class="font-semibold text-gold-soft tabular-nums">{{ amount(best.exchangeAmount / best.itemAmount) }}</b> <app-currency [tag]="bulk.selected()" /></span>
-      }
-    } @else if (bulk.isSearching()) {
-      <span class="text-muted">{{ 'Searching…' | tr }}</span>
-    } @else if (stale()) {
-      <span class="text-muted">{{ 'Adjust filters, then Search' | tr }}</span>
-    }
-    <span class="flex-1"></span>
-    @if (ninjaChaos(); as ninja) {
-      <span class="flex items-center gap-1 text-muted">poe.ninja <b class="font-semibold text-bright tabular-nums">{{ amount(ninja) }}</b> <app-currency tag="chaos" /></span>
-    }
-  </div>
-
-  @if (youHave(); as have) {
-    <div class="flex items-center gap-1 border-b border-line px-3 py-1.5 text-muted">
-      {{ 'trade_result.you_have' | t }} {{ have.amount }}
-      @if (itemIcon(); as icon) {
-        <img [src]="icon" alt="" class="size-4 object-contain" />
-      }
-      → <span class="text-bright">{{ have.worth }}</span>
-    </div>
-  }
-
-  @if (searchError(); as message) {
-    @if (message === cloudflareError) {
-      <div class="mx-3 my-2 flex items-center gap-3 border border-warn-line bg-warn-bg px-2.5 py-2 text-warn">
-        <span class="flex-1">{{ '{0}. Pass the check in the built-in browser; the overlay then searches through it.' | tr: (message | tr) }}</span>
-        <button class="h-7 flex-none border border-gold bg-selected px-2.5 text-gold-soft hover:bg-selected-hover" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
-      </div>
-    } @else {
-      <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">{{ 'trade_result.error' | t }}: {{ message }}</p>
-    }
-  }
-
-  <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] gap-2 border-b border-line px-3 py-1 text-[11px] text-muted">
-    <span>{{ 'Pay → get' | tr }}</span><span class="text-right">{{ 'Stock' | tr }}</span><span class="text-right">{{ 'Seller' | tr }}</span><span class="text-right">{{ 'Listed' | tr }}</span>
-  </div>
-  <div class="min-h-0 flex-1 overflow-y-auto">
-    @for (line of bulkLines(); track $index; let odd = $odd) {
-      @if (line.kind === 'ratio') {
-        <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-y border-dashed border-bronze/60 bg-gold/[0.06] px-3 py-1 tabular-nums">
-          <span class="flex items-center gap-1 text-gold-soft">
-            {{ amount(line.ratio.exchangeAmount) }} <app-currency [tag]="bulk.selected()" /> → {{ amount(line.ratio.itemAmount) }}
-            <ng-container *ngTemplateOutlet="bulkItem" />
-          </span>
-          <span class="col-span-3 text-right text-[11px] text-muted">{{ 'trade_result.market_ratio' | t }} · poe.ninja</span>
-        </div>
+<!-- Related items (RelatedItems.vue). In APT they sit outside the window, beside it; here at the
+     end of the column until the window can be wider than the price check. Used once: move freely. -->
+<ng-template #related>
+  @if (this.related(); as group) {
+    <div class="apt-related mt-4 self-start">
+      @if ('error' in group) {
+        <div class="p-2">{{ group.error }}</div>
       } @else {
-        <div class="grid grid-cols-[minmax(0,1fr)_70px_64px_70px] items-center gap-2 border-b border-row-line px-3 py-1 tabular-nums"
-          [class.bg-white/[0.015]]="odd" [class.opacity-55]="line.row.isBait || line.row.accountStatus === 'offline'" [class.text-gold-soft]="line.row.isMine">
-          <span class="flex min-w-0 items-center gap-1 text-bright">
-            {{ amount(line.row.exchangeAmount) }} <app-currency [tag]="bulk.selected()" /> → {{ amount(line.row.itemAmount) }}
-            <ng-container *ngTemplateOutlet="bulkItem" />
-            @if (line.row.isBait) {
-              <span class="ml-1 border border-bait-line px-1 text-[10px] text-bait-text">{{ 'bait?' | tr }}</span>
-            }
-          </span>
-          <span class="text-right">{{ line.row.stock.toLocaleString('en') }}</span>
-          <span class="text-right" [class]="line.row.accountStatus === 'online' ? 'text-good' : 'text-warn'">{{ line.row.accountStatus | tr }}</span>
-          <span class="text-right text-muted">{{ line.row.relativeDate }}</span>
-        </div>
-      }
-    }
-  </div>
-  <div class="border-t border-line px-3 py-1.5 text-[11px] text-muted">
-    @if (bulkBaitCount() && hideBait()) {
-      {{ '{0} offer(s) far below poe.ninja hidden as likely bait.' | tr: bulkBaitCount() }}
-    } @else if (bulkBaitCount()) {
-      {{ '{0} offer(s) marked “bait?”: far below poe.ninja, ignored for “best real offer”.' | tr: bulkBaitCount() }}
-    } @else {
-      &nbsp;
-    }
-  </div>
-</ng-template>
-
-<ng-template #bulkItem>
-  @if (itemIcon(); as icon) {
-    <img [src]="icon" alt="" class="size-4 flex-none object-contain" />
-  }
-</ng-template>
-
-<ng-template #ninjaPane>
-  <div class="min-h-0 flex-1 overflow-y-auto">
-    @if (ninja(); as entry) {
-      @if (entry.price) {
-        <div class="flex min-h-[34px] items-center gap-3.5 whitespace-nowrap border-b border-line bg-raised px-3 py-1.5">
-          <span class="min-w-0 truncate text-muted" [title]="entry.label">{{ entry.label }}</span>
-          <span class="flex-1"></span>
-          @if (updatedAgo(); as ago) {
-            <span class="flex-none text-[11px] text-muted">{{ ago }}</span>
+        <div class="w-1/2 flex-1 p-2">
+          @for (entry of group.related; track entry.name) {
+            <div class="rounded px-1" [class.bg-[#4a5568]]="entry.highlight">
+              <ng-container *ngTemplateOutlet="quickPrice; context: { price: relatedQuick(entry.chaos), img: entry.icon, base: false, size: 'w-8 h-8', icon: false }" />
+              <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-[#718096]">{{ entry.name }}</div>
+            </div>
           }
         </div>
-
-        <div class="flex items-center gap-5 border-b border-line px-4 py-4">
-          <div class="flex-none">
-            <div class="text-[11px] text-muted">{{ (ninjaBaseOnly() ? 'Base item price' : 'Price') | tr }}</div>
-            @if (ninjaAmount(); as value) {
-              <div class="flex items-center gap-1.5 font-display text-[28px] leading-tight" [class]="value.currency === 'divine' ? 'text-gold-soft' : 'text-bright'">
-                {{ value.text }} <app-currency [tag]="value.currency" [size]="26" />
+        @if (group.items.length) {
+          <div class="w-1/2 flex-1 p-2">
+            @for (entry of group.items; track entry.name) {
+              <div>
+                <ng-container *ngTemplateOutlet="quickPrice; context: { price: relatedQuick(entry.chaos), img: entry.icon, base: false, size: 'w-8 h-8', icon: false }" />
+                <div class="mb-1 overflow-hidden text-left whitespace-nowrap text-[#718096]">{{ entry.name }}</div>
               </div>
-            }
-            @if (ninjaValue()?.currency === 'div') {
-              <div class="flex items-center gap-1 text-muted tabular-nums">= {{ amount(entry.price.chaos) }} <app-currency tag="chaos" /></div>
             }
           </div>
+        }
+      }
+    </div>
+  }
+</ng-template>
 
-          @if (entry.trend; as trend) {
-            <div class="flex min-w-0 flex-1 flex-col gap-1">
-              <div class="flex items-baseline gap-2">
-                <span class="font-semibold tabular-nums" [class]="trend.change > 0 ? 'text-good' : trend.change < 0 ? 'text-bad' : 'text-muted'">
-                  {{ trend.change > 0 ? '▲' : trend.change < 0 ? '▼' : '' }} {{ percent(trend.change) }}
-                </span>
-                <span class="text-muted">{{ 'over 7 days' | tr }}</span>
+<!-- ItemQuickPrice.vue: "icon → 5 × [chaos]" (icon: true) or "icon → 4.5 chaos" (currency as text) -->
+<ng-template #quickPrice let-price="price" let-img="img" let-base="base" let-size="size" let-icon="icon">
+  <div class="flex items-center gap-x-1 text-base" [class.flex-1]="icon" [class.justify-center]="icon">
+    @if (base) {
+      <span class="text-[#cbd5e0]">{{ 'trade_result.base_item' | t }}</span>
+    } @else {
+      <div class="flex shrink-0 items-center justify-center" [class]="size">
+        <img [src]="img" alt="" class="max-h-full max-w-full overflow-hidden" />
+      </div>
+    }
+    <apt-icon name="arrow-right" class="px-1 text-sm text-[#718096]" />
+    <div class="overflow-hidden whitespace-nowrap">
+      @if (price) {
+        <span [class.apt-golden]="price.div">{{ price.min }}</span>
+        @if (price.max) {
+          <span class="apt-sans text-[#718096]"> ~ </span><span [class.apt-golden]="price.div">{{ price.max }}</span>
+        }
+        @if (icon) {
+          <span class="apt-sans" [class.apt-golden]="price.div"> ×</span>
+        } @else {
+          <span [class.apt-golden]="price.div">&nbsp;{{ price.div ? 'div' : 'chaos' }}</span>
+        }
+      } @else {
+        <span class="px-1">?</span>
+      }
+    </div>
+    @if (icon && price) {
+      <div class="flex size-8 shrink-0 items-center justify-center">
+        <app-currency [tag]="price.div ? 'divine' : 'chaos'" [size]="32" />
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- UiToggle.vue -->
+<ng-template #toggle let-on="on" let-label="label" let-flip="flip" let-cls="cls">
+  <button class="flex items-center text-[#cbd5e0]" [class]="cls" style="height: 1.375rem" (click)="flip.set(!on)">
+    <apt-icon [name]="on ? 'toggle-on' : 'toggle-off'" class="pr-1" [class]="on ? 'text-[#e2e8f0]' : 'text-[#718096]'" />
+    {{ label | t }}
+  </button>
+</ng-template>
+
+<!-- ItemModifierText.vue: the rolled numbers in Exo 2 white -->
+<ng-template #modText let-parts>
+  @for (part of parts; track $index) {
+    <span [class]="part.roll ? 'apt-roll text-white' : 'text-[#edf2f7]'">{{ part.text }}</span>
+  }
+</ng-template>
+
+<!-- FilterModifier.vue -->
+<ng-template #statRow let-stat>
+  @let text = parts(filterText(stat), stat.roll?.value);
+  <div class="apt-filter">
+    @if (showSourceInfo(stat)) {
+      <div class="apt-mods">
+        @for (source of stat.sources; track $index) {
+          @let info = sourceInfo(stat, source);
+          <div class="py-1 pl-5">
+            <div class="text-[#a0aec0] italic">{{ info.title }}</div>
+            @for (line of info.lines; track $index) {
+              <div class="flex items-baseline">
+                <span [class.line-through]="!line.contributes"><ng-container *ngTemplateOutlet="modText; context: { $implicit: line.parts }" /></span>
+                @if (line.contributes && line.contribution) {
+                  <div class="ml-auto w-12 shrink-0 rounded border border-[#4a5568] text-center">{{ line.contribution }}</div>
+                }
               </div>
-              @if (ninjaSpark(); as spark) {
-                <svg viewBox="0 0 300 64" preserveAspectRatio="none" class="h-16 w-full overflow-visible">
-                  <line x1="0" x2="300" [attr.y1]="spark.zeroY" [attr.y2]="spark.zeroY" class="stroke-line-strong" stroke-dasharray="3 3" vector-effect="non-scaling-stroke" />
-                  <path [attr.d]="spark.area" class="fill-gold/10" />
-                  <path [attr.d]="spark.line" class="fill-none stroke-gold-soft" stroke-width="1.5" vector-effect="non-scaling-stroke" />
-                </svg>
-              }
-              <div class="flex justify-between text-[10px] text-muted"><span>{{ '7 days ago' | tr }}</span><span>{{ 'today' | tr }}</span></div>
+            }
+          </div>
+        }
+      </div>
+    }
+    <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex items-baseline justify-between pb-px">
+        <button class="flex min-w-0 items-baseline text-left" type="button" (click)="toggleStat(stat)">
+          <apt-icon [name]="stat.disabled ? 'square' : 'check-square'" class="w-5 shrink-0" [class.text-[#a0aec0]]="stat.disabled" />
+          <div class="apt-search-text relative mr-1 flex min-w-0 flex-1" style="line-height: 1rem">
+            <span class="truncate"><ng-container *ngTemplateOutlet="modText; context: { $implicit: text }" /></span>
+            <span class="apt-search-text-full whitespace-pre-wrap"><ng-container *ngTemplateOutlet="modText; context: { $implicit: text }" /></span>
+          </div>
+        </button>
+        <div class="flex items-baseline gap-x-1">
+          @if (q20(stat); as quality) {
+            <div class="rounded px-2 text-center text-[#a0aec0]">{{ quality }}</div>
+          }
+          @if (stat.roll && !stat.oils) {
+            <div class="apt-roll-inputs flex gap-x-px">
+              <app-num-input [value]="rollValue(stat, 'min')" [decimals]="stat.roll.dp" [label]="'Minimum' | tr" [placeholder]="'min' | tr"
+                (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
+              <app-num-input [value]="rollValue(stat, 'max')" [decimals]="stat.roll.dp" [label]="'Maximum' | tr" [placeholder]="'max' | tr"
+                (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />
             </div>
-          } @else {
-            <p class="flex-1 text-muted">{{ 'Not enough trades for a 7 day trend.' | tr }}</p>
           }
         </div>
-      } @else {
-        @let noPrice = around('poe.ninja has no price for {0}.' | tr);
-        <p class="px-3 py-3 text-muted">{{ noPrice[0] }}<span class="text-text">{{ entry.label }}</span>{{ noPrice[1] }}</p>
-      }
-    } @else if (ninjaLoading()) {
-      <p class="px-3 py-3 text-muted">{{ 'Loading poe.ninja prices…' | tr }}</p>
-    } @else if (ninjaError(); as message) {
-      <p class="mx-3 my-2 bg-error-bg px-2 py-1.5 text-bad">poe.ninja: {{ message }}</p>
-    } @else {
-      <p class="px-3 py-3 text-muted">{{ 'poe.ninja has no prices for this kind of item.' | tr }}</p>
-    }
-
-    @if (item().dustEquivalent; as dust) {
-      <div class="mx-3 my-2 flex items-center gap-2 border border-dashed border-line-strong px-2.5 py-1.5 text-muted">
-        {{ 'item.disenchanting' | t }} → <b class="font-semibold text-bright tabular-nums">{{ dust.toLocaleString('en') }}</b> Thaumaturgic Dust
       </div>
-    }
-  </div>
-</ng-template>
-
-<ng-template #relatedList let-title="title" let-entries="entries" let-fold="fold">
-  <div class="mt-1.5 flex items-center gap-2 border-b border-line pt-1 pb-0.5 text-[11px] tracking-[.06em] text-muted uppercase">
-    {{ title | tr }}
-    <span class="flex-1"></span>
-    @if (fold) {
-      <button class="normal-case tracking-normal hover:text-text" (click)="relatedOpen.set(false)">poe.ninja ▾</button>
-    } @else {
-      <span class="normal-case tracking-normal">poe.ninja</span>
-    }
-  </div>
-  <div class="grid grid-cols-2 gap-x-2 py-1">
-    @for (entry of entries; track entry.name) {
-      <div class="flex min-w-0 items-center gap-1.5 px-1 py-[3px]" [class]="entry.highlight ? 'bg-selected text-bright' : 'text-text'">
-        <img [src]="entry.icon" alt="" class="size-6 flex-none object-contain" loading="lazy" />
-        <span class="min-w-0 flex-1 truncate text-[12px]" [title]="entry.name">{{ entry.name }}</span>
-        @if (relatedPrice(entry.chaos); as p) {
-          <span class="flex flex-none items-center gap-1 tabular-nums" [class.text-gold-soft]="p.currency === 'divine'">{{ p.text }} <app-currency [tag]="p.currency" [size]="14" /></span>
-        } @else {
-          <span class="flex-none text-muted">—</span>
+      <div class="flex">
+        <div class="flex w-5 items-start">
+          @if (stat.hidden) {
+            <span class="apt-hidden-eye relative cursor-pointer text-xs leading-none text-[#718096]">
+              <apt-icon name="eye-slash" />
+              <span class="apt-tippy apt-hidden-reason">{{ hiddenReason(stat) }}</span>
+            </span>
+          }
+        </div>
+        <div class="flex min-w-0 flex-1 items-start gap-x-2">
+          @if (stat.not) {
+            <span class="apt-tag apt-tag-not">{{ 'filters.tag_not' | t }}</span>
+          }
+          @if (tagOf(stat); as tag) {
+            <span class="apt-tag" [class]="tag.cls">{{ tag.text }}</span>
+          }
+          @let tierList = tiers(stat);
+          @if (tierList.length) {
+            <div class="flex items-center gap-x-1 text-xs leading-none">
+              @for (tier of tierList; track $index) {
+                <span [class]="tier.cls">{{ 'filters.tier' | t: tier.tier }}</span>
+              }
+            </div>
+          }
+          @if (emptyAffix(stat) != null) {
+            <div class="flex gap-x-1">
+              @for (key of emptyAffixKeys; track key; let i = $index) {
+                <button class="apt-empty-btn" [class.apt-empty-selected]="emptyAffix(stat) === i" type="button" (click)="setEmptyAffix(stat, i)">{{ key | t }}</button>
+              }
+            </div>
+          }
+        </div>
+        @if (stat.roll?.bounds && item().rarity === 'Unique') {
+          @let s = slider(stat);
+          <div #track class="apt-slider mr-4 ml-2" style="width: 12.5rem" [class]="'apt-slider-' + s.mode" (mousedown)="slide($event, stat, track)">
+            <span class="apt-bound" [class.apt-inclusive]="s.minIn">{{ stat.roll.bounds.min }}</span>
+            @if (s.mode !== 'none') {
+              <div class="apt-fill" [style.--left]="s.left + '%'" [style.--right]="s.right + '%'"></div>
+            }
+            <div class="apt-tick" [style.left]="'max(0.125rem, min(' + s.tick + '% - 0.0625rem, 100% - 0.25rem))'"></div>
+            <span class="apt-bound" [class.apt-inclusive]="s.maxIn">{{ stat.roll.bounds.max }}</span>
+          </div>
         }
+        <div style="width: calc(2 * 3rem + 1px)"></div>
       </div>
-    }
+    </div>
   </div>
 </ng-template>
 
-<footer class="flex h-6 items-center gap-3.5 border-t border-line bg-chrome px-3 text-[11px] text-muted">
-  <span class="flex items-center gap-1.5">
-    <span class="size-[7px] rounded-full" [class]="searchError() ? 'bg-bad' : isSearching() ? 'bg-warn' : 'bg-good'"></span>
-    Trade API
-  </span>
-  <span>{{ limits() }}</span>
-  <span class="flex-1"></span>
-  <span>{{ 'Click a field to type · ↑ ↓ or wheel to step · Enter searches · Esc or a click outside closes' | tr }}</span>
-</footer>
+<!-- TradeLinks.vue -->
+<ng-template #tradeLinks>
+  <div class="flex gap-px">
+    <button class="rounded bg-[#4a5568] px-2 text-[#cbd5e0]" (click)="openTradeSite()">{{ 'trade_result.trade' | t }} <apt-icon name="external-link" class="text-xs" /></button>
+  </div>
+</ng-template>
 
-<ng-template #entryRow let-entry>
-  @if (isGroup(entry)) {
-    <div class="flex items-center gap-2 px-1 py-1">
-      <input type="checkbox" class="size-3.5 accent-gold" [checked]="!entry.meta.disabled" (change)="toggleStat(entry.meta)" />
-      <span class="w-6 flex-none"></span>
-      <button class="min-w-0 flex-1 truncate text-left font-display text-[13px] text-mod" (click)="toggleGroup(entry)">
-        {{ entry.expanded ? '▾' : '▸' }} {{ entry.meta.text }}
+<!-- OnlineFilter.vue: the button and its popover -->
+<ng-template #onlineFilter>
+  @if (active(); as preset) {
+    <span class="relative">
+      <button class="mr-1 truncate rounded px-2" [class]="onlineWarning() ? 'text-[#ed8936]' : 'text-[#a0aec0]'" (click)="onlineOpen.set(!onlineOpen())">
+        <apt-icon name="history" /> {{ onlineLabel() }}
       </button>
-    </div>
-    @if (entry.expanded) {
-      @for (stat of entry.stats; track $index) {
-        <ng-container *ngTemplateOutlet="statRow; context: { $implicit: stat, nested: true }" />
+      @if (onlineOpen()) {
+        <div class="apt-tippy absolute top-full left-0 z-30 mt-2 p-0!">
+          <div class="apt-tippy-arrow left-6"></div>
+          <div class="flex gap-x-8 rounded bg-[#2d3748] p-2 text-[#cbd5e0]">
+            <div class="flex flex-col gap-y-1">
+              <div class="mb-1">
+                <ng-container *ngTemplateOutlet="flag; context: { on: preset.filters.trade.offline, label: 'online_filter.offline_toggle', act: 'offline' }" />
+              </div>
+              @if (activeTab() !== 'bulk') {
+                @for (option of listedOptions; track option.key) {
+                  <ng-container *ngTemplateOutlet="radio; context: { on: preset.filters.trade.listed === option.value, label: option.key, act: 'listed', value: option.value }" />
+                }
+              }
+            </div>
+            <div class="flex flex-col gap-y-1">
+              <div class="mb-1" [class.invisible]="preset.filters.trade.offline">
+                @if (activeTab() === 'bulk') {
+                  <ng-container *ngTemplateOutlet="flag; context: { on: hideBait(), label: 'Hide offers far below poe.ninja', act: 'bait', tr: true }" />
+                } @else {
+                  <ng-container *ngTemplateOutlet="flag; context: { on: preset.filters.trade.merchantOnly, label: 'online_filter.merchant_toggle', act: 'merchant' }" />
+                }
+              </div>
+              @if (activeTab() !== 'bulk') {
+                @for (option of currencyOptions; track option.key; let first = $first) {
+                  <div [class.mt-3]="first">
+                    <ng-container *ngTemplateOutlet="radio; context: { on: preset.filters.trade.currency === option.value, label: option.key, act: 'currency', value: option.value }" />
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
       }
-    }
+    </span>
+  }
+</ng-template>
+
+<ng-template #flag let-on="on" let-label="label" let-act="act" let-useTr="tr">
+  <button class="flex items-center whitespace-nowrap" style="height: 1.375rem"
+    (click)="act === 'offline' ? setOffline() : act === 'merchant' ? toggleMerchantOnly() : toggleHideBait()">
+    <apt-icon [name]="on ? 'toggle-on' : 'toggle-off'" class="pr-1" [class]="on ? 'text-[#e2e8f0]' : 'text-[#718096]'" />
+    {{ useTr ? (label | tr) : (label | t) }}
+  </button>
+</ng-template>
+
+<ng-template #radio let-on="on" let-label="label" let-act="act" let-value="value">
+  <button class="flex items-center gap-x-1 whitespace-nowrap" (click)="act === 'listed' ? setListed(value) : setCurrency(value)">
+    <span class="apt-radio" [class.apt-radio-on]="on"></span>{{ label | t }}
+  </button>
+</ng-template>
+
+<!-- TradeListing.vue -->
+<ng-template #tradeResults>
+  @if (search.error(); as message) {
+    <ng-container *ngTemplateOutlet="errorBox; context: { $implicit: message }" />
   } @else {
-    <ng-container *ngTemplateOutlet="statRow; context: { $implicit: asStat(entry), nested: false }" />
+    <div class="flex min-h-0 flex-col">
+      @if (item().info.exchangeable) {
+        <div class="apt-legacy-message">{{ 'trade_result.legacy_bulk_xchg_msg' | t }}</div>
+      }
+      <div class="mb-2 flex pl-2">
+        <div class="mr-2 flex items-baseline text-[#a0aec0]">
+          <span class="mr-1">{{ 'trade_result.matched' | t: '' }}</span>
+          @if (search.searchResult(); as list) {
+            <span>{{ list.total }}{{ list.inexact ? '+' : '' }}</span>
+          } @else {
+            <span class="text-[#718096]">...</span>
+          }
+        </div>
+        @if (search.searchResult()) {
+          <ng-container *ngTemplateOutlet="onlineFilter" />
+        }
+        <div class="flex-1"></div>
+        @if (search.searchResult()) {
+          <ng-container *ngTemplateOutlet="tradeLinks" />
+        }
+      </div>
+      <div class="apt-scroll flex min-h-0 flex-col overflow-x-hidden overflow-y-auto">
+        <table class="apt-table w-full">
+          <thead>
+            <tr class="text-left">
+              <th><div class="px-2">{{ 'trade_result.price' | t }}</div></th>
+              @if (item().stackSize) {
+                <th><div class="px-2">{{ 'trade_result.stock' | t }}</div></th>
+              }
+              @if (active()!.filters.itemLevel) {
+                <th><div class="px-2">{{ 'trade_result.item_level' | t }}</div></th>
+              }
+              @if (item().category === 'Gem') {
+                <th><div class="px-2">{{ 'trade_result.gem_level' | t }}</div></th>
+              }
+              @if (active()!.filters.quality || item().category === 'Gem') {
+                <th><div class="px-2">{{ 'trade_result.quality' | t }}</div></th>
+              }
+              <th class="w-full"><div class="pr-2 pl-4"><span class="ml-1" style="padding-left: 0.375rem">{{ 'trade_result.listed' | t }}</span></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of aptRows(); track $index) {
+              @if (!row) {
+                <tr><td colspan="100" class="text-transparent">***</td></tr>
+              } @else {
+                <tr>
+                  <td class="px-2 whitespace-nowrap">
+                    <span [class.line-through]="row.priceCurrency === 'exalted'">{{ row.priceAmount }} {{ row.priceCurrency }}</span>
+                    @if (row.listedTimes > 2) {
+                      <span class="-mr-2 ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]"><span class="apt-sans">×</span> {{ row.listedTimes }}</span>
+                    } @else if (!row.hasFee) {
+                      <span class="apt-stash-listing"><span class="apt-stash-icon"></span>
+                        @if (!row.hasNote) {
+                          <apt-icon name="question" class="apt-stash-question" />
+                        }
+                      </span>
+                    }
+                  </td>
+                  @if (item().stackSize) {
+                    <td class="px-2 text-right">{{ row.stackSize }}</td>
+                  }
+                  @if (active()!.filters.itemLevel) {
+                    <td class="px-2 text-right whitespace-nowrap">{{ row.itemLevel }}</td>
+                  }
+                  @if (item().category === 'Gem') {
+                    <td class="pl-2 whitespace-nowrap">{{ row.level }}</td>
+                  }
+                  @if (active()!.filters.quality || item().category === 'Gem') {
+                    <td class="px-2 text-right whitespace-nowrap text-[#63b3ed]">{{ row.quality }}</td>
+                  }
+                  <td class="pr-2 pl-4 whitespace-nowrap">
+                    <div class="inline-flex items-center">
+                      <div class="apt-status" [class]="'apt-status-' + row.accountStatus"></div>
+                      <div class="apt-sans ml-1 text-xs">{{ row.relativeDate }}</div>
+                    </div>
+                    @if (row.isMine) {
+                      <span class="ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]">{{ 'You' | tr }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 </ng-template>
 
-<ng-template #statRow let-stat let-nested="nested">
-  <label class="flex items-center gap-2 px-1 py-[3px]" [class.pl-5]="nested" [class.bg-mod/[0.06]]="!stat.disabled">
-    <input type="checkbox" class="size-3.5 flex-none accent-gold" [checked]="!stat.disabled" (change)="toggleStat(stat)" />
-    @let level = tier(stat);
-    <span class="flex h-4 w-6 flex-none items-center justify-center text-[10px] font-bold"
-      [class]="level === 1 ? 'bg-tier1 text-tier1-text' : level === 2 ? 'bg-tier2 text-tier2-text' : level ? 'border border-line text-muted' : ''">
-      {{ level ? 'T' + level : '' }}
-    </span>
-    <span class="flex min-w-0 flex-1 items-center gap-1.5">
-      <span class="min-w-0 truncate font-display text-[13px]" [class]="stat.disabled ? 'text-mod-off' : 'text-mod'" [title]="statText(stat)">{{ statText(stat) }}</span>
-      @if (statTag(stat); as tag) {
-        <span class="flex-none border border-line-strong px-1 text-[10px] leading-[14px] text-muted">{{ tag }}</span>
-      }
-    </span>
-    @if (fracturedState(stat); as fractured) {
-      <button class="flex h-[18px] flex-none items-center gap-1 rounded-[9px] border border-fractured-line pr-1.5 pl-0.5 text-[10px] leading-none"
-        [class]="fractured === 'on' ? 'bg-fractured text-fractured-text' : 'text-muted opacity-60 hover:opacity-100'"
-        [title]="(fractured === 'on' ? 'Searched as a fractured mod: click to search it as a regular one' : 'Click to search it as a fractured mod') | tr"
-        [attr.aria-pressed]="fractured === 'on'" (click)="$event.preventDefault(); toggleFractured(stat)">
-        <span class="size-3 rounded-full" [class]="fractured === 'on' ? 'bg-fractured-text' : 'bg-fractured-line'"></span>{{ 'Fractured' | tr }}
-      </button>
-    }
-    @if (emptyAffix(stat) != null) {
-      <span class="flex h-5 flex-none border border-line-strong text-[11px]" (click)="$event.preventDefault()">
-        @for (option of emptyAffixOptions; track option.value) {
-          <button class="px-1.5 not-last:border-r not-last:border-line-strong"
-            [class]="option.value === emptyAffix(stat) ? 'bg-selected text-gold-soft' : 'text-muted hover:text-text'"
-            (click)="setEmptyAffix(stat, option.value)">{{ option.label | tr }}</button>
+<!-- TradeBulk.vue -->
+<ng-template #bulkResults>
+  @if (bulk.error(); as message) {
+    <ng-container *ngTemplateOutlet="errorBox; context: { $implicit: message }" />
+  } @else {
+    <div class="flex min-h-0 flex-col">
+      <div class="apt-legacy-message">{{ 'trade_result.legacy_bulk_xchg_msg' | t }}</div>
+      <div class="mb-2 flex items-baseline justify-between pl-2" style="min-height: 1.375rem">
+        <div class="flex items-center text-[#a0aec0]">
+          <span class="mr-1">{{ 'trade_result.matched' | t: '' }}</span>
+          @if (!bulk.haves().length) {
+            <span class="text-[#718096]">...</span>
+          } @else {
+            <div class="flex items-center">
+              @for (have of bulk.haves(); track have) {
+                <button class="apt-btn mr-1 flex items-center" [style.background]="have !== bulk.selected() ? 'transparent' : null" (click)="selectHave(have)">
+                  <app-currency class="apt-bulk-currency" [tag]="have" [size]="28" />
+                  <span>{{ bulk.results()[have]?.total ?? '?' }}</span>
+                </button>
+              }
+              <span class="ml-1"><ng-container *ngTemplateOutlet="onlineFilter" /></span>
+            </div>
+          }
+        </div>
+        @if (bulk.current()) {
+          <ng-container *ngTemplateOutlet="tradeLinks" />
         }
-      </span>
-    } @else if (stat.roll; as roll) {
-      <app-num-input [value]="rollValue(stat, 'min')" [decimals]="roll.dp" [label]="'Minimum' | tr"
-        (valueChange)="setRoll(stat, 'min', $event)" (submit)="runSearch()" />
-      <app-num-input [value]="rollValue(stat, 'max')" [decimals]="roll.dp" [label]="'Maximum' | tr" [placeholder]="'max' | tr"
-        (valueChange)="setRoll(stat, 'max', $event)" (submit)="runSearch()" />
-    }
-  </label>
-  @for (line of sources(stat); track $index) {
-    <div class="flex items-center gap-1.5 py-px pl-[54px] text-[12px] text-muted">
-      <span class="min-w-0 truncate">{{ line.text }}</span>
-      @if (line.kind) {
-        <span class="flex-none text-[10px]">· {{ ('filters.tag_' + line.kind) | t }}</span>
-      }
-      @if (line.adds != null) {
-        <span class="flex-none text-text">→ +{{ line.adds }}</span>
-      }
+      </div>
+      <div class="apt-scroll flex min-h-0 flex-col overflow-x-hidden overflow-y-auto">
+        <table class="apt-table w-full">
+          <thead>
+            <tr class="text-left">
+              <th><div class="px-2">{{ 'trade_result.price' | t }}</div></th>
+              <th>
+                <div class="flex pr-2 pl-1 text-xs" style="line-height: 1.3125rem">
+                  <span class="-ml-px mr-px inline-block w-8 text-right">{{ bulk.selected() === 'chaos' ? 'chaos' : 'div' }}</span><span>&thinsp;/&thinsp;</span><span class="inline-block w-8">{{ 'trade_result.bulk' | t }}</span>
+                </div>
+              </th>
+              <th><div class="px-1">{{ 'trade_result.stock' | t }}</div></th>
+              <th><div class="px-1">{{ 'trade_result.fulfill' | t }}</div></th>
+              <th class="w-full"><div class="pr-2 pl-4"><span class="ml-1" style="padding-left: 0.375rem">{{ 'trade_result.listed' | t }}</span></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of aptBulkLines(); track $index) {
+              @if (!line) {
+                <tr><td colspan="100" class="text-transparent">***</td></tr>
+              } @else if (line.kind === 'ratio') {
+                <tr class="apt-market-ratio">
+                  <td class="px-2">{{ bulkNumber(line.ratio.exchangeAmount / line.ratio.itemAmount, 4) }}</td>
+                  <td class="pl-1 whitespace-nowrap">
+                    <span class="inline-block w-8 text-right">{{ bulkNumber(line.ratio.exchangeAmount, 1) }}</span><span>&thinsp;/&thinsp;</span><span class="inline-block w-8">{{ bulkNumber(line.ratio.itemAmount, 1) }}</span>
+                  </td>
+                  <td class="pr-2 pl-1 text-center whitespace-nowrap" colspan="3">{{ 'trade_result.market_ratio' | t }}</td>
+                </tr>
+              } @else {
+                <tr [class.opacity-50]="line.row.isBait">
+                  <td class="px-2">{{ bulkNumber(line.row.exchangeAmount / line.row.itemAmount, 4) }}</td>
+                  <td class="pl-1 whitespace-nowrap">
+                    <span class="inline-block w-8 text-right">{{ bulkNumber(line.row.exchangeAmount, 1) }}</span><span>&thinsp;/&thinsp;</span><span class="inline-block w-8">{{ bulkNumber(line.row.itemAmount, 1) }}</span>
+                  </td>
+                  <td class="px-1 text-right">{{ line.row.stock }}</td>
+                  <td class="px-1 text-right">
+                    @if (line.row.stock < line.row.itemAmount) {
+                      <apt-icon name="warning" class="mr-1 text-[#a0aec0]" />
+                    }
+                    {{ floor(line.row.stock / line.row.itemAmount) }}
+                  </td>
+                  <td class="pr-2 pl-4 whitespace-nowrap">
+                    <div class="inline-flex items-center">
+                      <div class="apt-status" [class]="'apt-status-' + line.row.accountStatus"></div>
+                      <div class="apt-sans ml-1 text-xs">{{ line.row.relativeDate }}</div>
+                    </div>
+                    @if (line.row.isMine) {
+                      <span class="ml-1 rounded bg-[#cbd5e0] px-1 text-[#2d3748]">{{ 'You' | tr }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   }
+</ng-template>
+
+<!-- UiErrorBox.vue -->
+<ng-template #errorBox let-message>
+  <div class="mb-4 rounded border border-[#c53030] bg-[#1a202c] p-2">
+    <div class="mb-1 text-[#fc8181]">{{ 'trade_result.error' | t }}</div>
+    @if (message === cloudflareError) {
+      <p class="apt-sans">{{ '{0}. Pass the check in the built-in browser; the overlay then searches through it.' | tr: (message | tr) }}</p>
+      <div class="mt-2 flex gap-x-2">
+        <button class="apt-btn" (click)="openBrowserForCheck()">{{ 'Open browser' | tr }}</button>
+      </div>
+    } @else {
+      <p class="apt-sans">Error: {{ message }}</p>
+      <div class="mt-2 flex gap-x-2">
+        <button class="apt-btn" (click)="runSearch()">{{ 'Retry' | tr }}</button>
+        <button class="apt-btn" (click)="openTradeSite()">{{ 'Browser' | tr }}</button>
+      </div>
+    }
+  </div>
 </ng-template>

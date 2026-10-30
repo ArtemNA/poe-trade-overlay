@@ -517,7 +517,7 @@ export class PriceCheckPanel {
   }
 
   /** Stat and item filter edits wait for the Search button, like in APT. */
-  private markChanged(): void {
+  protected markChanged(): void {
     this.revision.update((n) => n + 1);
     this.stale.set(true);
   }
@@ -556,7 +556,7 @@ export class PriceCheckPanel {
     this.runSearchSoon();
   }
 
-  private runSearchSoon(): void {
+  protected runSearchSoon(): void {
     this.stale.set(true);
     if (!this.isSearching()) this.runSearch();
   }

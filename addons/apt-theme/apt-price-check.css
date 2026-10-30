@@ -1,0 +1,513 @@
+/*
+ * Awakened PoE Trade's price check: the styles of its Vue components (Tailwind v1 palette,
+ * docs/screenshots/apt/STYLE_NOTES.md), for apt-price-check.html and the title bar. Global (imported
+ * by theme.css): the rules reach into app-num-input, so each is scoped to a class of the addon.
+ */
+
+.apt-price-check {
+  font-family: 'FontinSmallCaps', 'Alegreya SC', serif;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #edf2f7;
+}
+
+.apt-price-check .apt-sans,
+.apt-tippy .apt-sans {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Exo 2 SemiBold, white: the rolled numbers in mod texts (ItemModifierText.vue). */
+.apt-price-check .apt-roll {
+  font-family: 'Exo2', sans-serif;
+  font-weight: 600;
+}
+
+.apt-price-check .apt-golden {
+  color: #e4c29a;
+}
+
+/* Title bar (AppTitlebar.vue) */
+.apt-titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  background: #1a202c;
+  color: #718096;
+}
+.apt-titlebar button {
+  padding: 1px 0.5rem 0;
+}
+.apt-titlebar button:hover,
+.apt-titlebar button.apt-titlebar-open {
+  color: #cbd5e0;
+  background: linear-gradient(to top, #1a202c, #4a5568);
+}
+.apt-titlebar button.apt-titlebar-close:hover {
+  color: #fed7d7;
+  background: #f56565;
+}
+
+/* tippy.js, theme "light" (Popover.vue) */
+.apt-tippy {
+  background: #fff;
+  color: #26323d;
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow:
+    0 0 20px 4px rgba(154, 161, 177, 0.15),
+    0 4px 80px -8px rgba(36, 40, 47, 0.25),
+    0 4px 4px -2px rgba(91, 94, 105, 0.15);
+}
+.apt-tippy-arrow {
+  position: absolute;
+  top: -7px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #fff;
+}
+
+/* Name bar (FilterName.vue) */
+.apt-price-check .apt-filter-name {
+  display: flex;
+  justify-content: space-between;
+  white-space: nowrap;
+  margin-bottom: 0.5rem;
+  border-radius: 0.25rem;
+  background: #1a202c;
+  line-height: 1.25rem;
+}
+
+.apt-price-check .apt-trend-btn {
+  display: flex;
+  align-items: center;
+  column-gap: 0.5rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  margin: -0.125rem 0;
+  padding: 0.125rem 0.25rem;
+}
+.apt-price-check .apt-trend-btn:hover {
+  background: #4a5568;
+}
+
+/* Chips (FilterBtnNumeric.vue, FilterBtnLogical.vue) */
+.apt-price-check .apt-chip {
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  background: #1a202c;
+  line-height: 1.25rem;
+}
+.apt-price-check .apt-chip.apt-chip-active {
+  border-color: #a0aec0;
+}
+.apt-price-check app-num-input.apt-chip-input {
+  display: inline-block;
+}
+.apt-price-check app-num-input.apt-chip-input input {
+  width: 100%;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  text-align: center;
+  font: inherit;
+  color: #e2e8f0;
+  box-shadow: none;
+  vertical-align: baseline;
+}
+.apt-price-check app-num-input.apt-chip-input input:hover,
+.apt-price-check app-num-input.apt-chip-input input:focus {
+  background: #4a5568;
+  margin: -1px 0;
+  border-top: 1px solid #a0aec0;
+  border-bottom: 1px solid #a0aec0;
+}
+.apt-price-check app-num-input.apt-chip-input input::placeholder {
+  color: #cbd5e0;
+}
+
+.apt-price-check .apt-influence {
+  display: inline-block;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.apt-price-check .apt-influence-Shaper { background-image: url('./images/influence-Shaper.png'); }
+.apt-price-check .apt-influence-Elder { background-image: url('./images/influence-Elder.png'); }
+.apt-price-check .apt-influence-Crusader { background-image: url('./images/influence-Crusader.png'); }
+.apt-price-check .apt-influence-Hunter { background-image: url('./images/influence-Hunter.png'); }
+.apt-price-check .apt-influence-Redeemer { background-image: url('./images/influence-Redeemer.png'); }
+.apt-price-check .apt-influence-Warlord { background-image: url('./images/influence-Warlord.png'); }
+
+/* Preset tabs (FiltersBlock.vue) */
+.apt-price-check .apt-preset-btn {
+  min-width: 3rem;
+  padding: 0 0.5rem;
+  border-color: #4a5568;
+  background: #2d3748;
+}
+.apt-price-check .apt-preset-btn:hover {
+  background: #4a5568;
+}
+.apt-price-check .apt-preset-btn.apt-preset-active {
+  background: linear-gradient(to bottom, #1a202c, #2d3748);
+}
+
+/* Stat filter (FilterModifier.vue) */
+.apt-price-check .apt-filter {
+  position: relative;
+  display: flex;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #4a5568;
+}
+
+.apt-price-check .apt-roll-inputs app-num-input input {
+  width: 3rem;
+  height: auto;
+  padding: 0 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: #1a202c;
+  color: #e2e8f0;
+  text-align: center;
+  font: inherit;
+  box-shadow: none;
+}
+.apt-price-check .apt-roll-inputs app-num-input:first-child input {
+  border-radius: 0.25rem 0 0 0.25rem;
+}
+.apt-price-check .apt-roll-inputs app-num-input:last-child input {
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+.apt-price-check .apt-roll-inputs app-num-input input::placeholder {
+  color: #4a5568;
+  font-size: 0.8125rem;
+}
+.apt-price-check .apt-roll-inputs app-num-input input:focus {
+  border-color: #a0aec0;
+  box-shadow: none;
+}
+
+.apt-price-check .apt-search-text-full {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding-bottom: 1px;
+  z-index: 10;
+}
+.apt-price-check .apt-search-text:not(:hover) .apt-search-text-full {
+  display: none;
+}
+.apt-price-check .apt-search-text:hover .apt-search-text-full {
+  background: #4a5568;
+}
+
+/* The mods behind a filter, over the next rows while hovered. */
+.apt-price-check .apt-mods {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0 -1rem;
+  padding: 0 1rem;
+  border-bottom: 4px solid #a0aec0;
+  background: linear-gradient(to bottom, #2d3748, #1a202c);
+  pointer-events: none;
+  z-index: 10;
+}
+.apt-price-check .apt-filter:not(:hover) > .apt-mods {
+  display: none;
+}
+
+/* Tags */
+.apt-price-check .apt-tag {
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.apt-price-check .apt-tag-variant { background: #b7791f; color: #fffff0; }
+.apt-price-check .apt-tag-eldritch { background: linear-gradient(to right, #c53030, #2b6cb0); }
+.apt-price-check .apt-tag-corrupted { background: #c53030; color: #fff5f5; }
+.apt-price-check .apt-tag-fractured { background: #f6e05e; color: #000; }
+.apt-price-check .apt-tag-crafted,
+.apt-price-check .apt-tag-synthesised { background: #3182ce; color: #ebf8ff; }
+.apt-price-check .apt-tag-implicit,
+.apt-price-check .apt-tag-explicit {
+  margin: 0 -0.25rem;
+  color: #718096;
+  text-shadow: 0 0 4px #1a202c;
+}
+.apt-price-check .apt-tag-scourge { background: #dd6b20; color: #fff; }
+.apt-price-check .apt-tag-foulborn { background: #b83280; color: #fff; }
+.apt-price-check .apt-tag-enchant { background: #805ad5; color: #faf5ff; }
+.apt-price-check .apt-tag-pseudo,
+.apt-price-check .apt-tag-not { background: #4a5568; color: #000; }
+
+.apt-price-check [class*='apt-tag-explicit-'] {
+  display: flex;
+  align-items: center;
+  margin: 0 -0.25rem;
+  padding-left: 0.125rem;
+  column-gap: 0.125rem;
+  color: #718096;
+  text-shadow: 0 0 4px #1a202c;
+}
+.apt-price-check [class*='apt-tag-explicit-']::before {
+  content: '';
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: -1.25rem 0;
+  background-size: contain;
+}
+.apt-price-check .apt-tag-explicit-shaper::before { background-image: url('./images/influence-Shaper.png'); }
+.apt-price-check .apt-tag-explicit-elder::before { background-image: url('./images/influence-Elder.png'); }
+.apt-price-check .apt-tag-explicit-crusader::before { background-image: url('./images/influence-Crusader.png'); }
+.apt-price-check .apt-tag-explicit-hunter::before { background-image: url('./images/influence-Hunter.png'); }
+.apt-price-check .apt-tag-explicit-redeemer::before { background-image: url('./images/influence-Redeemer.png'); }
+.apt-price-check .apt-tag-explicit-warlord::before { background-image: url('./images/influence-Warlord.png'); }
+.apt-price-check .apt-tag-explicit-delve::before { background-image: url('./images/delve.png'); }
+.apt-price-check .apt-tag-explicit-veiled::before { background-image: url('./images/veiled.png'); }
+.apt-price-check .apt-tag-explicit-incursion::before { background-image: url('./images/incursion.png'); }
+
+/* Tier badges (FilterModifierTiers.vue) */
+.apt-price-check .apt-tier-1,
+.apt-price-check .apt-tier-2,
+.apt-price-check .apt-not-tier-1 {
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+}
+.apt-price-check .apt-tier-1 { background: #ecc94b; color: #000; }
+.apt-price-check .apt-tier-2 { border: 1px solid #ecc94b; margin: -1px 0; color: #ecc94b; }
+.apt-price-check .apt-not-tier-1 { background: #4a5568; color: #000; }
+
+/* "1 Empty or Crafted Modifier": Any / Prefix / Suffix (FilterModifierItemHasEmpty.vue) */
+.apt-price-check .apt-empty-btn {
+  padding: 0 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  background: #4a5568;
+  line-height: 1.15rem;
+}
+.apt-price-check .apt-empty-btn.apt-empty-selected {
+  border-color: #a0aec0;
+}
+
+/* The reason a filter is hidden, on hover over the eye. */
+.apt-price-check .apt-hidden-reason {
+  position: absolute;
+  left: 1.25rem;
+  top: -0.5rem;
+  z-index: 30;
+  width: max-content;
+  max-width: 18.5rem;
+  font-size: 0.875rem;
+  white-space: normal;
+}
+.apt-price-check .apt-hidden-eye:not(:hover) .apt-hidden-reason {
+  display: none;
+}
+
+/* Roll slider (StatRollSlider.vue) */
+.apt-price-check .apt-slider {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 1.25rem;
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+  background: #4a5568;
+}
+.apt-price-check .apt-tick {
+  position: absolute;
+  width: 0.125rem;
+  height: 100%;
+  background: linear-gradient(to bottom, #000 10%, transparent 30%, transparent 70%, #000 90%);
+  pointer-events: none;
+}
+.apt-price-check .apt-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 0.25rem;
+  padding: inherit;
+  background-clip: content-box;
+  min-width: 0.75rem;
+  pointer-events: none;
+}
+.apt-price-check .apt-slider-min .apt-fill {
+  width: calc(100% - var(--left));
+  right: 0;
+  background-image: linear-gradient(to right, transparent calc(-1 * var(--left) - 5%), #cbd5e0 80%);
+}
+.apt-price-check .apt-slider-max .apt-fill {
+  width: calc(100% - var(--right));
+  left: 0;
+  background-image: linear-gradient(to left, transparent calc(-1 * var(--right) - 5%), #cbd5e0 80%);
+}
+.apt-price-check .apt-slider-range .apt-fill {
+  left: var(--left);
+  right: var(--right);
+  background-color: #cbd5e0;
+}
+.apt-price-check .apt-bound {
+  z-index: 1;
+  color: #a0aec0;
+  pointer-events: none;
+  user-select: none;
+}
+.apt-price-check .apt-bound.apt-inclusive {
+  color: #000;
+}
+.apt-price-check .apt-bound:first-child { padding-left: 0.25rem; }
+.apt-price-check .apt-bound:last-child { padding-right: 0.25rem; }
+
+/* .btn of App.vue */
+.apt-price-check .apt-btn {
+  border-radius: 0.25rem;
+  background: #4a5568;
+  padding: 0.25rem 0.5rem;
+  color: #cbd5e0;
+  line-height: 1;
+}
+
+/* Listings (TradeListing.vue, TradeBulk.vue) */
+.apt-price-check .apt-legacy-message {
+  margin-bottom: 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid #718096;
+  background: #4a5568;
+  padding: 0.5rem;
+  text-align: center;
+  text-wrap-style: balance;
+}
+.apt-price-check .apt-table th {
+  position: sticky;
+  top: 0;
+  margin: 0;
+  padding: 0;
+  background: #2d3748;
+  white-space: nowrap;
+  font-weight: bold; /* the browser's th: Fontin has no bold, so it is synthesised, as in APT */
+}
+.apt-price-check .apt-table th > div {
+  border-bottom: 1px solid #4a5568;
+}
+.apt-price-check .apt-table tbody tr:nth-child(odd) {
+  background: #353f52;
+}
+.apt-price-check .apt-table tbody tr.apt-market-ratio {
+  background: #4a5568;
+  outline: 1px solid #718096;
+  outline-offset: -1px;
+}
+.apt-price-check .apt-status {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 100%;
+}
+.apt-price-check .apt-status-offline { background: #e53e3e; }
+.apt-price-check .apt-status-afk { background: #ed8936; }
+
+.apt-price-check .apt-stash-listing {
+  position: relative;
+  display: inline-block;
+  margin-left: 0.25rem;
+  margin-right: -0.25rem;
+}
+.apt-price-check .apt-stash-icon {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  vertical-align: bottom;
+  background: url('./images/stash.png') center / contain no-repeat;
+  filter: grayscale(1) opacity(0.5);
+}
+.apt-price-check .apt-stash-question {
+  position: absolute;
+  left: 0;
+  right: 0;
+  justify-content: center;
+  line-height: inherit;
+  top: 0.15rem;
+  filter: drop-shadow(1px 1px 0 #000);
+}
+
+.apt-price-check app-currency.apt-bulk-currency {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: -0.4375rem 0.125rem -0.4375rem -0.4375rem;
+  filter: grayscale(1);
+}
+
+.apt-price-check .apt-radio {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 100%;
+  border: 2px solid #718096;
+}
+.apt-price-check .apt-radio.apt-radio-on {
+  border: 4px solid #e2e8f0;
+}
+
+/* Scrollbars of App.vue */
+.apt-price-check .apt-scroll::-webkit-scrollbar {
+  width: 0.875rem;
+}
+.apt-price-check .apt-scroll::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 0.375rem rgba(0, 0, 0, 0.3);
+}
+.apt-price-check .apt-scroll::-webkit-scrollbar-thumb {
+  box-shadow: inset 0 0 0.375rem rgba(0, 0, 0, 0.5);
+}
+
+/* Disenchanting: a dust crystal in place of APT's picture. */
+.apt-price-check .apt-dust {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: url('./images/dust.svg') center / contain no-repeat;
+}
+
+/* Related items (RelatedItems.vue), for now inside the column. */
+.apt-price-check .apt-related {
+  display: flex;
+  max-width: min(100%, 24rem);
+  border: 0.25rem solid #1a202c;
+  border-radius: 0.5rem;
+  background: #2d3748;
+  color: #cbd5e0;
+}
+
+/* Rate limiting tab (RateLimiterState.vue) */
+.apt-price-check .apt-rate-tab {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin: 0 1.5rem;
+  padding: 0 1rem;
+  border-radius: 0.25rem 0.25rem 0 0;
+  background: #1a202c;
+  color: #718096;
+  line-height: 1.5rem;
+}
+.apt-price-check .apt-rate-tab.apt-rate-limited {
+  background: #c53030;
+  color: #fed7d7;
+}
+
+/* APT's rows are 22 px: the inline-flex date cell sits on the text baseline. */
+.apt-price-check .apt-table tbody td {
+  height: 22px;
+}

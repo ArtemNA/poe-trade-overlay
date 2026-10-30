@@ -17,6 +17,11 @@ export interface Theme {
   priceCheckSize?: { width: number; fullHeight: boolean };
   /** Where the popup goes, whatever the setting (APT always sits next to the game's panel). */
   popupPosition?: PopupPosition;
+  /**
+   * Own "which unique is it?" view; inputs `baseName`, `variants` and `pick` (a callback: views
+   * of a theme are created with NgComponentOutlet, which binds no outputs).
+   */
+  unidentifiedPicker?: Type<unknown>;
 }
 
 export const BASE_THEME: Theme = { id: 'price-of-exile', label: 'Price of Exile' };

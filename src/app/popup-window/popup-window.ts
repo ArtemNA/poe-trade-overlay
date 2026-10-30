@@ -41,6 +41,9 @@ export class PopupWindow {
   /** The item is in another game language than the settings: their labels. */
   /** The price check of the theme (an addon may bring its own view over the same logic). */
   protected readonly priceCheckView = computed(() => themeById(settings().theme).priceCheck ?? PriceCheckPanel);
+  /** The theme's own unidentified unique picker, if it has one; `pick` is its callback. */
+  protected readonly themePicker = computed(() => themeById(settings().theme).unidentifiedPicker ?? null);
+  protected readonly pick = (unique: BaseType) => this.identify(unique);
   protected readonly languageMismatch = signal<{ copied: string; chosen: string } | null>(null);
   /** Uniques an unidentified unique can be, while the user has not picked one (price check only). */
   protected readonly variants = signal<BaseType[]>([]);

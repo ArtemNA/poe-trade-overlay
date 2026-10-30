@@ -640,6 +640,11 @@
     "When the overlay starts, so the restart never comes in the middle of a game. Found later: only a message in the corner.": "При запуске оверлея, чтобы перезапуск никогда не случился посреди игры. Найденная позже — только сообщение в углу.",
     "White sockets": "Белые гнёзда",
     "Your own listings are marked in the price check.": "Ваши собственные предложения отмечаются в проверке цены.",
-    "Σ Mods behind totals": "Σ Моды в суммах"
+    "Σ Mods behind totals": "Σ Моды в суммах",
+    "You": "Вы",
+    "Not recognized modifier": "Нераспознанный модификатор",
+    "Browser": "Браузер",
+    "min": "мин",
+    "Retry": "Повторить"
   }
 }

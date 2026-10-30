@@ -4,6 +4,7 @@ import { appLogDir, join } from '@tauri-apps/api/path';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { openUrl, revealItemInDir } from '@tauri-apps/plugin-opener';
+import { THEMES, themeById } from '../themes';
 import { poeWebApi } from '@/web/Config';
 import {
   APP_CONTACT,
@@ -129,7 +130,7 @@ export class SettingsWindow {
         .filter((entry) => entry.hotkey && entry.text.trim())
         .map((entry) => ({ hotkey: entry.hotkey!, text: entry.text }));
       host
-        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()), stashPresets, popupPosition)
+        .setHostConfig(gameTitle, hotkeys, commands.filter((command) => command.text.trim()), stashPresets, themeById(settings().theme).popupPosition ?? popupPosition)
         .then((errors) => {
           this.hotkeyErrors.set(errors);
           return host.getStatus();
@@ -184,6 +185,13 @@ export class SettingsWindow {
 
   protected setStartMessage(startMessage: boolean): void {
     updateSettings({ startMessage });
+  }
+
+  protected readonly themes = THEMES;
+  protected readonly currentTheme = computed(() => themeById(settings().theme).id);
+
+  protected setTheme(theme: string): void {
+    updateSettings({ theme });
   }
 
   protected setPopupPosition(popupPosition: PopupPosition): void {

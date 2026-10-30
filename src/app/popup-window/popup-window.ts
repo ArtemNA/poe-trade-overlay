@@ -16,7 +16,9 @@ import { isMapLike } from '../map-check/map-check';
 import { MapCheckPanel } from '../map-check/map-check-panel';
 import { StashPanel } from '../stash-search/stash-panel';
 import { formatChaos } from '../price-check/listing-summary';
+import { NgComponentOutlet } from '@angular/common';
 import { PriceCheckPanel } from '../price-check/price-check-panel';
+import { themeById } from '../themes';
 import { identifiedVariants, identifyAs, needsIdentification } from '../price-check/unidentified';
 import { UnidentifiedPicker } from '../price-check/unidentified-picker';
 import type { BaseType } from '@/assets/data';
@@ -25,7 +27,7 @@ import { ItemView, toItemView } from './item-view';
 /** The popup: price check (title bar with league and divine rate, filters, listings), item check or map check. */
 @Component({
   selector: 'app-popup-window',
-  imports: [PriceCheckPanel, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TrPipe],
+  imports: [NgComponentOutlet, ItemCheckPanel, MapCheckPanel, StashPanel, UnidentifiedPicker, Currency, TrPipe],
   templateUrl: './popup-window.html',
   // Esc normally reaches the host's keyboard hook; while the popup has the keyboard
   // (typing into a field) it arrives here instead.
@@ -37,6 +39,8 @@ export class PopupWindow {
   protected readonly item = signal<ItemView | null>(null);
   protected readonly error = signal<string | null>(null);
   /** The item is in another game language than the settings: their labels. */
+  /** The price check of the theme (an addon may bring its own view over the same logic). */
+  protected readonly priceCheckView = computed(() => themeById(settings().theme).priceCheck ?? PriceCheckPanel);
   protected readonly languageMismatch = signal<{ copied: string; chosen: string } | null>(null);
   /** Uniques an unidentified unique can be, while the user has not picked one (price check only). */
   protected readonly variants = signal<BaseType[]>([]);

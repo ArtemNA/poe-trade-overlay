@@ -66,6 +66,8 @@ export interface Settings {
   /** Install a new version when the overlay starts (never in the middle of a session, F-62). */
   autoUpdate: boolean;
   popupPosition: PopupPosition;
+  /** The app's look: ours or an addon theme built in (src/app/themes.ts); '' = the build's default. */
+  theme: string;
   hotkeys: Record<HotkeyAction, string | null>;
   commands: ChatCommand[];
   stashSearch: StashSearchGroup[];
@@ -94,6 +96,7 @@ export function defaultSettings(): Settings {
     startMessage: true,
     autoUpdate: true,
     popupPosition: DEFAULT_POPUP_POSITION,
+    theme: '',
     hotkeys: { ...DEFAULT_HOTKEYS },
     commands: DEFAULT_CHAT_COMMANDS.map((command) => ({ ...command })),
     stashSearch: structuredClone(DEFAULT_STASH_SEARCH),

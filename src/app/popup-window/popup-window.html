@@ -79,7 +79,7 @@
       @if (variants().length) {
         <app-unidentified-picker [baseName]="parsedItem.info.name" [variants]="variants()" (picked)="identify($event)" />
       } @else {
-        <app-price-check [item]="parsedItem" [view]="item()!" />
+        <ng-container *ngComponentOutlet="priceCheckView(); inputs: { item: parsedItem, view: item()! }" />
       }
     }
   } @else {

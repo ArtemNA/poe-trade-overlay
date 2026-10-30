@@ -32,7 +32,7 @@
   <div class="flex gap-0.5">
     @for (profile of profiles; track profile; let i = $index) {
       <button class="h-5 w-7 border font-display text-[12px]"
-        [class]="config().profile === i + 1 ? 'border-gold bg-[#2a2218] text-gold-soft' : 'border-line bg-raised text-text hover:border-line-strong'"
+        [class]="config().profile === i + 1 ? 'border-gold bg-selected text-gold-soft' : 'border-line bg-raised text-text hover:border-line-strong'"
         [attr.aria-pressed]="config().profile === i + 1" (click)="selectProfile(i + 1)">{{ profile }}</button>
     }
   </div>
@@ -89,5 +89,5 @@
 </div>
 
 @if (map().hasOutdated) {
-  <p class="mx-2.5 mb-2.5 border border-[#5a3a12] bg-[#2a1f0e] px-2.5 py-1.5 text-[12px] leading-snug text-warn">{{ 'map_check.has_outdated' | t }}</p>
+  <p class="mx-2.5 mb-2.5 border border-warn-line bg-warn-bg px-2.5 py-1.5 text-[12px] leading-snug text-warn">{{ 'map_check.has_outdated' | t }}</p>
 }

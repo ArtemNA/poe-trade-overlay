@@ -14,7 +14,7 @@
 
     <button
       class="flex h-6 items-center gap-1.5 border px-2"
-      [class]="menu() === 'divine' ? 'border-gold bg-[#2a2218]' : 'border-line bg-raised hover:border-line-strong'"
+      [class]="menu() === 'divine' ? 'border-gold bg-selected' : 'border-line bg-raised hover:border-line-strong'"
       [disabled]="!divine()"
       (click)="toggleMenu('divine')"
     >
@@ -34,7 +34,7 @@
   </header>
 
   @if (menu() === 'league') {
-    <div class="absolute top-[33px] right-[150px] z-10 flex w-56 flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+    <div class="absolute top-[33px] right-[150px] z-10 flex w-56 flex-col border border-bronze bg-menu shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
       @for (league of leagues.list(); track league.id) {
         <button class="px-2.5 py-1.5 text-left hover:bg-raised" [class.text-gold-soft]="league.id === settings().leagueId" (click)="selectLeague(league.id)">
           {{ league.id }}
@@ -46,10 +46,10 @@
   }
 
   @if (menu() === 'divine' && divine(); as rate) {
-    <div class="absolute top-[33px] right-[36px] z-10 flex w-[200px] flex-col border border-bronze bg-[#12100d] shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
+    <div class="absolute top-[33px] right-[36px] z-10 flex w-[200px] flex-col border border-bronze bg-menu shadow-[0_12px_30px_rgba(0,0,0,0.8)]">
       <div class="flex justify-between border-b border-line px-2.5 py-1.5 text-[11px] text-muted"><span>Divine</span><span>Chaos</span></div>
       @for (row of fractions(rate); track row.divine) {
-        <div class="flex justify-between border-b border-[#1f1c18] px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
+        <div class="flex justify-between border-b border-row-line px-2.5 py-[3px] tabular-nums" [class.bg-gold/[0.08]]="row.divine === 1">
           <span class="flex items-center gap-1 text-bright">{{ row.divine === 1 ? '1' : row.divine.toFixed(1) }} <app-currency tag="divine" [size]="14" /></span>
           <span class="flex items-center gap-1" [class]="row.divine === 1 ? 'text-gold-soft' : 'text-bright'">{{ row.chaos }} <app-currency tag="chaos" [size]="14" /></span>
         </div>

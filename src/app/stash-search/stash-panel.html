@@ -17,7 +17,7 @@
     </div>
     @for (entry of group.entries; track entry.id) {
       @if (entry.text.trim()) {
-        <button class="flex h-8 items-center gap-2 border border-line-strong bg-raised px-2.5 text-left hover:border-gold hover:bg-[#2a2218]"
+        <button class="flex h-8 items-center gap-2 border border-line-strong bg-raised px-2.5 text-left hover:border-gold hover:bg-selected"
           [title]="entry.text" (click)="search(entry.text)">
           <span class="min-w-0 flex-1 truncate text-bright">{{ entry.name || entry.text }}</span>
           @if (entry.hotkey && group.enableHotkeys) {
@@ -31,5 +31,5 @@
   <p class="px-1 py-2 text-muted">{{ 'No presets yet: add them in the settings, Stash search.' | tr }}</p>
 }
 @if (error(); as message) {
-  <p class="bg-[#3a1a14] px-2 py-1 text-bad">{{ message }}</p>
+  <p class="bg-error-bg px-2 py-1 text-bad">{{ message }}</p>
 }

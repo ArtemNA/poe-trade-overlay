@@ -23,6 +23,44 @@
   --color-good: #6fbf73;
   --color-warn: #d9a441;
   --color-bad: #e0806a;
+
+  /* Named for what they mean, so a theme can recolour them (the APT theme does). */
+  --color-selected: #2a2218;
+  --color-selected-hover: #3a2e1e;
+  --color-error-bg: #3a1a14;
+  --color-gold-hover: #e6c88a;
+  --color-warn-bg: #2a1f0e;
+  --color-warn-line: #5a3a12;
+  --color-row-line: #1f1c18;
+  --color-primary-from: #a7823f;
+  --color-primary-to: #7a5c26;
+  --color-primary-text: #1a1208;
+  --color-ink: #15130f;
+  --color-deadly: #d0503c;
+  --color-bad-line: #8a3a2c;
+  --color-menu: #12100d;
+  --color-bait-text: #f0a08a;
+  --color-bait-line: #a5553f;
+  --color-unique: #d97a3a;
+  --color-positive: #8fd493;
+  --color-positive-bg: #1d2a1c;
+  --color-corrupted-bg: #2e1a17;
+  --color-heist: #5a1d18;
+  --color-deadly-bg: #3f1813;
+  --color-deadly-hover: #4a1d17;
+  --color-warning-bg: #38290f;
+  --color-warning-hover: #433112;
+  --color-good-bg: #14261a;
+  --color-good-line: #2f5a32;
+  --color-good-row-bg: #16301a;
+  --color-good-row-hover: #1b3a20;
+  --color-tier1: #c9a15a;
+  --color-tier1-text: #15130f;
+  --color-tier2: #7a5f36;
+  --color-tier2-text: #f0d48a;
+  --color-fractured: #c4ad6e;
+  --color-fractured-text: #15130f;
+  --color-fractured-line: #6a5a2e;
 }
 
 html,
